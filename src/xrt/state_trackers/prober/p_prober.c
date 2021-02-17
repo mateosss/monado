@@ -16,6 +16,8 @@
 #include "os/os_hid.h"
 #include "p_prober.h"
 
+#include <stdio.h>
+
 #ifdef XRT_HAVE_V4L2
 #include "v4l2/v4l2_interface.h"
 #endif
@@ -608,6 +610,7 @@ probe(struct xrt_prober *xp)
 static int
 dump(struct xrt_prober *xp)
 {
+	printf(">>> p_prober.dump()\n");
 	struct prober *p = (struct prober *)xp;
 	XRT_MAYBE_UNUSED ssize_t k = 0;
 	XRT_MAYBE_UNUSED size_t j = 0;
@@ -624,6 +627,7 @@ static void
 handle_found_device(
     struct prober *p, struct xrt_device **xdevs, size_t num_xdevs, bool *have_hmd, struct xrt_device *xdev)
 {
+	printf(">>> handle_found_device\n");
 	P_DEBUG(p, "Found '%s' %p", xdev->str, (void *)xdev);
 
 	size_t i = 0;
@@ -654,6 +658,7 @@ handle_found_device(
 static void
 add_from_devices(struct prober *p, struct xrt_device **xdevs, size_t num_xdevs, bool *have_hmd)
 {
+	printf(">>> add_from_devices\n");
 	// Build a list of all current probed devices.
 	struct xrt_prober_device **dev_list = U_TYPED_ARRAY_CALLOC(struct xrt_prober_device *, p->num_devices);
 	for (size_t i = 0; i < p->num_devices; i++) {
@@ -710,6 +715,7 @@ add_from_devices(struct prober *p, struct xrt_device **xdevs, size_t num_xdevs, 
 static void
 add_from_auto_probers(struct prober *p, struct xrt_device **xdevs, size_t num_xdevs, bool *have_hmd)
 {
+	printf(">>> add_from_auto_probers\n");
 	for (int i = 0; i < MAX_AUTO_PROBERS && p->auto_probers[i]; i++) {
 
 		bool skip = false;
@@ -773,6 +779,7 @@ add_from_remote(struct prober *p, struct xrt_device **xdevs, size_t num_xdevs, b
 static int
 select_device(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs)
 {
+	printf(">>> select_device\n");
 	struct prober *p = (struct prober *)xp;
 	enum p_active_config active;
 	bool have_hmd = false;
@@ -782,10 +789,14 @@ select_device(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs
 	switch (active) {
 	case P_ACTIVE_CONFIG_NONE:
 	case P_ACTIVE_CONFIG_TRACKING:
+		printf(">>> P_ACTIVE_CONFIG_TRACKING\n");
 		add_from_devices(p, xdevs, num_xdevs, &have_hmd);
 		add_from_auto_probers(p, xdevs, num_xdevs, &have_hmd);
 		break;
-	case P_ACTIVE_CONFIG_REMOTE: add_from_remote(p, xdevs, num_xdevs, &have_hmd); break;
+	case P_ACTIVE_CONFIG_REMOTE:
+		printf(">>> P_ACTIVE_CONFIG_REMOTE\n");
+		add_from_remote(p, xdevs, num_xdevs, &have_hmd);
+		break;
 	default: assert(false);
 	}
 
@@ -800,6 +811,7 @@ select_device(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs
 		}
 
 		// This is a HMD, but it's not in the first slot.
+		printf(">>> Found hmd that is not in the first slot \n");
 		struct xrt_device *hmd = xdevs[i];
 		for (size_t k = i; k > 0; k--) {
 			xdevs[k] = xdevs[k - 1];
@@ -825,7 +837,7 @@ select_device(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs
 		P_DEBUG(p, "Destroying '%s'", xdevs[i]->str);
 		xrt_device_destroy(&xdevs[i]);
 	}
-
+	printf(">>> end select_devinc\n");
 	return 0;
 }
 
