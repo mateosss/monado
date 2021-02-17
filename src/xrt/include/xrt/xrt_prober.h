@@ -10,6 +10,7 @@
 #pragma once
 
 #include "xrt/xrt_device.h"
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -293,6 +294,7 @@ xrt_prober_dump(struct xrt_prober *xp)
 static inline int
 xrt_prober_select(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs)
 {
+	printf(">>> xrt_prober_select\n");
 	return xp->select(xp, xdevs, num_xdevs);
 }
 
