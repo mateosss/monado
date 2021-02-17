@@ -12,6 +12,7 @@
 
 #include "xrt/xrt_prober.h"
 #include "xrt/xrt_instance.h"
+#include <stdio.h>
 
 #include "util/u_misc.h"
 
@@ -51,6 +52,7 @@ t_instance(struct xrt_instance *xinst)
 static int
 t_instance_select(struct xrt_instance *xinst, struct xrt_device **xdevs, size_t num_xdevs)
 {
+	printf(">>> t_instance_select\n");
 	struct t_instance *tinst = t_instance(xinst);
 
 	int ret = xrt_prober_probe(tinst->xp);
