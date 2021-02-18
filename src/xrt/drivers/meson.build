@@ -241,3 +241,14 @@ lib_drv_multi = static_library(
 	dependencies: [aux],
 	build_by_default: true,
 )
+
+lib_drv_qwerty = static_library(
+	'drv_qwerty',
+	files(
+		'qwerty/qwerty_driver.c',
+		'qwerty/qwerty_interface.h',
+	),
+	include_directories: xrt_include,
+	dependencies: [aux],
+	build_by_default: 'qwerty' in drivers,
+)
