@@ -97,6 +97,10 @@ cli_cmd_probe(int argc, const char **argv)
 	printf(" ILLIXR,");
 #endif
 
+#ifdef XRT_BUILD_DRIVER_QWERTY
+	printf(" QWERTY,");
+#endif
+
 	printf("\n");
 
 	// Initialize the prober.

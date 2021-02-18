@@ -225,3 +225,14 @@ lib_drv_arduino = static_library(
 	dependencies: [dbus, aux],
 	build_by_default: 'arduino' in drivers,
 )
+
+lib_drv_qwerty = static_library(
+	'drv_qwerty',
+	files(
+		'qwerty/qwerty_driver.c',
+		'qwerty/qwerty_interface.h',
+	),
+	include_directories: xrt_include,
+	dependencies: [aux],
+	build_by_default: 'qwerty' in drivers,
+)

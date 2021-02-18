@@ -66,6 +66,10 @@
 #include "illixr/illixr_interface.h"
 #endif
 
+#ifdef XRT_BUILD_DRIVER_QWERTY
+#include "qwerty/qwerty_interface.h"
+#endif
+
 /*!
  * Each entry should be a vendor ID (VID), product ID (PID), a "found" function,
  * and a string literal name.
@@ -109,6 +113,10 @@ struct xrt_prober_entry target_entry_list[] = {
     {VALVE_VID, VIVE_PRO_LHR_PID, vive_found, "Valve Index"},
     {VALVE_VID, VIVE_WATCHMAN_DONGLE, vive_controller_found, "HTC Vive Watchman Wireless Device"},
     {VALVE_VID, VIVE_WATCHMAN_DONGLE_GEN2, vive_controller_found, "Valve Watchman Wireless Device"},
+#endif
+
+#ifdef XRT_BUILD_DRIVER_QWERTY
+    {QWERTY_VID, QWERTY_PID, qwerty_found, "QWERTY Keyboard"},
 #endif
 
     {0x0000, 0x0000, NULL, NULL}, // Terminate
