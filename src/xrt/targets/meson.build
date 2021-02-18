@@ -73,6 +73,10 @@ if 'arduino' in drivers
 	driver_libs += [lib_drv_arduino]
 endif
 
+if 'qwerty' in drivers
+	driver_libs += [lib_drv_qwerty]
+endif
+
 if 'remote' in drivers
 	driver_libs += [lib_drv_remote]
 endif
