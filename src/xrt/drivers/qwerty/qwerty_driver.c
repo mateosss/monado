@@ -1,4 +1,6 @@
 #include "math/m_mathinclude.h"
+#include "math/m_api.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include "xrt/xrt_prober.h"
@@ -21,7 +23,7 @@ qwerty_hmd(struct xrt_device *xdev)
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
 {
-	printf(">>> [QWERTY] qwerty_update_inputs\n");
+	// printf(">>> [QWERTY] qwerty_update_inputs\n");
 }
 
 static void
@@ -30,7 +32,41 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
-	printf(">>> [QWERTY] qwerty_get_tracked_pose\n");
+	// struct qwerty_hmd *qh = qwerty_hmd(xdev);
+
+	static float z = 0.f;
+
+	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
+		printf(">>> [QWERTY ERROR] unknown input name");
+		return;
+	}
+
+	double created_ns = 0;
+	double diameter_m = 0.05;
+	struct xrt_vec3 center = {0, 0, 0};
+
+	double time_s = time_ns_to_s(at_timestamp_ns - created_ns);
+	double d = diameter_m;
+	double d2 = d * 2;
+	double t = 2.0;
+	double t2 = t * 2;
+	double t3 = t * 3;
+	double t4 = t * 4;
+	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
+	// pose.position.x = center.x + sin((time_s / t2) * M_PI) * d2 - d;
+	// pose.position.y = center.y + sin((time_s / t) * M_PI) * d;
+	z += 0.001f;
+	pose.position.z = z;
+	// pose.orientation.x = sin((time_s / t3) * M_PI) / 64.0;
+	// pose.orientation.y = sin((time_s / t4) * M_PI) / 16.0;
+	// pose.orientation.z = sin((time_s / t4) * M_PI) / 64.0;
+	// pose.orientation.w = 1;
+	math_quat_normalize(&pose.orientation);
+
+	out_relation->pose = pose;
+	out_relation->relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
+	                               XRT_SPACE_RELATION_POSITION_VALID_BIT |
+	                               XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT;
 }
 
 static void
@@ -39,13 +75,32 @@ qwerty_get_view_pose(struct xrt_device *xdev,
                      uint32_t view_index,
                      struct xrt_pose *out_pose)
 {
-	printf(">>> [QWERTY] qwerty_get_view_pose\n");
+	// printf(">>> [QWERTY] qwerty_get_view_pose\n");
+	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
+	bool adjust = view_index == 0;
+
+	pose.position.x = eye_relation->x / 2.0f;
+	pose.position.y = eye_relation->y / 2.0f;
+	pose.position.z = eye_relation->z / 2.0f;
+
+	// Adjust for left/right while also making sure there aren't any -0.f.
+	if (pose.position.x > 0.0f && adjust) {
+		pose.position.x = -pose.position.x;
+	}
+	if (pose.position.y > 0.0f && adjust) {
+		pose.position.y = -pose.position.y;
+	}
+	if (pose.position.z > 0.0f && adjust) {
+		pose.position.z = -pose.position.z;
+	}
+
+	*out_pose = pose;
 }
 
 static void
 qwerty_destroy(struct xrt_device *xdev)
 {
- 	struct qwerty_hmd *qh = qwerty_hmd(xdev);
+	struct qwerty_hmd *qh = qwerty_hmd(xdev);
 
 	u_device_free(&qh->base);
 
@@ -61,11 +116,9 @@ qwerty_found(struct xrt_prober *xp,
              struct xrt_device **out_xdevs)
 {
 	printf(">>> [QWERTY] qwerty_found()\n");
-	// struct qwerty_hmd *qh = U_DE;
-	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
-
 	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
 	// the properties set are commented below
+	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
 	size_t num_inputs = 1, num_outputs = 0;
 	struct qwerty_hmd *qh = U_DEVICE_ALLOCATE(struct qwerty_hmd, flags, num_inputs, num_outputs);
 	qh->base.name = XRT_DEVICE_GENERIC_HMD;
@@ -102,6 +155,7 @@ qwerty_found(struct xrt_prober *xp,
 
 	// qh->base.num_inputs // Set on alloc
 	// qh->base.inputs // Set on alloc with inputs[i].active == true
+	qh->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
 
 	// qh->base.num_outputs // Set on alloc
 	// qh->base.outputs // Set on alloc
