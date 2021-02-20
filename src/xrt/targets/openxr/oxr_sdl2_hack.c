@@ -27,7 +27,7 @@ oxr_sdl2_hack_create(void **out_hack)
 }
 
 void
-oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst)
+oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **xdevs)
 {}
 
 void
@@ -291,7 +291,7 @@ oxr_sdl2_hack_create(void **out_hack)
 }
 
 void
-oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst)
+oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **xdevs)
 {
 	struct sdl2_program *p = (struct sdl2_program *)hack;
 	if (p == NULL) {
@@ -299,6 +299,13 @@ oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst)
 	}
 
 	xrt_instance_get_prober(xinst, &p->base.xp);
+
+	// XXX for some reason p->base.xdevs is empty on monado-service, understand why
+	// XXX Having more than one owner for these pointers seems like a bad idea
+	// Fill sdl2_program xrt_devices
+	for (size_t i = 0; i < NUM_XDEVS; i++) {
+		p->base.xdevs[i] = xdevs[i];
+	}
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		U_LOG_E("Failed to init SDL2!");
