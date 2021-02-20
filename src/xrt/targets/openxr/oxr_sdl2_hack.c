@@ -15,6 +15,12 @@
 
 #include "os/os_threading.h"
 
+struct cJSON;
+typedef struct cJSON cJSON;
+struct xrt_prober_device;
+
+#include "xrt/xrt_device.h"
+#include "qwerty_interface.h"
 
 struct xrt_instance;
 
@@ -162,21 +168,22 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_w)
-			{
-				printf(">>> W pressed\n");
-			}
-			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a)
-			{
-				printf(">>> A pressed\n");
-			}
-			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s)
-			{
-				printf(">>> S pressed\n");
-			}
-			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d)
-			{
-				printf(">>> D pressed\n");
+			struct xrt_device *qh = p->base.xdevs[0];
+			if (qh != NULL && !strcmp(qh->serial, "Qwerty HMD")) {
+				// clang-format off
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) qwerty_press_right(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_d) qwerty_release_right(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_w) qwerty_press_forward(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_w) qwerty_release_forward(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s) qwerty_press_backward(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_s) qwerty_release_backward(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) qwerty_press_up(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_e) qwerty_release_up(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q) qwerty_press_down(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_q) qwerty_release_down(qh);
+				// clang-format on
 			}
 
 			if (event.type == SDL_QUIT) {
