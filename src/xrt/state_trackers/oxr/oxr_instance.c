@@ -57,7 +57,7 @@ extern int
 oxr_sdl2_hack_create(void **out_hack);
 
 extern void
-oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst);
+oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **xdevs);
 
 extern void
 oxr_sdl2_hack_stop(void **hack_ptr);
@@ -379,7 +379,7 @@ oxr_instance_create(struct oxr_logger *log, const XrInstanceCreateInfo *createIn
 	u_var_add_root((void *)inst, "XrInstance", true);
 
 	/* ---- HACK ---- */
-	oxr_sdl2_hack_start(inst->hack, inst->xinst);
+	oxr_sdl2_hack_start(inst->hack, inst->xinst, sys->xdevs);
 	/* ---- HACK ---- */
 
 	oxr_log(log,
