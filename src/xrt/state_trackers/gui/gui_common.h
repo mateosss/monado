@@ -46,7 +46,7 @@ struct gui_program
 
 	struct gui_scene_manager *gsm;
 
-	struct xrt_device *xdevs[NUM_XDEVS];
+	struct xrt_device *xdevs[NUM_XDEVS]; // XXX This is empty in ipc service run for some reason, will fill manually
 	struct xrt_instance *instance;
 	struct xrt_prober *xp;
 
