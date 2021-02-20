@@ -181,8 +181,8 @@ void qwerty_press_left(struct xrt_device *qh) { qwerty_hmd(qh)->left_pressed = t
 void qwerty_release_left(struct xrt_device *qh) { qwerty_hmd(qh)->left_pressed = false; }
 void qwerty_press_right(struct xrt_device *qh) { qwerty_hmd(qh)->right_pressed = true; }
 void qwerty_release_right(struct xrt_device *qh) { qwerty_hmd(qh)->right_pressed = false; }
-void qwerty_press_forward(struct xrt_device *qh) { qwerty_hmd(qh)->forward_pressed = true; printf(">>> qwerty_press_forward() qh=%p\n", (void*)qh);}
-void qwerty_release_forward(struct xrt_device *qh) { qwerty_hmd(qh)->forward_pressed = false; printf(">>> qwerty_release_forward()\n");}
+void qwerty_press_forward(struct xrt_device *qh) { qwerty_hmd(qh)->forward_pressed = true; }
+void qwerty_release_forward(struct xrt_device *qh) { qwerty_hmd(qh)->forward_pressed = false; }
 void qwerty_press_backward(struct xrt_device *qh) { qwerty_hmd(qh)->backward_pressed = true; }
 void qwerty_release_backward(struct xrt_device *qh) { qwerty_hmd(qh)->backward_pressed = false; }
 void qwerty_press_up(struct xrt_device *qh) { qwerty_hmd(qh)->up_pressed = true; }
