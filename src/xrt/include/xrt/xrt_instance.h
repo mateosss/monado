@@ -154,7 +154,6 @@ struct xrt_instance
 static inline int
 xrt_instance_select(struct xrt_instance *xinst, struct xrt_device **xdevs, size_t num_xdevs)
 {
-	printf(">>> xrt_instance_select\n");
 	return xinst->select(xinst, xdevs, num_xdevs);
 }
 

@@ -162,6 +162,23 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
+			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_w)
+			{
+				printf(">>> W pressed\n");
+			}
+			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a)
+			{
+				printf(">>> A pressed\n");
+			}
+			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s)
+			{
+				printf(">>> S pressed\n");
+			}
+			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d)
+			{
+				printf(">>> D pressed\n");
+			}
+
 			if (event.type == SDL_QUIT) {
 				p->base.stopped = true;
 			}
