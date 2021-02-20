@@ -23,7 +23,6 @@ qwerty_hmd(struct xrt_device *xdev)
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
 {
-	// printf(">>> [QWERTY] qwerty_update_inputs\n");
 }
 
 static void
@@ -37,30 +36,14 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	static float z = 0.f;
 
 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
-		printf(">>> [QWERTY ERROR] unknown input name");
+		printf("[QWERTY ERROR] unknown input name");
 		return;
 	}
-
-	double created_ns = 0;
-	double diameter_m = 0.05;
-	struct xrt_vec3 center = {0, 0, 0};
-
-	double time_s = time_ns_to_s(at_timestamp_ns - created_ns);
-	double d = diameter_m;
-	double d2 = d * 2;
-	double t = 2.0;
-	double t2 = t * 2;
-	double t3 = t * 3;
-	double t4 = t * 4;
 	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
-	// pose.position.x = center.x + sin((time_s / t2) * M_PI) * d2 - d;
-	// pose.position.y = center.y + sin((time_s / t) * M_PI) * d;
 	z += 0.001f;
 	pose.position.z = z;
-	// pose.orientation.x = sin((time_s / t3) * M_PI) / 64.0;
-	// pose.orientation.y = sin((time_s / t4) * M_PI) / 16.0;
-	// pose.orientation.z = sin((time_s / t4) * M_PI) / 64.0;
-	// pose.orientation.w = 1;
+	// pose.orientation.y = 0;
+	pose.orientation.w = 1;
 	math_quat_normalize(&pose.orientation);
 
 	out_relation->pose = pose;
@@ -75,7 +58,6 @@ qwerty_get_view_pose(struct xrt_device *xdev,
                      uint32_t view_index,
                      struct xrt_pose *out_pose)
 {
-	// printf(">>> [QWERTY] qwerty_get_view_pose\n");
 	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
 	bool adjust = view_index == 0;
 
@@ -104,7 +86,6 @@ qwerty_destroy(struct xrt_device *xdev)
 
 	u_device_free(&qh->base);
 
-	printf(">>> [QWERTY] qwerty_destroy\n");
 }
 
 int
@@ -115,7 +96,6 @@ qwerty_found(struct xrt_prober *xp,
              cJSON *attached_data,
              struct xrt_device **out_xdevs)
 {
-	printf(">>> [QWERTY] qwerty_found()\n");
 	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
 	// the properties set are commented below
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
@@ -139,7 +119,7 @@ qwerty_found(struct xrt_prober *xp,
 	info.views[1].fov = 85.0f * (M_PI / 180.0f);
 
 	if (!u_device_setup_split_side_by_side(&qh->base, &info)) {
-		printf(">>> [QWERTY ERROR] Failed to setup basic device info\n");
+		printf("[QWERTY ERROR] Failed to setup basic device info\n");
 		qwerty_destroy(&qh->base);
 		return -1;
 	}

@@ -112,13 +112,11 @@ cli_cmd_probe(int argc, const char **argv)
 	}
 
 	// XXX BEGIN
-	printf(">>> Begin dump\n");
 	struct xrt_prober *xp = NULL;
 	xrt_instance_get_prober(xi, &xp);
 	// 3: 0x1a2c:0x2c27; usb.product USB Keyboard
 	xrt_prober_probe(xp);
 	xrt_prober_dump(xp);
-	printf(">>> End dump\n");
 	// XXX END
 
 	// Need to prime the prober with devices before dumping and listing.
