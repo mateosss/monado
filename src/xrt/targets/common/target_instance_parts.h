@@ -52,7 +52,6 @@ t_instance(struct xrt_instance *xinst)
 static int
 t_instance_select(struct xrt_instance *xinst, struct xrt_device **xdevs, size_t num_xdevs)
 {
-	printf(">>> t_instance_select\n");
 	struct t_instance *tinst = t_instance(xinst);
 
 	int ret = xrt_prober_probe(tinst->xp);
