@@ -9,6 +9,9 @@ hack_incs = [
 	imgui_include,
 ]
 
+# hack_incs += drv_include
+hack_incs += include_directories('../../drivers/qwerty')
+
 if sdl2.found()
 	hack_deps += sdl2
 	hack_src += [
