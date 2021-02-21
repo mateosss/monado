@@ -28,6 +28,15 @@ void qwerty_release_up(struct xrt_device *qh);
 void qwerty_press_down(struct xrt_device *qh);
 void qwerty_release_down(struct xrt_device *qh);
 
+void qwerty_press_look_left(struct xrt_device *qh);
+void qwerty_release_look_left(struct xrt_device *qh);
+void qwerty_press_look_right(struct xrt_device *qh);
+void qwerty_release_look_right(struct xrt_device *qh);
+void qwerty_press_look_up(struct xrt_device *qh);
+void qwerty_release_look_up(struct xrt_device *qh);
+void qwerty_press_look_down(struct xrt_device *qh);
+void qwerty_release_look_down(struct xrt_device *qh);
+
 #ifdef __cplusplus
 }
 #endif
