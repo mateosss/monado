@@ -7,7 +7,8 @@
 #include "util/u_device.h"
 #include "util/u_distortion_mesh.h"
 
-#define QWERTY_INITIAL_MOVEMENT_SPEED 0.001f
+#define QWERTY_INITIAL_MOVEMENT_SPEED 0.001f // in meters per frame
+#define QWERTY_INITIAL_LOOK_SPEED 0.01f      // in radians per frame
 
 struct qwerty_hmd
 {
@@ -21,6 +22,12 @@ struct qwerty_hmd
 	bool backward_pressed;
 	bool up_pressed;
 	bool down_pressed;
+
+	float look_speed;
+	bool look_left_pressed;
+	bool look_right_pressed;
+	bool look_up_pressed;
+	bool look_down_pressed;
 };
 
 static inline struct qwerty_hmd *
@@ -47,6 +54,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	struct qwerty_hmd *qh = qwerty_hmd(xdev);
 
+	// TODO: Movement is global but should be local based on rotation
 	// clang-format off
 	if (qh->left_pressed) qh->pose.position.x -= qh->movement_speed;
 	if (qh->right_pressed) qh->pose.position.x += qh->movement_speed;
@@ -56,6 +64,23 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	if (qh->down_pressed) qh->pose.position.y -= qh->movement_speed;
 	// clang-format on
 
+	// TODO: Rotation is local but should be global to avoid camera tilts (around roll axis)
+	float x_look_speed = 0.f;
+	float y_look_speed = 0.f;
+
+	// clang-format off
+	if (qh->look_left_pressed) y_look_speed += qh->look_speed;
+	if (qh->look_right_pressed) y_look_speed -= qh->look_speed;
+	if (qh->look_up_pressed) x_look_speed += qh->look_speed;
+	if (qh->look_down_pressed) x_look_speed -= qh->look_speed;
+	// clang-format on
+
+	struct xrt_quat x_rotation, y_rotation;
+	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
+	math_quat_from_angle_vector(x_look_speed, &x_axis, &x_rotation);
+	math_quat_from_angle_vector(y_look_speed, &y_axis, &y_rotation);
+	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation);
+	math_quat_rotate(&qh->pose.orientation, &y_rotation, &qh->pose.orientation);
 	math_quat_normalize(&qh->pose.orientation);
 
 	out_relation->pose = qh->pose;
@@ -116,6 +141,7 @@ qwerty_found(struct xrt_prober *xp,
 	// Fill qwerty specific properties
 	qh->pose.orientation.w = 1.f;
 	qh->movement_speed = QWERTY_INITIAL_MOVEMENT_SPEED;
+	qh->look_speed = QWERTY_INITIAL_LOOK_SPEED;
 
 	// Fill xrt_device properties
 	qh->base.name = XRT_DEVICE_GENERIC_HMD;
@@ -189,4 +215,13 @@ void qwerty_press_up(struct xrt_device *qh) { qwerty_hmd(qh)->up_pressed = true;
 void qwerty_release_up(struct xrt_device *qh) { qwerty_hmd(qh)->up_pressed = false; }
 void qwerty_press_down(struct xrt_device *qh) { qwerty_hmd(qh)->down_pressed = true; }
 void qwerty_release_down(struct xrt_device *qh) { qwerty_hmd(qh)->down_pressed = false; }
+
+void qwerty_press_look_left(struct xrt_device *qh) { qwerty_hmd(qh)->look_left_pressed = true; }
+void qwerty_release_look_left(struct xrt_device *qh) { qwerty_hmd(qh)->look_left_pressed = false; }
+void qwerty_press_look_right(struct xrt_device *qh) { qwerty_hmd(qh)->look_right_pressed = true; }
+void qwerty_release_look_right(struct xrt_device *qh) { qwerty_hmd(qh)->look_right_pressed = false; }
+void qwerty_press_look_up(struct xrt_device *qh) { qwerty_hmd(qh)->look_up_pressed = true; }
+void qwerty_release_look_up(struct xrt_device *qh) { qwerty_hmd(qh)->look_up_pressed = false; }
+void qwerty_press_look_down(struct xrt_device *qh) { qwerty_hmd(qh)->look_down_pressed = true; }
+void qwerty_release_look_down(struct xrt_device *qh) { qwerty_hmd(qh)->look_down_pressed = false; }
 // clang-format on

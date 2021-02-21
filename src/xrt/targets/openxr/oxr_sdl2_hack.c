@@ -183,6 +183,15 @@ sdl2_loop(struct sdl2_program *p)
 				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_e) qwerty_release_up(qh);
 				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q) qwerty_press_down(qh);
 				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_q) qwerty_release_down(qh);
+
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LEFT) qwerty_press_look_left(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LEFT) qwerty_release_look_left(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RIGHT) qwerty_press_look_right(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_RIGHT) qwerty_release_look_right(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_UP) qwerty_press_look_up(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_UP) qwerty_release_look_up(qh);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DOWN) qwerty_press_look_down(qh);
+				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_DOWN) qwerty_release_look_down(qh);
 				// clang-format on
 			}
 
