@@ -39,6 +39,10 @@ void qwerty_release_look_down(struct xrt_device *qh);
 
 void qwerty_release_all(struct xrt_device *xdev);
 
+// XXX: Put proper doxygen documentation. See in which other functions I should put it.
+// Add yaw and pitch movement for the next frame
+void qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch);
+
 #ifdef __cplusplus
 }
 #endif
