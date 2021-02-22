@@ -265,7 +265,7 @@ u_device_free(struct xrt_device *xdev)
 		free(xdev->hmd->distortion.mesh.indices);
 		xdev->hmd->distortion.mesh.indices = NULL;
 	}
-
+	// XXX: Forgot to free tracking_origin?
 	free(xdev);
 }
 
