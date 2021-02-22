@@ -192,6 +192,16 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DOWN) qwerty_press_look_down(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_DOWN) qwerty_release_look_down(qdev);
 	// clang-format on
+
+	if (event.type == SDL_MOUSEBUTTONUP && event.button.button & SDL_BUTTON_RIGHT)
+		SDL_SetRelativeMouseMode(false);
+	if (event.type == SDL_MOUSEMOTION && event.motion.state & SDL_BUTTON_RMASK) {
+		SDL_SetRelativeMouseMode(true);
+		float sensitivity = 0.1f; // 1px moves `sensitivity` look_speed units
+		float yaw = -event.motion.xrel * sensitivity;
+		float pitch = -event.motion.yrel * sensitivity;
+		qwerty_add_look_delta(qdev, yaw, pitch);
+	}
 }
 
 static void
