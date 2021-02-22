@@ -39,7 +39,20 @@ qwerty_device(struct xrt_device *xdev)
 
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
-{}
+{
+	// TODO: Understand the role of this function
+}
+
+// XXX: Just noticed that the psmv version of these functions use psmv_device as
+// prefix instead of just psmv check other drivers to know if it is the standard
+// name style for drivers
+static void
+qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_output_value *value)
+{
+	// XXX: Should probably be using DEBUG macros instead of printf's
+	printf("[QWERTY] Vibration emitted with amplitude=%f duration=%ld frequency=%f\n", value->vibration.amplitude,
+	       value->vibration.duration, value->vibration.frequency);
+}
 
 static void
 qwerty_get_tracked_pose(struct xrt_device *xdev,
@@ -47,9 +60,19 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
-	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
-		printf("[QWERTY ERROR] unknown input name");
-		return;
+	if (name == XRT_INPUT_GENERIC_HEAD_POSE) {
+		// printf(">>> XRT_INPUT_GENERIC_HEAD_POSE\n");
+	} else if (name == XRT_INPUT_SIMPLE_SELECT_CLICK) {
+		// printf(">>> XRT_INPUT_SIMPLE_SELECT_CLICK\n");
+	} else if (name == XRT_INPUT_SIMPLE_MENU_CLICK) {
+		// printf(">>> XRT_INPUT_SIMPLE_MENU_CLICK\n");
+	} else if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
+		// printf(">>> XRT_INPUT_SIMPLE_GRIP_POSE\n");
+	} else if (name == XRT_INPUT_SIMPLE_AIM_POSE) {
+		// printf(">>> XRT_INPUT_SIMPLE_AIM_POSE\n");
+	} else {
+		// XXX: Using unsigned, what should I use to be more specific for a enum? uint32_t?
+		printf("[QWERTY ERROR] Unknown input name = %d\n", (unsigned)name);
 	}
 
 	struct qwerty_device *qh = qwerty_device(xdev);
@@ -124,13 +147,8 @@ qwerty_destroy(struct xrt_device *xdev)
 	u_device_free(&qh->base);
 }
 
-int
-qwerty_found(struct xrt_prober *xp,
-             struct xrt_prober_device **devices,
-             size_t num_devices,
-             size_t index,
-             cJSON *attached_data,
-             struct xrt_device **out_xdevs)
+static struct qwerty_device *
+qwerty_hmd_create()
 {
 	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
 	// the properties set are commented below
@@ -164,7 +182,7 @@ qwerty_found(struct xrt_prober *xp,
 	if (!u_device_setup_split_side_by_side(&qh->base, &info)) {
 		printf("[QWERTY ERROR] Failed to setup basic device info\n");
 		qwerty_destroy(&qh->base);
-		return -1;
+		return NULL;
 	}
 
 
@@ -194,10 +212,61 @@ qwerty_found(struct xrt_prober *xp,
 	qh->base.get_view_pose = qwerty_get_view_pose;
 	u_distortion_mesh_set_none(&qh->base); // Fills qh->base.compute_distortion
 	qh->base.destroy = qwerty_destroy;
+	return qh;
+}
 
+static struct qwerty_device *
+qwerty_controller_create()
+{
+	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
-	out_xdevs[0] = &qh->base;
-	return 1;
+	// Fill qwerty specific properties
+	qc->pose.orientation.w = 1.f;
+	qc->movement_speed = QWERTY_INITIAL_MOVEMENT_SPEED;
+	qc->look_speed = QWERTY_INITIAL_LOOK_SPEED;
+
+	// Fill xrt_device properties
+	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
+	qc->base.device_type = XRT_DEVICE_TYPE_ANY_HAND_CONTROLLER;
+
+	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty Controller");
+	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty Controller");
+
+	// XXX: Is XRT_TRACKING_TYPE_NONE correct? Isn't that "tracking" what this
+	// driver simulates? in any case, see qh->base.*_tracking_supported bools
+	// unset in this controller but also on  the qwerty hmd
+	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_NONE;
+	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
+
+	qc->base.inputs[0].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
+	qc->base.inputs[1].name = XRT_INPUT_SIMPLE_MENU_CLICK;
+	qc->base.inputs[2].name = XRT_INPUT_SIMPLE_GRIP_POSE;
+	qc->base.inputs[3].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX Understand aim inputs
+	qc->base.outputs[0].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
+
+	qc->base.update_inputs = qwerty_update_inputs;
+	qc->base.get_tracked_pose = qwerty_get_tracked_pose;
+	qc->base.set_output = qwerty_set_output;
+	qc->base.destroy = qwerty_destroy;
+	return qc;
+}
+
+int
+qwerty_found(struct xrt_prober *xp,
+             struct xrt_prober_device **devices,
+             size_t num_devices,
+             size_t index,
+             cJSON *attached_data,
+             struct xrt_device **out_xdevs)
+{
+	struct qwerty_device *qhmd = qwerty_hmd_create();
+	struct qwerty_device *qctrl_left = qwerty_controller_create();
+	struct qwerty_device *qctrl_right = qwerty_controller_create();
+
+	out_xdevs[0] = &qhmd->base;
+	out_xdevs[1] = &qctrl_left->base;
+	out_xdevs[2] = &qctrl_right->base;
+	return 3;
 }
 
 // Emulated actions
