@@ -37,6 +37,8 @@ void qwerty_release_look_up(struct xrt_device *qh);
 void qwerty_press_look_down(struct xrt_device *qh);
 void qwerty_release_look_down(struct xrt_device *qh);
 
+void qwerty_release_all(struct xrt_device *xdev);
+
 #ifdef __cplusplus
 }
 #endif
