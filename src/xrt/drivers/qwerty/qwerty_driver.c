@@ -30,6 +30,10 @@ struct qwerty_device
 	bool look_right_pressed;
 	bool look_up_pressed;
 	bool look_down_pressed;
+
+	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
+	float yaw_delta;
+	float pitch_delta;
 };
 
 static inline struct qwerty_device *
@@ -109,6 +113,9 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	if (qh->look_up_pressed) x_look_speed += qh->look_speed;
 	if (qh->look_down_pressed) x_look_speed -= qh->look_speed;
 	// clang-format on
+	y_look_speed += qh->yaw_delta;
+	x_look_speed += qh->pitch_delta;
+	qh->yaw_delta = qh->pitch_delta = 0;
 
 	struct xrt_quat x_rotation, y_rotation;
 	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
@@ -322,4 +329,12 @@ qwerty_release_all(struct xrt_device *xdev)
 	qdev->look_right_pressed = false;
 	qdev->look_up_pressed = false;
 	qdev->look_down_pressed = false;
+}
+
+void
+qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch)
+{
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	qdev->yaw_delta += yaw * qdev->look_speed;
+	qdev->pitch_delta += pitch * qdev->look_speed;
 }
