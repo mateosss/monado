@@ -132,6 +132,69 @@ sdl2_window_init(struct sdl2_program *p)
 }
 
 static void
+qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
+{
+	struct xrt_device *qhmd = xdevs[0];
+	struct xrt_device *qleft = xdevs[1];
+	struct xrt_device *qright = xdevs[2];
+
+	// clang-format off
+	// XXX: I'm definitely pushing some limits with so much clang-format off
+	// it is mainly for the oneline ifs that I think are more readable
+
+	// XXX: This static vars seem a bad idea, maybe should use
+	// SDL_GetKeyboardState but I quickly read that is only for SDL2 and I
+	// think monado should support SDL1 as well. Also this `*_pressed = true`
+	// logic is repeated in qwerty_device, smells bad.
+	static bool alt_pressed = false;
+	static bool ctrl_pressed = false;
+
+	bool alt_down = event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LALT;
+	bool alt_up = event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LALT;
+	bool ctrl_down = event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LCTRL;
+	bool ctrl_up = event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LCTRL;
+	if (alt_down) alt_pressed = true;
+	if (alt_up) alt_pressed = false;
+	if (ctrl_down) ctrl_pressed = true;
+	if (ctrl_up) ctrl_pressed = false;
+
+	bool change_focus = alt_down || alt_up || ctrl_down || ctrl_up;
+	if (change_focus) {
+		qwerty_release_all(qhmd);
+		qwerty_release_all(qright);
+		qwerty_release_all(qleft);
+	}
+
+	struct xrt_device *qdev; // Focused device
+	if (ctrl_pressed) qdev = qleft;
+	else if (alt_pressed) qdev = qright;
+	else qdev = qhmd;
+
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) qwerty_press_right(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_d) qwerty_release_right(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_w) qwerty_press_forward(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_w) qwerty_release_forward(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s) qwerty_press_backward(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_s) qwerty_release_backward(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) qwerty_press_up(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_e) qwerty_release_up(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q) qwerty_press_down(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_q) qwerty_release_down(qdev);
+
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LEFT) qwerty_press_look_left(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LEFT) qwerty_release_look_left(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RIGHT) qwerty_press_look_right(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_RIGHT) qwerty_release_look_right(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_UP) qwerty_press_look_up(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_UP) qwerty_release_look_up(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DOWN) qwerty_press_look_down(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_DOWN) qwerty_release_look_down(qdev);
+	// clang-format on
+}
+
+static void
 sdl2_loop(struct sdl2_program *p)
 {
 	// Need to call this before any other Imgui call.
@@ -168,32 +231,11 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			struct xrt_device *qh = p->base.xdevs[0];
-			if (qh != NULL && !strcmp(qh->serial, "Qwerty HMD")) {
-				// clang-format off
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) qwerty_press_right(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_d) qwerty_release_right(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_w) qwerty_press_forward(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_w) qwerty_release_forward(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_s) qwerty_press_backward(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_s) qwerty_release_backward(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) qwerty_press_up(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_e) qwerty_release_up(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q) qwerty_press_down(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_q) qwerty_release_down(qh);
-
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LEFT) qwerty_press_look_left(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LEFT) qwerty_release_look_left(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RIGHT) qwerty_press_look_right(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_RIGHT) qwerty_release_look_right(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_UP) qwerty_press_look_up(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_UP) qwerty_release_look_up(qh);
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DOWN) qwerty_press_look_down(qh);
-				if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_DOWN) qwerty_release_look_down(qh);
-				// clang-format on
-			}
+			// Check usage of qwerty device for emulating hmd and controllers
+			struct xrt_device *hmd = p->base.xdevs[0];
+			bool using_qwerty = hmd != NULL && !strcmp(hmd->serial, "Qwerty HMD");
+			if (using_qwerty)
+				qwerty_process_inputs(p->base.xdevs, event);
 
 			if (event.type == SDL_QUIT) {
 				p->base.stopped = true;

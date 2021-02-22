@@ -279,6 +279,7 @@ qwerty_found(struct xrt_prober *xp,
 
 // Emulated actions
 
+// XXX Using `qh` for "qwerty headset" even though now this work for controllers as well
 // clang-format off
 void qwerty_press_left(struct xrt_device *qh) { qwerty_device(qh)->left_pressed = true; }
 void qwerty_release_left(struct xrt_device *qh) { qwerty_device(qh)->left_pressed = false; }
@@ -302,3 +303,19 @@ void qwerty_release_look_up(struct xrt_device *qh) { qwerty_device(qh)->look_up_
 void qwerty_press_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = true; }
 void qwerty_release_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = false; }
 // clang-format on
+
+void
+qwerty_release_all(struct xrt_device *xdev)
+{
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	qdev->left_pressed = false;
+	qdev->right_pressed = false;
+	qdev->forward_pressed = false;
+	qdev->backward_pressed = false;
+	qdev->up_pressed = false;
+	qdev->down_pressed = false;
+	qdev->look_left_pressed = false;
+	qdev->look_right_pressed = false;
+	qdev->look_up_pressed = false;
+	qdev->look_down_pressed = false;
+}
