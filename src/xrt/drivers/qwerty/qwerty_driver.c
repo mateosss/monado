@@ -7,8 +7,10 @@
 #include "util/u_device.h"
 #include "util/u_distortion_mesh.h"
 
-#define QWERTY_INITIAL_MOVEMENT_SPEED 0.001f // in meters per frame
-#define QWERTY_INITIAL_LOOK_SPEED 0.01f      // in radians per frame
+#define QWERTY_HMD_INITIAL_MOVEMENT_SPEED 0.002f // in meters per frame
+#define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
+#define QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED 0.005f
+#define QWERTY_CONTROLLER_INITIAL_LOOK_SPEED 0.05f
 
 struct qwerty_device
 {
@@ -85,17 +87,19 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	struct qwerty_device *qh = qwerty_device(xdev);
 
-	// TODO: Movement is global but should be local based on rotation
-	// clang-format off
-	if (qh->left_pressed) qh->pose.position.x -= qh->movement_speed;
-	if (qh->right_pressed) qh->pose.position.x += qh->movement_speed;
-	if (qh->forward_pressed) qh->pose.position.z -= qh->movement_speed;
-	if (qh->backward_pressed) qh->pose.position.z += qh->movement_speed;
-	if (qh->up_pressed) qh->pose.position.y += qh->movement_speed;
-	if (qh->down_pressed) qh->pose.position.y -= qh->movement_speed;
-	// clang-format on
+	// Position
 
-	// TODO: Rotation is local but should be global to avoid camera tilts (around roll axis)
+	struct xrt_vec3 pos_delta = {
+	    qh->movement_speed * (qh->right_pressed - qh->left_pressed),
+	    0, // Up/down movement will be global
+	    qh->movement_speed * (qh->backward_pressed - qh->forward_pressed),
+	};
+	math_quat_rotate_vec3(&qh->pose.orientation, &pos_delta, &pos_delta);
+	pos_delta.y += qh->movement_speed * (qh->up_pressed - qh->down_pressed);
+	math_vec3_accum(&pos_delta, &qh->pose.position);
+
+	// Rotation
+
 	float x_look_speed = 0.f;
 	float y_look_speed = 0.f;
 
@@ -110,8 +114,8 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
 	math_quat_from_angle_vector(x_look_speed, &x_axis, &x_rotation);
 	math_quat_from_angle_vector(y_look_speed, &y_axis, &y_rotation);
-	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation);
-	math_quat_rotate(&qh->pose.orientation, &y_rotation, &qh->pose.orientation);
+	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation); // local pitch
+	math_quat_rotate(&y_rotation, &qh->pose.orientation, &qh->pose.orientation); // global yaw
 	math_quat_normalize(&qh->pose.orientation);
 
 	out_relation->pose = qh->pose;
@@ -166,8 +170,8 @@ qwerty_hmd_create()
 
 	// Fill qwerty specific properties
 	qh->pose.orientation.w = 1.f;
-	qh->movement_speed = QWERTY_INITIAL_MOVEMENT_SPEED;
-	qh->look_speed = QWERTY_INITIAL_LOOK_SPEED;
+	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
+	qh->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
 
 	// Fill xrt_device properties
 	qh->base.name = XRT_DEVICE_GENERIC_HMD;
@@ -230,8 +234,8 @@ qwerty_controller_create()
 
 	// Fill qwerty specific properties
 	qc->pose.orientation.w = 1.f;
-	qc->movement_speed = QWERTY_INITIAL_MOVEMENT_SPEED;
-	qc->look_speed = QWERTY_INITIAL_LOOK_SPEED;
+	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
+	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
 
 	// Fill xrt_device properties
 	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
