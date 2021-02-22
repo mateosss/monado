@@ -50,8 +50,16 @@ static void
 qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_output_value *value)
 {
 	// XXX: Should probably be using DEBUG macros instead of printf's
-	printf("[QWERTY] Vibration emitted with amplitude=%f duration=%ld frequency=%f\n", value->vibration.amplitude,
-	       value->vibration.duration, value->vibration.frequency);
+
+	float frequency = value->vibration.frequency;
+	float amplitude = value->vibration.amplitude;
+	time_duration_ns duration = value->vibration.duration;
+	if (amplitude || duration || frequency) {
+		printf(
+		    "[QWERTY] Vibration emitted with "
+		    "frequency=%f amplitude=%f duration=%ld\n",
+		    frequency, amplitude, duration);
+	}
 }
 
 static void
