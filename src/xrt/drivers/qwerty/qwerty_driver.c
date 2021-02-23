@@ -1,3 +1,4 @@
+// TODO: Check includes order in all files
 #include "math/m_mathinclude.h"
 #include "math/m_api.h"
 
@@ -11,6 +12,13 @@
 #define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
 #define QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED 0.005f
 #define QWERTY_CONTROLLER_INITIAL_LOOK_SPEED 0.05f
+
+// Indices for fake controller input components
+#define QWERTY_SELECT 0
+#define QWERTY_MENU 1
+#define QWERTY_GRIP 2
+#define QWERTY_AIM 3
+#define QWERTY_VIBRATION 0
 
 struct qwerty_device
 {
@@ -31,6 +39,10 @@ struct qwerty_device
 	bool look_up_pressed;
 	bool look_down_pressed;
 
+	// Controller buttons, unused for hmd
+	bool select_clicked;
+	bool menu_clicked;
+
 	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
 	float yaw_delta;
 	float pitch_delta;
@@ -46,7 +58,13 @@ qwerty_device(struct xrt_device *xdev)
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
 {
-	// TODO: Understand the role of this function
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	xdev->inputs[QWERTY_SELECT].value.boolean = qdev->select_clicked;
+	qdev->select_clicked = false;
+	xdev->inputs[QWERTY_MENU].value.boolean = qdev->menu_clicked;
+	qdev->menu_clicked = false;
+	// XXX Wasn't necessary to set input timestamp as below, why?
+	// xdev->inputs[i].timestamp = os_monotonic_get_ns();
 }
 
 // XXX: Just noticed that the psmv version of these functions use psmv_device as
@@ -62,9 +80,9 @@ qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_
 	time_duration_ns duration = value->vibration.duration;
 	if (amplitude || duration || frequency) {
 		printf(
-		    "[QWERTY] Vibration emitted with "
+		    "[QWERTY] Vibration emitted from %s with "
 		    "frequency=%f amplitude=%f duration=%ld\n",
-		    frequency, amplitude, duration);
+		    xdev->str, frequency, amplitude, duration);
 	}
 }
 
@@ -235,7 +253,7 @@ qwerty_hmd_create()
 }
 
 static struct qwerty_device *
-qwerty_controller_create()
+qwerty_controller_create(bool is_left)
 {
 	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
@@ -246,10 +264,11 @@ qwerty_controller_create()
 
 	// Fill xrt_device properties
 	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
-	qc->base.device_type = XRT_DEVICE_TYPE_ANY_HAND_CONTROLLER;
+	qc->base.device_type = is_left ? XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER : XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
 
-	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty Controller");
-	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty Controller");
+	char *side_name = is_left ? "Left" : "Right";
+	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
+	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
 	// XXX: Is XRT_TRACKING_TYPE_NONE correct? Isn't that "tracking" what this
 	// driver simulates? in any case, see qh->base.*_tracking_supported bools
@@ -257,11 +276,11 @@ qwerty_controller_create()
 	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_NONE;
 	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
 
-	qc->base.inputs[0].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
-	qc->base.inputs[1].name = XRT_INPUT_SIMPLE_MENU_CLICK;
-	qc->base.inputs[2].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-	qc->base.inputs[3].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX Understand aim inputs
-	qc->base.outputs[0].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
+	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
+	qc->base.inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
+	qc->base.inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
+	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX Understand aim inputs
+	qc->base.outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
 
 	qc->base.update_inputs = qwerty_update_inputs;
 	qc->base.get_tracked_pose = qwerty_get_tracked_pose;
@@ -279,8 +298,8 @@ qwerty_found(struct xrt_prober *xp,
              struct xrt_device **out_xdevs)
 {
 	struct qwerty_device *qhmd = qwerty_hmd_create();
-	struct qwerty_device *qctrl_left = qwerty_controller_create();
-	struct qwerty_device *qctrl_right = qwerty_controller_create();
+	struct qwerty_device *qctrl_left = qwerty_controller_create(true);
+	struct qwerty_device *qctrl_right = qwerty_controller_create(false);
 
 	out_xdevs[0] = &qhmd->base;
 	out_xdevs[1] = &qctrl_left->base;
@@ -313,6 +332,9 @@ void qwerty_press_look_up(struct xrt_device *qh) { qwerty_device(qh)->look_up_pr
 void qwerty_release_look_up(struct xrt_device *qh) { qwerty_device(qh)->look_up_pressed = false; }
 void qwerty_press_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = true; }
 void qwerty_release_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = false; }
+
+void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_clicked = true; }
+void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
 // clang-format on
 
 void
