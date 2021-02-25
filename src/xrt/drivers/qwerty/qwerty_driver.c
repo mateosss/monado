@@ -1,6 +1,7 @@
 // TODO: Check includes order in all files
 #include "math/m_mathinclude.h"
 #include "math/m_api.h"
+#include "math/m_space.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -23,7 +24,8 @@
 struct qwerty_device
 {
 	struct xrt_device base;
-	struct xrt_pose pose;
+	struct xrt_pose pose;       // Pose of controllers is relative to hmd pose
+	struct qwerty_device *qhmd; // Reference to hmd
 
 	float movement_speed;
 	bool left_pressed;
@@ -124,7 +126,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	// View rotation caused by keys
 	float y_look_speed = qh->look_speed * (qh->look_left_pressed - qh->look_right_pressed);
-	float x_look_speed = qh->look_speed * (qh->look_up_pressed-qh->look_down_pressed);
+	float x_look_speed = qh->look_speed * (qh->look_up_pressed - qh->look_down_pressed);
 
 	// View rotation caused by mouse
 	y_look_speed += qh->yaw_delta;
@@ -135,11 +137,18 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
 	math_quat_from_angle_vector(x_look_speed, &x_axis, &x_rotation);
 	math_quat_from_angle_vector(y_look_speed, &y_axis, &y_rotation);
-	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation); // local pitch
-	math_quat_rotate(&y_rotation, &qh->pose.orientation, &qh->pose.orientation); // global yaw
+	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation); // local-space pitch
+	math_quat_rotate(&y_rotation, &qh->pose.orientation, &qh->pose.orientation); // base-space yaw
 	math_quat_normalize(&qh->pose.orientation);
 
-	out_relation->pose = qh->pose;
+	if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
+		struct xrt_space_graph space_graph = {0};
+		m_space_graph_add_pose(&space_graph, &qh->pose);       // controller pose
+		m_space_graph_add_pose(&space_graph, &qh->qhmd->pose); // base space is hmd space
+		m_space_graph_resolve(&space_graph, out_relation);
+	} else {
+		out_relation->pose = qh->pose;
+	}
 	out_relation->relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
 	                               XRT_SPACE_RELATION_POSITION_VALID_BIT |
 	                               XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT;
@@ -190,6 +199,7 @@ qwerty_hmd_create()
 	struct qwerty_device *qh = U_DEVICE_ALLOCATE(struct qwerty_device, flags, num_inputs, num_outputs);
 
 	// Fill qwerty specific properties
+	qh->qhmd = qh;
 	qh->pose.orientation.w = 1.f;
 	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
 	qh->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
@@ -223,6 +233,7 @@ qwerty_hmd_create()
 	// .type == XRT_TRACKING_TYPE_NONE
 	// .offset.orientation.w = 1f and
 	// .name == "No tracking" */
+	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_RGB; // XXX: RGB is not semantically correct.
 
 	// qh->base.num_binding_profiles // Set on alloc
 	// qh->base.binding_profiles // Does not matter as num is zero
@@ -249,11 +260,12 @@ qwerty_hmd_create()
 }
 
 static struct qwerty_device *
-qwerty_controller_create(bool is_left)
+qwerty_controller_create(bool is_left, struct qwerty_device *qhmd)
 {
 	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
 	// Fill qwerty specific properties
+	qc->qhmd = qhmd;
 	qc->pose.orientation.w = 1.f;
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
@@ -266,10 +278,9 @@ qwerty_controller_create(bool is_left)
 	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXX: Is XRT_TRACKING_TYPE_NONE correct? Isn't that "tracking" what this
-	// driver simulates? in any case, see qh->base.*_tracking_supported bools
-	// unset in this controller but also on  the qwerty hmd
-	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_NONE;
+	// XXX: Why qh->base.*_tracking_supported bools are
+	// unset in this controller but also on the qwerty hmd
+	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_RGB; // XXX: RGB is not semantically correct.
 	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
 
 	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
@@ -294,13 +305,15 @@ qwerty_found(struct xrt_prober *xp,
              struct xrt_device **out_xdevs)
 {
 	struct qwerty_device *qhmd = qwerty_hmd_create();
-	struct qwerty_device *qctrl_left = qwerty_controller_create(true);
-	struct qwerty_device *qctrl_right = qwerty_controller_create(false);
+	struct qwerty_device *qctrl_left = qwerty_controller_create(true, qhmd);
+	struct qwerty_device *qctrl_right = qwerty_controller_create(false, qhmd);
 
 	out_xdevs[0] = &qhmd->base;
 	out_xdevs[1] = &qctrl_left->base;
 	out_xdevs[2] = &qctrl_right->base;
-	return 3;
+
+	int num_qwerty_devices = 3;
+	return num_qwerty_devices;
 }
 
 // Emulated actions
