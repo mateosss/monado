@@ -74,10 +74,19 @@ static void
 qwerty_update_inputs(struct xrt_device *xdev)
 {
 	struct qwerty_device *qdev = qwerty_device(xdev);
+
 	xdev->inputs[QWERTY_SELECT].value.boolean = qdev->select_clicked;
-	qdev->select_clicked = false;
+	if (qdev->select_clicked) {
+		printf("[QWERTY] [%s] Select click\n", xdev->str);
+		qdev->select_clicked = false;
+	}
+
 	xdev->inputs[QWERTY_MENU].value.boolean = qdev->menu_clicked;
-	qdev->menu_clicked = false;
+	if (qdev->menu_clicked) {
+		printf("[QWERTY] [%s] Menu click\n", xdev->str);
+		qdev->menu_clicked = false;
+	}
+
 	// XXX Wasn't necessary to set input timestamp as below, why?
 	// xdev->inputs[i].timestamp = os_monotonic_get_ns();
 }
@@ -95,8 +104,8 @@ qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_
 	time_duration_ns duration = value->vibration.duration;
 	if (amplitude || duration || frequency) {
 		printf(
-		    "[QWERTY] Vibration emitted from %s with "
-		    "frequency=%f amplitude=%f duration=%ld\n",
+		    "[QWERTY] [%s] Vibration: "
+		    "freq=%.2ff ampl=%.2ff dur=%ld\n",
 		    xdev->str, frequency, amplitude, duration);
 	}
 }
