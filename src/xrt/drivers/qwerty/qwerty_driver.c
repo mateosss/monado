@@ -115,45 +115,45 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 		printf("[QWERTY ERROR] Unknown input name = %d\n", (unsigned)name);
 	}
 
-	struct qwerty_device *qh = qwerty_device(xdev);
+	struct qwerty_device *qd = qwerty_device(xdev);
 
 	// Position
 
 	struct xrt_vec3 pos_delta = {
-	    qh->movement_speed * (qh->right_pressed - qh->left_pressed),
+	    qd->movement_speed * (qd->right_pressed - qd->left_pressed),
 	    0, // Up/down movement will be global
-	    qh->movement_speed * (qh->backward_pressed - qh->forward_pressed),
+	    qd->movement_speed * (qd->backward_pressed - qd->forward_pressed),
 	};
-	math_quat_rotate_vec3(&qh->pose.orientation, &pos_delta, &pos_delta);
-	pos_delta.y += qh->movement_speed * (qh->up_pressed - qh->down_pressed);
-	math_vec3_accum(&pos_delta, &qh->pose.position);
+	math_quat_rotate_vec3(&qd->pose.orientation, &pos_delta, &pos_delta);
+	pos_delta.y += qd->movement_speed * (qd->up_pressed - qd->down_pressed);
+	math_vec3_accum(&pos_delta, &qd->pose.position);
 
 	// Rotation
 
 	// View rotation caused by keys
-	float y_look_speed = qh->look_speed * (qh->look_left_pressed - qh->look_right_pressed);
-	float x_look_speed = qh->look_speed * (qh->look_up_pressed - qh->look_down_pressed);
+	float y_look_speed = qd->look_speed * (qd->look_left_pressed - qd->look_right_pressed);
+	float x_look_speed = qd->look_speed * (qd->look_up_pressed - qd->look_down_pressed);
 
 	// View rotation caused by mouse
-	y_look_speed += qh->yaw_delta;
-	x_look_speed += qh->pitch_delta;
-	qh->yaw_delta = qh->pitch_delta = 0;
+	y_look_speed += qd->yaw_delta;
+	x_look_speed += qd->pitch_delta;
+	qd->yaw_delta = qd->pitch_delta = 0;
 
 	struct xrt_quat x_rotation, y_rotation;
 	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
 	math_quat_from_angle_vector(x_look_speed, &x_axis, &x_rotation);
 	math_quat_from_angle_vector(y_look_speed, &y_axis, &y_rotation);
-	math_quat_rotate(&qh->pose.orientation, &x_rotation, &qh->pose.orientation); // local-space pitch
-	math_quat_rotate(&y_rotation, &qh->pose.orientation, &qh->pose.orientation); // base-space yaw
-	math_quat_normalize(&qh->pose.orientation);
+	math_quat_rotate(&qd->pose.orientation, &x_rotation, &qd->pose.orientation); // local-space pitch
+	math_quat_rotate(&y_rotation, &qd->pose.orientation, &qd->pose.orientation); // base-space yaw
+	math_quat_normalize(&qd->pose.orientation);
 
 	if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
 		struct xrt_space_graph space_graph = {0};
-		m_space_graph_add_pose(&space_graph, &qh->pose);       // controller pose
-		m_space_graph_add_pose(&space_graph, &qh->qhmd->pose); // base space is hmd space
+		m_space_graph_add_pose(&space_graph, &qd->pose);       // controller pose
+		m_space_graph_add_pose(&space_graph, &qd->qhmd->pose); // base space is hmd space
 		m_space_graph_resolve(&space_graph, out_relation);
 	} else {
-		out_relation->pose = qh->pose;
+		out_relation->pose = qd->pose;
 	}
 	out_relation->relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
 	                               XRT_SPACE_RELATION_POSITION_VALID_BIT |
@@ -181,9 +181,8 @@ qwerty_get_view_pose(struct xrt_device *xdev,
 static void
 qwerty_destroy(struct xrt_device *xdev)
 {
-	struct qwerty_device *qh = qwerty_device(xdev);
-
-	u_device_free(&qh->base);
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	u_device_free(&qdev->base);
 }
 
 static struct qwerty_device *
@@ -226,34 +225,15 @@ qwerty_hmd_create()
 		return NULL;
 	}
 
-
-	// qh->base.tracking_origin // Set on alloc with
-	// .type == XRT_TRACKING_TYPE_NONE
-	// .offset.orientation.w = 1f and
-	// .name == "No tracking" */
 	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-
-	// qh->base.num_binding_profiles // Set on alloc
-	// qh->base.binding_profiles // Does not matter as num is zero
-
-	// qh->base.num_inputs // Set on alloc
-	// qh->base.inputs // Set on alloc with inputs[i].active == true
 	qh->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
-
-	// qh->base.num_outputs // Set on alloc
-	// qh->base.outputs // Set on alloc
-
-	// qh->base.orientation_tracking_supported
-	// qh->base.position_tracking_supported
-	// qh->base.hand_tracking_supported
 
 	qh->base.update_inputs = qwerty_update_inputs;
 	qh->base.get_tracked_pose = qwerty_get_tracked_pose;
-	// qh->base.get_hand_tracking // Hopefully unused
-	// qh->base.set_output // Hopefully unused
 	qh->base.get_view_pose = qwerty_get_view_pose;
-	u_distortion_mesh_set_none(&qh->base); // Fills qh->base.compute_distortion
 	qh->base.destroy = qwerty_destroy;
+	u_distortion_mesh_set_none(&qh->base); // Fills qh->base.compute_distortion
+
 	return qh;
 }
 
@@ -277,7 +257,7 @@ qwerty_controller_create(bool is_left, struct qwerty_device *qhmd)
 	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXX: qh->base.*_tracking_supported bools are false. Is this semantically correct?
+	// XXX: qc->base.*_tracking_supported bools are false. Is this semantically correct?
 	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
 	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
 
@@ -316,29 +296,28 @@ qwerty_found(struct xrt_prober *xp,
 
 // Emulated actions
 
-// XXX Using `qh` for "qwerty headset" even though now this work for controllers as well
 // clang-format off
-void qwerty_press_left(struct xrt_device *qh) { qwerty_device(qh)->left_pressed = true; }
-void qwerty_release_left(struct xrt_device *qh) { qwerty_device(qh)->left_pressed = false; }
-void qwerty_press_right(struct xrt_device *qh) { qwerty_device(qh)->right_pressed = true; }
-void qwerty_release_right(struct xrt_device *qh) { qwerty_device(qh)->right_pressed = false; }
-void qwerty_press_forward(struct xrt_device *qh) { qwerty_device(qh)->forward_pressed = true; }
-void qwerty_release_forward(struct xrt_device *qh) { qwerty_device(qh)->forward_pressed = false; }
-void qwerty_press_backward(struct xrt_device *qh) { qwerty_device(qh)->backward_pressed = true; }
-void qwerty_release_backward(struct xrt_device *qh) { qwerty_device(qh)->backward_pressed = false; }
-void qwerty_press_up(struct xrt_device *qh) { qwerty_device(qh)->up_pressed = true; }
-void qwerty_release_up(struct xrt_device *qh) { qwerty_device(qh)->up_pressed = false; }
-void qwerty_press_down(struct xrt_device *qh) { qwerty_device(qh)->down_pressed = true; }
-void qwerty_release_down(struct xrt_device *qh) { qwerty_device(qh)->down_pressed = false; }
+void qwerty_press_left(struct xrt_device *qd) { qwerty_device(qd)->left_pressed = true; }
+void qwerty_release_left(struct xrt_device *qd) { qwerty_device(qd)->left_pressed = false; }
+void qwerty_press_right(struct xrt_device *qd) { qwerty_device(qd)->right_pressed = true; }
+void qwerty_release_right(struct xrt_device *qd) { qwerty_device(qd)->right_pressed = false; }
+void qwerty_press_forward(struct xrt_device *qd) { qwerty_device(qd)->forward_pressed = true; }
+void qwerty_release_forward(struct xrt_device *qd) { qwerty_device(qd)->forward_pressed = false; }
+void qwerty_press_backward(struct xrt_device *qd) { qwerty_device(qd)->backward_pressed = true; }
+void qwerty_release_backward(struct xrt_device *qd) { qwerty_device(qd)->backward_pressed = false; }
+void qwerty_press_up(struct xrt_device *qd) { qwerty_device(qd)->up_pressed = true; }
+void qwerty_release_up(struct xrt_device *qd) { qwerty_device(qd)->up_pressed = false; }
+void qwerty_press_down(struct xrt_device *qd) { qwerty_device(qd)->down_pressed = true; }
+void qwerty_release_down(struct xrt_device *qd) { qwerty_device(qd)->down_pressed = false; }
 
-void qwerty_press_look_left(struct xrt_device *qh) { qwerty_device(qh)->look_left_pressed = true; }
-void qwerty_release_look_left(struct xrt_device *qh) { qwerty_device(qh)->look_left_pressed = false; }
-void qwerty_press_look_right(struct xrt_device *qh) { qwerty_device(qh)->look_right_pressed = true; }
-void qwerty_release_look_right(struct xrt_device *qh) { qwerty_device(qh)->look_right_pressed = false; }
-void qwerty_press_look_up(struct xrt_device *qh) { qwerty_device(qh)->look_up_pressed = true; }
-void qwerty_release_look_up(struct xrt_device *qh) { qwerty_device(qh)->look_up_pressed = false; }
-void qwerty_press_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = true; }
-void qwerty_release_look_down(struct xrt_device *qh) { qwerty_device(qh)->look_down_pressed = false; }
+void qwerty_press_look_left(struct xrt_device *qd) { qwerty_device(qd)->look_left_pressed = true; }
+void qwerty_release_look_left(struct xrt_device *qd) { qwerty_device(qd)->look_left_pressed = false; }
+void qwerty_press_look_right(struct xrt_device *qd) { qwerty_device(qd)->look_right_pressed = true; }
+void qwerty_release_look_right(struct xrt_device *qd) { qwerty_device(qd)->look_right_pressed = false; }
+void qwerty_press_look_up(struct xrt_device *qd) { qwerty_device(qd)->look_up_pressed = true; }
+void qwerty_release_look_up(struct xrt_device *qd) { qwerty_device(qd)->look_up_pressed = false; }
+void qwerty_press_look_down(struct xrt_device *qd) { qwerty_device(qd)->look_down_pressed = true; }
+void qwerty_release_look_down(struct xrt_device *qd) { qwerty_device(qd)->look_down_pressed = false; }
 
 void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_clicked = true; }
 void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
