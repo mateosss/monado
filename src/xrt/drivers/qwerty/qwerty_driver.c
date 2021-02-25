@@ -27,11 +27,18 @@
 #define QWERTY_AIM 3
 #define QWERTY_VIBRATION 0
 
+struct qwerty_devices
+{
+	struct qwerty_device *hmd;
+	struct qwerty_device *lctrl;
+	struct qwerty_device *rctrl;
+};
+
 struct qwerty_device
 {
 	struct xrt_device base;
-	struct xrt_pose pose;       // Pose of controllers is relative to hmd pose
-	struct qwerty_device *qhmd; // Reference to hmd
+	struct xrt_pose pose;        // Pose of controllers is relative to hmd pose
+	struct qwerty_devices qdevs; // References to all qwerty devices. Same in all devices.
 
 	float movement_speed;
 	bool left_pressed;
@@ -150,7 +157,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
 		struct xrt_space_graph space_graph = {0};
 		m_space_graph_add_pose(&space_graph, &qd->pose);       // controller pose
-		m_space_graph_add_pose(&space_graph, &qd->qhmd->pose); // base space is hmd space
+		m_space_graph_add_pose(&space_graph, &qd->qdevs.hmd->pose); // base space is hmd space
 		m_space_graph_resolve(&space_graph, out_relation);
 	} else {
 		out_relation->pose = qd->pose;
@@ -195,7 +202,6 @@ qwerty_hmd_create()
 	struct qwerty_device *qh = U_DEVICE_ALLOCATE(struct qwerty_device, flags, num_inputs, num_outputs);
 
 	// Fill qwerty specific properties
-	qh->qhmd = qh;
 	qh->pose.orientation.w = 1.f;
 	qh->pose.position = QWERTY_HMD_INITIAL_POS;
 	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
@@ -238,12 +244,11 @@ qwerty_hmd_create()
 }
 
 static struct qwerty_device *
-qwerty_controller_create(bool is_left, struct qwerty_device *qhmd)
+qwerty_controller_create(bool is_left)
 {
 	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
 	// Fill qwerty specific properties
-	qc->qhmd = qhmd;
 	qc->pose.orientation.w = 1.f;
 	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS;
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
@@ -283,8 +288,14 @@ qwerty_found(struct xrt_prober *xp,
              struct xrt_device **out_xdevs)
 {
 	struct qwerty_device *qhmd = qwerty_hmd_create();
-	struct qwerty_device *qctrl_left = qwerty_controller_create(true, qhmd);
-	struct qwerty_device *qctrl_right = qwerty_controller_create(false, qhmd);
+	struct qwerty_device *qctrl_left = qwerty_controller_create(true);
+	struct qwerty_device *qctrl_right = qwerty_controller_create(false);
+
+	// All devices should be able to reference other ones, qdevs should only be written here.
+	struct qwerty_devices qdevs = {qhmd, qctrl_left, qctrl_right};
+	qhmd->qdevs = qdevs;
+	qctrl_left->qdevs = qdevs;
+	qctrl_right->qdevs = qdevs;
 
 	out_xdevs[0] = &qhmd->base;
 	out_xdevs[1] = &qctrl_left->base;
