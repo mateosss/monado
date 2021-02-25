@@ -196,6 +196,8 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	// because some window managers capture alt+click actions before SDL
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qdev != qhmd ? qdev : qright);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qdev != qhmd ? qdev : qright);
+
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) qwerty_reset_controller_poses(qdev);
 	// clang-format on
 
 	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT)
