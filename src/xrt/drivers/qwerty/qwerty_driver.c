@@ -122,15 +122,11 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	// Rotation
 
-	float x_look_speed = 0.f;
-	float y_look_speed = 0.f;
+	// View rotation caused by keys
+	float y_look_speed = qh->look_speed * (qh->look_left_pressed - qh->look_right_pressed);
+	float x_look_speed = qh->look_speed * (qh->look_up_pressed-qh->look_down_pressed);
 
-	// clang-format off
-	if (qh->look_left_pressed) y_look_speed += qh->look_speed;
-	if (qh->look_right_pressed) y_look_speed -= qh->look_speed;
-	if (qh->look_up_pressed) x_look_speed += qh->look_speed;
-	if (qh->look_down_pressed) x_look_speed -= qh->look_speed;
-	// clang-format on
+	// View rotation caused by mouse
 	y_look_speed += qh->yaw_delta;
 	x_look_speed += qh->pitch_delta;
 	qh->yaw_delta = qh->pitch_delta = 0;
