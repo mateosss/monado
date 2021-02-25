@@ -1083,6 +1083,8 @@ struct oxr_system
 
 	XrSystemId systemId;
 
+	// XXX: See how/when to use the ! prefix in comments. Is it only for struct members?
+
 	//! Have the client application called the gfx api requirements func?
 	bool gotten_requirements;
 
