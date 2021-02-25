@@ -183,7 +183,7 @@ struct ipc_shared_memory
 	 *
 	 * Only @ref num_itracks elements are populated/valid.
 	 */
-	struct ipc_shared_tracking_origin itracks[IPC_SHARED_MAX_DEVICES];
+	struct ipc_shared_tracking_origin itracks[IPC_SHARED_MAX_DEVICES]; // XXX: Shared tracking here, may be useful
 
 	/*!
 	 * Number of elements in @ref isdevs that are populated/valid.
