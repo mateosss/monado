@@ -17,7 +17,7 @@
 // clang-format off
 // Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
 #define QWERTY_HMD_INITIAL_POS (struct xrt_vec3){0, 1.6f, 0}
-#define QWERTY_CONTROLLER_INITIAL_POS (struct xrt_vec3){is_left ? -0.2f : 0.2f, -0.3f, -0.5f}
+#define QWERTY_CONTROLLER_INITIAL_POS(is_left) (struct xrt_vec3){is_left ? -0.2f : 0.2f, -0.3f, -0.5f}
 // clang-format on
 
 // Indices for fake controller input components
@@ -156,7 +156,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
 		struct xrt_space_graph space_graph = {0};
-		m_space_graph_add_pose(&space_graph, &qd->pose);       // controller pose
+		m_space_graph_add_pose(&space_graph, &qd->pose);            // controller pose
 		m_space_graph_add_pose(&space_graph, &qd->qdevs.hmd->pose); // base space is hmd space
 		m_space_graph_resolve(&space_graph, out_relation);
 	} else {
@@ -250,7 +250,7 @@ qwerty_controller_create(bool is_left)
 
 	// Fill qwerty specific properties
 	qc->pose.orientation.w = 1.f;
-	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS;
+	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
 
@@ -333,6 +333,19 @@ void qwerty_release_look_down(struct xrt_device *qd) { qwerty_device(qd)->look_d
 void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_clicked = true; }
 void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
 // clang-format on
+
+void
+qwerty_reset_controller_poses(struct xrt_device *xdev)
+{
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	struct xrt_quat quat_identity = {0, 0, 0, 1};
+
+	struct xrt_pose lpose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(true)};
+	qdev->qdevs.lctrl->pose = lpose;
+
+	struct xrt_pose rpose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(false)};
+	qdev->qdevs.rctrl->pose = rpose;
+}
 
 void
 qwerty_release_all(struct xrt_device *xdev)
