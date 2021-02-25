@@ -191,6 +191,7 @@ oxr_instance_create(struct oxr_logger *log, const XrInstanceCreateInfo *createIn
 	}
 
 	/* ---- HACK ---- */
+	// XXX: When running an OpenXR app with OXR_DEBUG_GUI=1 it crashes
 	oxr_sdl2_hack_create(&inst->hack);
 	/* ---- HACK ---- */
 
@@ -291,7 +292,10 @@ oxr_instance_create(struct oxr_logger *log, const XrInstanceCreateInfo *createIn
 	struct xrt_vec3 global_tracking_origin_offset = {debug_get_float_option_tracking_origin_offset_x(),
 	                                                 debug_get_float_option_tracking_origin_offset_y(),
 	                                                 debug_get_float_option_tracking_origin_offset_z()};
-
+	// XXX: This next line is only being executed by the app but not by monado-service,
+	// thus tracking_point.offset differ between client and server. Notice that
+	// XRT_TRACKING_TYPE_NONE is the default tracking type. So many drivers could be
+	// affected
 	u_device_setup_tracking_origins(dev, GET_XDEV_BY_ROLE(sys, left), GET_XDEV_BY_ROLE(sys, right),
 	                                &global_tracking_origin_offset);
 
