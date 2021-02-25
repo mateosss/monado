@@ -14,6 +14,12 @@
 #define QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED 0.005f
 #define QWERTY_CONTROLLER_INITIAL_LOOK_SPEED 0.05f
 
+// clang-format off
+// Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
+#define QWERTY_HMD_INITIAL_POS (struct xrt_vec3){0, 20.6f, 0}
+#define QWERTY_CONTROLLER_INITIAL_POS (struct xrt_vec3){is_left ? -0.2f : 0.2f, -0.3f, -0.5f}
+// clang-format on
+
 // Indices for fake controller input components
 #define QWERTY_SELECT 0
 #define QWERTY_MENU 1
@@ -201,6 +207,7 @@ qwerty_hmd_create()
 	// Fill qwerty specific properties
 	qh->qhmd = qh;
 	qh->pose.orientation.w = 1.f;
+	qh->pose.position = QWERTY_HMD_INITIAL_POS;
 	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
 	qh->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
 
@@ -233,7 +240,7 @@ qwerty_hmd_create()
 	// .type == XRT_TRACKING_TYPE_NONE
 	// .offset.orientation.w = 1f and
 	// .name == "No tracking" */
-	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_RGB; // XXX: RGB is not semantically correct.
+	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
 
 	// qh->base.num_binding_profiles // Set on alloc
 	// qh->base.binding_profiles // Does not matter as num is zero
@@ -267,6 +274,7 @@ qwerty_controller_create(bool is_left, struct qwerty_device *qhmd)
 	// Fill qwerty specific properties
 	qc->qhmd = qhmd;
 	qc->pose.orientation.w = 1.f;
+	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS;
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
 
@@ -278,9 +286,8 @@ qwerty_controller_create(bool is_left, struct qwerty_device *qhmd)
 	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXX: Why qh->base.*_tracking_supported bools are
-	// unset in this controller but also on the qwerty hmd
-	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_RGB; // XXX: RGB is not semantically correct.
+	// XXX: qh->base.*_tracking_supported bools are false. Is this semantically correct?
+	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
 	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
 
 	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
