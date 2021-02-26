@@ -358,16 +358,11 @@ qwerty_reset_controller_poses(struct xrt_device *xdev)
 }
 
 void
-qwerty_increase_movement_speed(struct xrt_device *xdev)
+qwerty_change_movement_speed(struct xrt_device *xdev, float steps)
 {
-	qwerty_device(xdev)->movement_speed *= MOVEMENT_SPEED_STEP;
+	qwerty_device(xdev)->movement_speed *= powf(MOVEMENT_SPEED_STEP, steps);
 }
 
-void
-qwerty_decrease_movement_speed(struct xrt_device *xdev)
-{
-	qwerty_device(xdev)->movement_speed /= MOVEMENT_SPEED_STEP;
-}
 
 void
 qwerty_release_all(struct xrt_device *xdev)

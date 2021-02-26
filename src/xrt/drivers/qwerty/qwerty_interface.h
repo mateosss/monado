@@ -41,8 +41,8 @@ void qwerty_select_click(struct xrt_device *xdev);
 void qwerty_menu_click(struct xrt_device *xdev);
 
 void qwerty_reset_controller_poses(struct xrt_device *xdev);
-void qwerty_increase_movement_speed(struct xrt_device *xdev);
-void qwerty_decrease_movement_speed(struct xrt_device *xdev);
+// Change movement speed in steps which are usually integers, though any float is allowed.
+void qwerty_change_movement_speed(struct xrt_device *xdev, float steps);
 
 void qwerty_release_all(struct xrt_device *xdev);
 
