@@ -198,10 +198,7 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qdev != qhmd ? qdev : qright);
 
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) qwerty_reset_controller_poses(qdev);
-	if (event.type == SDL_MOUSEWHEEL) {
-		if (event.wheel.y == 1) qwerty_increase_movement_speed(qdev);
-		else if (event.wheel.y == -1) qwerty_decrease_movement_speed(qdev);
-	}
+	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(qdev, event.wheel.y);
 	// clang-format on
 
 	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT)
