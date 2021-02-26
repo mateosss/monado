@@ -13,6 +13,7 @@
 #define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
 #define QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED 0.005f
 #define QWERTY_CONTROLLER_INITIAL_LOOK_SPEED 0.05f
+#define MOVEMENT_SPEED_STEP 1.25f // Multiplier for how fast will mov speed increase/decrease
 
 // clang-format off
 // Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
@@ -354,6 +355,18 @@ qwerty_reset_controller_poses(struct xrt_device *xdev)
 
 	struct xrt_pose rpose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(false)};
 	qdev->qdevs.rctrl->pose = rpose;
+}
+
+void
+qwerty_increase_movement_speed(struct xrt_device *xdev)
+{
+	qwerty_device(xdev)->movement_speed *= MOVEMENT_SPEED_STEP;
+}
+
+void
+qwerty_decrease_movement_speed(struct xrt_device *xdev)
+{
+	qwerty_device(xdev)->movement_speed /= MOVEMENT_SPEED_STEP;
 }
 
 void
