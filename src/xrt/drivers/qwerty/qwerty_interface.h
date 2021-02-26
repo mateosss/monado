@@ -41,6 +41,9 @@ void qwerty_select_click(struct xrt_device *xdev);
 void qwerty_menu_click(struct xrt_device *xdev);
 
 void qwerty_reset_controller_poses(struct xrt_device *xdev);
+void qwerty_increase_movement_speed(struct xrt_device *xdev);
+void qwerty_decrease_movement_speed(struct xrt_device *xdev);
+
 void qwerty_release_all(struct xrt_device *xdev);
 
 // XXX: Put proper doxygen documentation. See in which other functions I should put it.
