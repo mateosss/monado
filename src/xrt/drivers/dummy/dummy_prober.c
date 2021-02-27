@@ -42,18 +42,23 @@ dummy_prober_destroy(struct xrt_auto_prober *p)
 }
 
 //! @public @memberof dummy_prober
-static struct xrt_device *
-dummy_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+dummy_prober_autoprobe(struct xrt_auto_prober *xap,
+                       cJSON *attached_data,
+                       bool no_hmds,
+                       struct xrt_prober *xp,
+                       struct xrt_device **out_xdevs)
 {
 	struct dummy_prober *dp = dummy_prober(xap);
 	(void)dp;
 
 	// Do not create a dummy HMD if we are not looking for HMDs.
 	if (no_hmds) {
-		return NULL;
+		return 0;
 	}
 
-	return dummy_hmd_create();
+	out_xdevs[0] = dummy_hmd_create();
+	return 1;
 }
 
 struct xrt_auto_prober *

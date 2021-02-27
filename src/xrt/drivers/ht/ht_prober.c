@@ -40,13 +40,17 @@ ht_prober_destroy(struct xrt_auto_prober *p)
 }
 
 //! @public @memberof ht_prober
-static struct xrt_device *
-ht_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+ht_prober_autoprobe(struct xrt_auto_prober *xap,
+                    cJSON *attached_data,
+                    bool no_hmds,
+                    struct xrt_prober *xp,
+                    struct xrt_device **out_xdevs)
 {
 	struct xrt_device *xdev = ht_device_create(xap, attached_data, xp);
 
 	if (xdev == NULL) {
-		return NULL;
+		return 0;
 	}
 
 	xdev->orientation_tracking_supported = true;
@@ -54,7 +58,8 @@ ht_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_h
 	xdev->hand_tracking_supported = true;
 	xdev->device_type = XRT_DEVICE_TYPE_HAND_TRACKER;
 
-	return xdev;
+	out_xdevs[0] = xdev;
+	return 1;
 }
 
 struct xrt_auto_prober *

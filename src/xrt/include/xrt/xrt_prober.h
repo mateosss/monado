@@ -33,8 +33,10 @@ struct xrt_tracking_factory;
 struct os_hid_device;
 
 /*!
- * The maximum number of devices that a single "found" function called by the
- * prober can create per-call.
+ * The maximum number of devices that a single
+ * @ref xrt_prober_entry::found or
+ * @ref xrt_auto_prober::lelo_dallas_autoprobe
+ * function called by the prober can create per-call.
  *
  * @ingroup xrt_iface
  */
@@ -432,13 +434,19 @@ struct xrt_auto_prober
 	 * devices.
 	 * @param[in] xp Prober: provided for access to the tracking factory,
 	 * among other reasons.
+	 * @param[out] out_xdevs Array of @ref XRT_MAX_DEVICES_PER_PROBE @c NULL
+	 * @ref xrt_device pointers. First elements will be populated with new
+	 * devices.
 	 *
-	 * @return New device implementing the xrt_device interface, or NULL.
+	 * @return The amount of devices written into @p out_xdevs, 0 if none.
+	 *
+	 * @note Leeloo Dallas is a reference to The Fifth Element.
 	 */
-	struct xrt_device *(*lelo_dallas_autoprobe)(struct xrt_auto_prober *xap,
-	                                            cJSON *attached_data,
-	                                            bool no_hmds,
-	                                            struct xrt_prober *xp);
+	int (*lelo_dallas_autoprobe)(struct xrt_auto_prober *xap,
+	                             cJSON *attached_data,
+	                             bool no_hmds,
+	                             struct xrt_prober *xp,
+	                             struct xrt_device **out_xdevs);
 	/*!
 	 * Destroy this auto-prober.
 	 *

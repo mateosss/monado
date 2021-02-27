@@ -33,24 +33,29 @@ illixr_prober_destroy(struct xrt_auto_prober *p)
 	free(dp);
 }
 
-static struct xrt_device *
-illixr_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+illixr_prober_autoprobe(struct xrt_auto_prober *xap,
+                        cJSON *attached_data,
+                        bool no_hmds,
+                        struct xrt_prober *xp,
+                        struct xrt_device **out_xdevs)
 {
 	struct illixr_prober *dp = illixr_prober(xap);
 	(void)dp;
 
 	if (no_hmds) {
-		return NULL;
+		return 0;
 	}
 
 	const char *illixr_path, *illixr_comp;
 	illixr_path = getenv("ILLIXR_PATH");
 	illixr_comp = getenv("ILLIXR_COMP");
 	if (!illixr_path || !illixr_comp) {
-		return NULL;
+		return 0;
 	}
 
-	return illixr_hmd_create(illixr_path, illixr_comp);
+	out_xdevs[0] = illixr_hmd_create(illixr_path, illixr_comp);
+	return 1;
 }
 
 struct xrt_auto_prober *

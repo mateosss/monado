@@ -66,12 +66,16 @@ daydream_prober_destroy(struct xrt_auto_prober *p)
 }
 
 //! @public @memberof daydream_prober
-static struct xrt_device *
-daydream_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+daydream_prober_autoprobe(struct xrt_auto_prober *xap,
+                          cJSON *attached_data,
+                          bool no_hmds,
+                          struct xrt_prober *xp,
+                          struct xrt_device **out_xdevs)
 {
 	struct daydream_prober *pdaydream = daydream_prober(xap);
 	if (!pdaydream->enabled) {
-		return NULL;
+		return 0;
 	}
 
 	const char *dev_uuid = "0000fe55-0000-1000-8000-00805f9b34fb";
@@ -80,12 +84,13 @@ daydream_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, boo
 	struct os_ble_device *ble = NULL;
 	os_ble_notify_open(dev_uuid, char_uuid, &ble);
 	if (ble == NULL) {
-		return NULL;
+		return 0;
 	}
 
 	struct daydream_device *dd = daydream_device_create(ble);
 
-	return &dd->base;
+	out_xdevs[0] = &dd->base;
+	return 1;
 }
 
 

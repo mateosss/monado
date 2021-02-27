@@ -53,14 +53,18 @@ oh_prober_destroy(struct xrt_auto_prober *p)
 }
 
 //! @public @memberof oh_prober
-static struct xrt_device *
-oh_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+oh_prober_autoprobe(struct xrt_auto_prober *xap,
+                    cJSON *attached_data,
+                    bool no_hmds,
+                    struct xrt_prober *xp,
+                    struct xrt_device **out_xdevs)
 {
 	struct oh_prober *ohp = oh_prober(xap);
 
 	// Do not use OpenHMD if we are not looking for HMDs.
 	if (no_hmds) {
-		return NULL;
+		return 0;
 	}
 
 	int device_idx = -1;
@@ -103,13 +107,13 @@ oh_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_h
 	}
 
 	if (device_idx < 0) {
-		return NULL;
+		return 0;
 	}
 
 	const char *prod = ohmd_list_gets(ohp->ctx, device_idx, OHMD_PRODUCT);
 	ohmd_device *dev = ohmd_list_open_device(ohp->ctx, device_idx);
 	if (dev == NULL) {
-		return NULL;
+		return 0;
 	}
 
 	struct xrt_device *xdev = oh_device_create(ohp->ctx, dev, prod);
@@ -118,7 +122,8 @@ oh_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_h
 	xdev->position_tracking_supported = position_tracking_supported;
 	xdev->device_type = XRT_DEVICE_TYPE_HMD;
 
-	return xdev;
+	out_xdevs[0] = xdev;
+	return 1;
 }
 
 struct xrt_auto_prober *

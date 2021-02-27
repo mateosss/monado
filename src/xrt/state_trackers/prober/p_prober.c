@@ -612,13 +612,25 @@ add_from_auto_probers(struct prober *p, struct xrt_device **xdevs, size_t num_xd
 		 */
 		bool no_hmds = *have_hmd;
 
-		struct xrt_device *xdev =
-		    p->auto_probers[i]->lelo_dallas_autoprobe(p->auto_probers[i], NULL, no_hmds, &p->base);
-		if (xdev == NULL) {
+		struct xrt_device *new_xdevs[XRT_MAX_DEVICES_PER_PROBE] = {NULL};
+		int num_found =
+		    p->auto_probers[i]->lelo_dallas_autoprobe(p->auto_probers[i], NULL, no_hmds, &p->base, new_xdevs);
+
+		if (num_found <= 0) {
 			continue;
 		}
 
-		handle_found_device(p, xdevs, num_xdevs, have_hmd, xdev);
+		for (int created_idx = 0; created_idx < num_found; ++created_idx) {
+			if (new_xdevs[created_idx] == NULL) {
+				P_DEBUG(p,
+				        "Leaving device creation loop "
+				        "early: autoprobe function reported %i "
+				        "created, but only %i non-null",
+				        num_found, created_idx);
+				continue;
+			}
+			handle_found_device(p, xdevs, num_xdevs, have_hmd, new_xdevs[created_idx]);
+		}
 	}
 }
 

@@ -48,20 +48,25 @@ ns_prober_destroy(struct xrt_auto_prober *p)
 }
 
 //! @public @memberof ns_prober
-static struct xrt_device *
-ns_prober_autoprobe(struct xrt_auto_prober *xap, cJSON *attached_data, bool no_hmds, struct xrt_prober *xp)
+static int
+ns_prober_autoprobe(struct xrt_auto_prober *xap,
+                    cJSON *attached_data,
+                    bool no_hmds,
+                    struct xrt_prober *xp,
+                    struct xrt_device **out_xdevs)
 {
 	struct ns_prober *nsp = ns_prober(xap);
 
 	if (no_hmds) {
-		return NULL;
+		return 0;
 	}
 
 	if (nsp->config_path == NULL) {
-		return NULL;
+		return 0;
 	}
 
-	return ns_hmd_create(nsp->config_path);
+	out_xdevs[0] = ns_hmd_create(nsp->config_path);
+	return 1;
 }
 
 struct xrt_auto_prober *
