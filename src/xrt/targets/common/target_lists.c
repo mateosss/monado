@@ -115,10 +115,6 @@ struct xrt_prober_entry target_entry_list[] = {
     {VALVE_VID, VIVE_WATCHMAN_DONGLE_GEN2, vive_controller_found, "Valve Watchman Wireless Device"},
 #endif
 
-#ifdef XRT_BUILD_DRIVER_QWERTY
-    {QWERTY_VID, QWERTY_PID, qwerty_found, "QWERTY Keyboard"},
-#endif
-
     {0x0000, 0x0000, NULL, NULL}, // Terminate
 };
 
@@ -162,6 +158,10 @@ xrt_auto_prober_creator target_auto_list[] = {
 
 #ifdef XRT_BUILD_DRIVER_ILLIXR
     illixr_create_auto_prober,
+#endif
+
+#ifdef XRT_BUILD_DRIVER_QWERTY
+    qwerty_create_auto_prober,
 #endif
 
 #ifdef XRT_BUILD_DRIVER_DUMMY

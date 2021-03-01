@@ -1,13 +1,18 @@
 // TODO: Check includes order in all files
-#include "math/m_mathinclude.h"
-#include "math/m_api.h"
-#include "math/m_space.h"
+// XXX: Should I be more explicit with my includes?
 
-#include <stddef.h>
-#include <stdio.h>
-#include "xrt/xrt_prober.h"
+#include "qwerty_device.h"
+
 #include "util/u_device.h"
 #include "util/u_distortion_mesh.h"
+
+#include "math/m_api.h"
+#include "math/m_space.h"
+#include "math/m_mathinclude.h"
+
+#include "xrt/xrt_device.h"
+
+#include <stdio.h>
 
 #define QWERTY_HMD_INITIAL_MOVEMENT_SPEED 0.002f // in meters per frame
 #define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
@@ -27,42 +32,6 @@
 #define QWERTY_GRIP 2
 #define QWERTY_AIM 3
 #define QWERTY_VIBRATION 0
-
-struct qwerty_devices
-{
-	struct qwerty_device *hmd;
-	struct qwerty_device *lctrl;
-	struct qwerty_device *rctrl;
-};
-
-struct qwerty_device
-{
-	struct xrt_device base;
-	struct xrt_pose pose;        // Pose of controllers is relative to hmd pose
-	struct qwerty_devices qdevs; // References to all qwerty devices. Same in all devices.
-
-	float movement_speed;
-	bool left_pressed;
-	bool right_pressed;
-	bool forward_pressed;
-	bool backward_pressed;
-	bool up_pressed;
-	bool down_pressed;
-
-	float look_speed;
-	bool look_left_pressed;
-	bool look_right_pressed;
-	bool look_up_pressed;
-	bool look_down_pressed;
-
-	// Controller buttons, unused for hmd
-	bool select_clicked;
-	bool menu_clicked;
-
-	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
-	float yaw_delta;
-	float pitch_delta;
-};
 
 static inline struct qwerty_device *
 qwerty_device(struct xrt_device *xdev)
@@ -202,7 +171,7 @@ qwerty_destroy(struct xrt_device *xdev)
 	u_device_free(&qdev->base);
 }
 
-static struct qwerty_device *
+struct qwerty_device *
 qwerty_hmd_create()
 {
 	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
@@ -253,7 +222,7 @@ qwerty_hmd_create()
 	return qh;
 }
 
-static struct qwerty_device *
+struct qwerty_device *
 qwerty_controller_create(bool is_left)
 {
 	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
@@ -287,32 +256,6 @@ qwerty_controller_create(bool is_left)
 	qc->base.set_output = qwerty_set_output;
 	qc->base.destroy = qwerty_destroy;
 	return qc;
-}
-
-int
-qwerty_found(struct xrt_prober *xp,
-             struct xrt_prober_device **devices,
-             size_t num_devices,
-             size_t index,
-             cJSON *attached_data,
-             struct xrt_device **out_xdevs)
-{
-	struct qwerty_device *qhmd = qwerty_hmd_create();
-	struct qwerty_device *qctrl_left = qwerty_controller_create(true);
-	struct qwerty_device *qctrl_right = qwerty_controller_create(false);
-
-	// All devices should be able to reference other ones, qdevs should only be written here.
-	struct qwerty_devices qdevs = {qhmd, qctrl_left, qctrl_right};
-	qhmd->qdevs = qdevs;
-	qctrl_left->qdevs = qdevs;
-	qctrl_right->qdevs = qdevs;
-
-	out_xdevs[0] = &qhmd->base;
-	out_xdevs[1] = &qctrl_left->base;
-	out_xdevs[2] = &qctrl_right->base;
-
-	int num_qwerty_devices = 3;
-	return num_qwerty_devices;
 }
 
 // Emulated actions
