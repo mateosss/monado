@@ -94,6 +94,10 @@ endif()
 
 target_link_libraries(target_lists PRIVATE drv_multi)
 
+if(XRT_BUILD_DRIVER_QWERTY)
+	target_link_libraries(target_lists PRIVATE drv_qwerty)
+endif()
+
 ####
 # Instance
 #
