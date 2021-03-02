@@ -175,7 +175,7 @@ cmake_dependent_option(XRT_HAVE_GST "Enable gstreamer" ON "GST_FOUND" OFF)
 
 
 cmake_dependent_option(XRT_BUILD_DRIVER_PSVR "Enable PSVR HMD driver" ON "HIDAPI_FOUND" OFF)
-cmake_dependent_option(XRT_BUILD_DRIVER_RS "Enable RealSense device driver" ON "realsense2_FOUND" OFF)
+cmake_dependent_option(XRT_BUILD_DRIVER_RS "Enable RealSense device driver" ON "realsense2_FOUND" OFF) # XXX: Where does realsense2_FOUND get set?
 cmake_dependent_option(XRT_BUILD_DRIVER_VIVE "Enable driver for HTC Vive, Vive Pro, Valve Index, and their controllers" ON "ZLIB_FOUND AND XRT_HAVE_LINUX" OFF)
 cmake_dependent_option(XRT_BUILD_DRIVER_OHMD "Enable OpenHMD driver" ON "OPENHMD_FOUND" OFF)
 cmake_dependent_option(XRT_BUILD_DRIVER_HANDTRACKING "Enable Camera Hand Tracking driver" ON "XRT_HAVE_V4L2" OFF)
@@ -184,6 +184,7 @@ cmake_dependent_option(XRT_BUILD_DRIVER_ARDUINO "Enable Arduino input device wit
 cmake_dependent_option(XRT_BUILD_DRIVER_ILLIXR "Enable ILLIXR driver" ON "ILLIXR_PATH" OFF)
 
 option(XRT_BUILD_DRIVER_DUMMY "Enable dummy driver" ON)
+option(XRT_BUILD_DRIVER_QWERTY "Enable Qwerty driver" ON)
 cmake_dependent_option(XRT_BUILD_DRIVER_REMOTE "Enable remote debugging driver" ON "XRT_HAVE_LINUX OR ANDROID" OFF)
 
 # These all use the Monado internal hid wrapper.
@@ -219,6 +220,7 @@ list(APPEND AVAILABLE_DRIVERS
 	"V4L2"
 	"VF"
 	"VIVE"
+	"QWERTY" # XXX: See order of drivers in every meson/cmake file, is just alphabetic?
 	)
 
 
@@ -340,6 +342,7 @@ message(STATUS "#    DRIVER_ANDROID:      ${XRT_BUILD_DRIVER_ANDROID}")
 message(STATUS "#    DRIVER_ARDUINO:      ${XRT_BUILD_DRIVER_ARDUINO}")
 message(STATUS "#    DRIVER_DAYDREAM:     ${XRT_BUILD_DRIVER_DAYDREAM}")
 message(STATUS "#    DRIVER_DUMMY:        ${XRT_BUILD_DRIVER_DUMMY}")
+message(STATUS "#    DRIVER_QWERTY:       ${XRT_BUILD_DRIVER_QWERTY}")
 message(STATUS "#    DRIVER_HANDTRACKING: ${XRT_BUILD_DRIVER_HANDTRACKING}")
 message(STATUS "#    DRIVER_HDK:          ${XRT_BUILD_DRIVER_HDK}")
 message(STATUS "#    DRIVER_HYDRA:        ${XRT_BUILD_DRIVER_HYDRA}")

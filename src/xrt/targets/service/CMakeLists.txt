@@ -91,3 +91,5 @@ if(XRT_HAVE_SDL2)
 		${SDL2_INCLUDE_DIRS}
 		)
 endif()
+
+target_include_directories(monado-service PRIVATE ../../drivers/qwerty)
