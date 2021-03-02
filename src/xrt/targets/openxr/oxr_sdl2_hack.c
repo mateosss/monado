@@ -199,6 +199,8 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
 
+	// TODO: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
+	// XXX: Look for other inconsistencies in the shortcuts usage and improve it
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f) qwerty_toggle_follow_hmd(qctrl);
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0) qwerty_toggle_follow_hmd(qctrl);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE) qwerty_toggle_follow_hmd(qctrl);
