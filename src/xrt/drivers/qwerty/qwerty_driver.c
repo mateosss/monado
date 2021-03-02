@@ -311,28 +311,26 @@ qwerty_follow_hmd(struct xrt_device *xdev, bool follow)
 	qctrl->follow_hmd = follow;
 }
 
-void qwerty_toggle_follow_hmd(struct xrt_device *xdev) {
+void
+qwerty_toggle_follow_hmd(struct xrt_device *xdev)
+{
 	struct qwerty_device *qdev = qwerty_device(xdev);
 	qwerty_follow_hmd(xdev, !qdev->follow_hmd);
 }
 
 void
-qwerty_reset_controller_poses(struct xrt_device *xdev)
+qwerty_reset_controller_pose(struct xrt_device *xdev)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
+	struct qwerty_device *qctrl = qwerty_device(xdev);
+	if (qctrl == qctrl->qdevs.hmd)
+		return;
+
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
+	bool is_left = qctrl == qctrl->qdevs.lctrl;
 
-	struct qwerty_device *lctrl = qdev->qdevs.lctrl;
-	struct qwerty_device *rctrl = qdev->qdevs.rctrl;
-
-	qwerty_follow_hmd(&lctrl->base, true);
-	qwerty_follow_hmd(&rctrl->base, true);
-
-	struct xrt_pose lpose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(true)};
-	struct xrt_pose rpose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(false)};
-
-	lctrl->pose = lpose;
-	rctrl->pose = rpose;
+	qwerty_follow_hmd(xdev, true);
+	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
+	qctrl->pose = pose;
 }
 
 void
