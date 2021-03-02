@@ -203,7 +203,14 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0) qwerty_toggle_follow_hmd(qctrl);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE) qwerty_toggle_follow_hmd(qctrl);
 
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) qwerty_reset_controller_poses(qdev);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+		if (ctrl_pressed) qwerty_reset_controller_pose(qleft);
+		else if (alt_pressed) qwerty_reset_controller_pose(qright);
+		else {
+			qwerty_reset_controller_pose(qleft);
+			qwerty_reset_controller_pose(qright);
+		}
+	}
 	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(qdev, event.wheel.y);
 
 	float sprint_steps = 5;
