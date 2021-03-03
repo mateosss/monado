@@ -14,15 +14,11 @@
 
 #include <stdio.h>
 
-#define QWERTY_HMD_INITIAL_MOVEMENT_SPEED 0.002f // in meters per frame
-#define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
 #define QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED 0.005f
 #define QWERTY_CONTROLLER_INITIAL_LOOK_SPEED 0.05f
 #define MOVEMENT_SPEED_STEP 1.25f // Multiplier for how fast will mov speed increase/decrease
 
 // clang-format off
-// Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
-#define QWERTY_HMD_INITIAL_POS (struct xrt_vec3){0, 1.6f, 0}
 #define QWERTY_CONTROLLER_INITIAL_POS(is_left) (struct xrt_vec3){is_left ? -0.2f : 0.2f, -0.3f, -0.5f}
 // clang-format on
 
@@ -138,35 +134,11 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	math_quat_rotate(&y_rotation, &qd->pose.orientation, &qd->pose.orientation); // base-space yaw
 	math_quat_normalize(&qd->pose.orientation);
 
-	if (name == XRT_INPUT_SIMPLE_GRIP_POSE && qd->follow_hmd) {
-		struct xrt_space_graph space_graph = {0};
-		m_space_graph_add_pose(&space_graph, &qd->pose);            // controller pose
-		m_space_graph_add_pose(&space_graph, &qd->qdevs.hmd->pose); // base space is hmd space
-		m_space_graph_resolve(&space_graph, out_relation);
-	} else {
-		out_relation->pose = qd->pose;
-	}
+
+	out_relation->pose = qd->pose;
 	out_relation->relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
 	                               XRT_SPACE_RELATION_POSITION_VALID_BIT |
 	                               XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT;
-}
-
-static void
-qwerty_get_view_pose(struct xrt_device *xdev,
-                     struct xrt_vec3 *eye_relation,
-                     uint32_t view_index,
-                     struct xrt_pose *out_pose)
-{
-	// XXX: This behaviour is different from the majority of driver's
-	// get_view_pose. See if that behaviour could be better than this
-	// i.e. the "avoid -0.f" and "only flip if negative" if statements.
-	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
-	bool is_left = view_index == 0;
-	float adjust = is_left ? -0.5f : 0.5f;
-	struct xrt_vec3 eye_offset = *eye_relation;
-	math_vec3_scalar_mul(adjust, &eye_offset);
-	math_vec3_accum(&eye_offset, &pose.position);
-	*out_pose = pose;
 }
 
 static void
@@ -174,58 +146,6 @@ qwerty_destroy(struct xrt_device *xdev)
 {
 	struct qwerty_device *qdev = qwerty_device(xdev);
 	u_device_free(&qdev->base);
-}
-
-struct qwerty_device *
-qwerty_hmd_create()
-{
-	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
-	// the properties set are commented below
-	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
-	size_t num_inputs = 1, num_outputs = 0;
-	struct qwerty_device *qh = U_DEVICE_ALLOCATE(struct qwerty_device, flags, num_inputs, num_outputs);
-
-	// Fill qwerty specific properties
-	qh->pose.orientation.w = 1.f;
-	qh->pose.position = QWERTY_HMD_INITIAL_POS;
-	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
-	qh->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
-	qh->follow_hmd = false;
-
-	// Fill xrt_device properties
-	qh->base.name = XRT_DEVICE_GENERIC_HMD;
-	qh->base.device_type = XRT_DEVICE_TYPE_HMD;
-
-	snprintf(qh->base.str, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
-	snprintf(qh->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
-
-	// Fills qh->base.hmd
-	struct u_device_simple_info info;
-	info.display.w_pixels = 1280;
-	info.display.h_pixels = 720;
-	info.display.w_meters = 0.13f;
-	info.display.h_meters = 0.07f;
-	info.lens_horizontal_separation_meters = 0.13f / 2.0f;
-	info.lens_vertical_position_meters = 0.07f / 2.0f;
-	info.views[0].fov = 85.0f * (M_PI / 180.0f);
-	info.views[1].fov = 85.0f * (M_PI / 180.0f);
-
-	if (!u_device_setup_split_side_by_side(&qh->base, &info)) {
-		printf("[QWERTY ERROR] Failed to setup basic device info\n");
-		qwerty_destroy(&qh->base);
-		return NULL;
-	}
-
-	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	qh->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
-
-	qh->base.update_inputs = qwerty_update_inputs;
-	qh->base.get_tracked_pose = qwerty_get_tracked_pose;
-	qh->base.get_view_pose = qwerty_get_view_pose;
-	qh->base.destroy = qwerty_destroy;
-	u_distortion_mesh_set_none(&qh->base); // Fills qh->base.compute_distortion
-
-	return qh;
 }
 
 struct qwerty_device *
@@ -238,7 +158,6 @@ qwerty_controller_create(bool is_left)
 	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
-	qc->follow_hmd = true;
 
 	// Fill xrt_device properties
 	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
@@ -295,45 +214,13 @@ void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clic
 // clang-format on
 
 void
-qwerty_follow_hmd(struct xrt_device *xdev, bool follow)
-{
-	struct qwerty_device *qctrl = qwerty_device(xdev);
-
-	if (qctrl == qctrl->qdevs.hmd || qctrl->follow_hmd == follow)
-		return;
-
-	struct xrt_space_graph graph = {0};
-	struct xrt_space_relation rel = {0};
-
-	m_space_graph_add_pose(&graph, &qctrl->pose);
-	if (follow) // From global to hmd
-		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qctrl->qdevs.hmd->pose);
-	else // From hmd to global
-		m_space_graph_add_pose(&graph, &qctrl->qdevs.hmd->pose);
-	m_space_graph_resolve(&graph, &rel);
-
-	qctrl->pose = rel.pose;
-	qctrl->follow_hmd = follow;
-}
-
-void
-qwerty_toggle_follow_hmd(struct xrt_device *xdev)
-{
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	qwerty_follow_hmd(xdev, !qdev->follow_hmd);
-}
-
-void
 qwerty_reset_controller_pose(struct xrt_device *xdev)
 {
 	struct qwerty_device *qctrl = qwerty_device(xdev);
-	if (qctrl == qctrl->qdevs.hmd)
-		return;
 
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
 	bool is_left = qctrl == qctrl->qdevs.lctrl;
 
-	qwerty_follow_hmd(xdev, true);
 	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
 	qctrl->pose = pose;
 }

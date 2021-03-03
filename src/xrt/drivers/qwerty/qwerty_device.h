@@ -4,7 +4,6 @@
 
 struct qwerty_devices
 {
-	struct qwerty_device *hmd;
 	struct qwerty_device *lctrl;
 	struct qwerty_device *rctrl;
 };
@@ -12,7 +11,7 @@ struct qwerty_devices
 struct qwerty_device
 {
 	struct xrt_device base;
-	struct xrt_pose pose;        // Pose of controllers is relative to hmd pose if follow_hmd
+	struct xrt_pose pose;
 	struct qwerty_devices qdevs; // References to all qwerty devices. Same in all devices.
 
 	float movement_speed;
@@ -29,21 +28,13 @@ struct qwerty_device
 	bool look_up_pressed;
 	bool look_down_pressed;
 
-	// Controller buttons, unused for hmd
 	bool select_clicked;
 	bool menu_clicked;
-
-	// Only used for controllers. If true, `pose` is relative to the HMD.
-	// TODO: Enough reason to separate qwerty_device into qwerty_hmd and qwerty_controller
-	bool follow_hmd;
 
 	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
 	float yaw_delta;
 	float pitch_delta;
 };
-
-struct qwerty_device *
-qwerty_hmd_create();
 
 struct qwerty_device *
 qwerty_controller_create(bool is_left);

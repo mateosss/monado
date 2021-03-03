@@ -134,9 +134,9 @@ sdl2_window_init(struct sdl2_program *p)
 static void
 qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 {
-	struct xrt_device *qhmd = xdevs[0];
 	struct xrt_device *qleft = xdevs[1];
 	struct xrt_device *qright = xdevs[2];
+
 
 	// clang-format off
 	// XXX: I'm definitely pushing some limits with so much clang-format off
@@ -160,7 +160,6 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 
 	bool change_focus = alt_down || alt_up || ctrl_down || ctrl_up;
 	if (change_focus) {
-		qwerty_release_all(qhmd);
 		qwerty_release_all(qright);
 		qwerty_release_all(qleft);
 	}
@@ -168,10 +167,10 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	struct xrt_device *qdev; // Focused device
 	if (ctrl_pressed) qdev = qleft;
 	else if (alt_pressed) qdev = qright;
-	else qdev = qhmd;
+	else qdev = qright;
 
 	// Default controller. Right one because some window managers capture alt+click actions before SDL
-	struct xrt_device *qctrl = qdev != qhmd ? qdev : qright;
+	struct xrt_device *qctrl = qdev;
 
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qdev);
@@ -198,12 +197,6 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	// Select and menu clicks only for controllers.
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
-
-	// TODO: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
-	// XXX: Look for other inconsistencies in the shortcuts usage and improve it
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f) qwerty_toggle_follow_hmd(qctrl);
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0) qwerty_toggle_follow_hmd(qctrl);
-	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE) qwerty_toggle_follow_hmd(qctrl);
 
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
 		if (ctrl_pressed) qwerty_reset_controller_pose(qleft);
@@ -268,9 +261,8 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			// Check usage of qwerty device for emulating hmd and controllers
-			struct xrt_device *hmd = p->base.xdevs[0];
-			bool using_qwerty = hmd != NULL && !strcmp(hmd->serial, "Qwerty HMD");
+			struct xrt_device *qctrl = p->base.xdevs[1];
+			bool using_qwerty = qctrl != NULL && !strcmp(qctrl->serial, "Qwerty Left Controller");
 			if (using_qwerty)
 				qwerty_process_inputs(p->base.xdevs, event);
 

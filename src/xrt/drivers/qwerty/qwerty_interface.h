@@ -32,10 +32,7 @@ void qwerty_release_look_down(struct xrt_device *qh);
 void qwerty_select_click(struct xrt_device *xdev);
 void qwerty_menu_click(struct xrt_device *xdev);
 
-void qwerty_follow_hmd(struct xrt_device *xdev, bool follow);
-void qwerty_toggle_follow_hmd(struct xrt_device *xdev);
-
-// Resets controller to initial pose and makes it follow the HMD
+// Resets controller to initial pose.
 void qwerty_reset_controller_pose(struct xrt_device *xdev);
 // Change movement speed in steps which are usually integers, though any float is allowed.
 void qwerty_change_movement_speed(struct xrt_device *xdev, float steps);

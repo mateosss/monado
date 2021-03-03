@@ -27,28 +27,18 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
                         struct xrt_prober *xp,
                         struct xrt_device **out_xdevs)
 {
-	// TODO: Currently if no_hmd is true, nothing is created, but it would be
-	// better to detect if the user does not have an HMD, a left controller or a
-	// right controller and if the user requested it somehow, provide the
-	// remaining devices qwerty devices they might need.
-	if (no_hmds)
-		return 0;
-
-	struct qwerty_device *qhmd = qwerty_hmd_create();
 	struct qwerty_device *qctrl_left = qwerty_controller_create(true);
 	struct qwerty_device *qctrl_right = qwerty_controller_create(false);
 
 	// All devices should be able to reference other ones, qdevs should only be written here.
-	struct qwerty_devices qdevs = {qhmd, qctrl_left, qctrl_right};
-	qhmd->qdevs = qdevs;
+	struct qwerty_devices qdevs = {qctrl_left, qctrl_right};
 	qctrl_left->qdevs = qdevs;
 	qctrl_right->qdevs = qdevs;
 
-	out_xdevs[0] = &qhmd->base;
-	out_xdevs[1] = &qctrl_left->base;
-	out_xdevs[2] = &qctrl_right->base;
+	out_xdevs[0] = &qctrl_left->base;
+	out_xdevs[1] = &qctrl_right->base;
 
-	int num_qwerty_devices = 3;
+	int num_qwerty_devices = 2;
 	return num_qwerty_devices;
 }
 
