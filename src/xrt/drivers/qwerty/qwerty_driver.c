@@ -57,7 +57,7 @@ qwerty_update_inputs(struct xrt_device *xdev)
 		qdev->menu_clicked = false;
 	}
 
-	// XXX Wasn't necessary to set input timestamp as below, why?
+	// XXX: Wasn't necessary to set input timestamp as below, why?
 	// xdev->inputs[i].timestamp = os_monotonic_get_ns();
 }
 
@@ -74,7 +74,7 @@ qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_
 	time_duration_ns duration = value->vibration.duration;
 	if (amplitude || duration || frequency) {
 		printf(
-		    "[QWERTY] [%s] Vibration: "
+		    "[QWERTY] [%s] Haptic output: "
 		    "freq=%.2ff ampl=%.2ff dur=%ld\n",
 		    xdev->str, frequency, amplitude, duration);
 	}
@@ -86,6 +86,10 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
+	// TODO: Remove these empty ifs
+	// XXX: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
+	// ASK
+
 	if (name == XRT_INPUT_GENERIC_HEAD_POSE) {
 		// printf(">>> XRT_INPUT_GENERIC_HEAD_POSE\n");
 	} else if (name == XRT_INPUT_SIMPLE_SELECT_CLICK) {
@@ -97,8 +101,9 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	} else if (name == XRT_INPUT_SIMPLE_AIM_POSE) {
 		// printf(">>> XRT_INPUT_SIMPLE_AIM_POSE\n");
 	} else {
-		// XXX: Using unsigned, what should I use to be more specific for a enum? uint32_t?
-		printf("[QWERTY ERROR] Unknown input name = %d\n", (unsigned)name);
+		// XXXANS: Using unsigned, what should I use to be more specific for a enum? uint32_t?
+		// ANS: Enumerators in enums can have different sizes unfortunately. So just pray for these enumerators to fit into
+		printf("[QWERTY ERROR] Unexpected input name = 0x%04X\n", name >> 8);
 	}
 
 	struct qwerty_device *qd = qwerty_device(xdev);
@@ -250,7 +255,7 @@ qwerty_controller_create(bool is_left)
 	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 	qc->base.inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
 	qc->base.inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX Understand aim inputs
+	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX: Understand aim inputs
 	qc->base.outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
 
 	qc->base.update_inputs = qwerty_update_inputs;

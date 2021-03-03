@@ -63,6 +63,7 @@ enum xrt_tracking_type
 	//     the app but this is not yet synced with the server
 	// 2. _NONE is not quite exact, for what I understand qwerty devices *are*
 	//    being tracked. Though I might be missunderstanding what tracking is.
+	// ASK
 
 	// The device(s) are tracked by other methods.
 	XRT_TRACKING_TYPE_OTHER,

@@ -44,13 +44,13 @@ cli_cmd_probe(int argc, const char **argv)
 		return do_exit(&xi, 0);
 	}
 
-	// XXX BEGIN
+	// XXX: BEGIN
 	struct xrt_prober *myxp = NULL;
 	xrt_instance_get_prober(xi, &myxp);
 	// 3: 0x1a2c:0x2c27; usb.product USB Keyboard
 	xrt_prober_probe(myxp);
 	xrt_prober_dump(myxp);
-	// XXX END
+	// XXX: END
 
 	// Need to prime the prober with devices before dumping and listing.
 	printf(" :: Probing and selecting!\n");
