@@ -134,9 +134,13 @@ sdl2_window_init(struct sdl2_program *p)
 static void
 qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 {
+	// TODO: Think about a better way of obtaining qwerty_devices from xdevs than
+	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
 	struct xrt_device *qhmd = xdevs[0];
-	struct xrt_device *qleft = xdevs[1];
+	struct xrt_device *qleft = xdevs[1]; // TODO: Why q prefix? This should be xleft
 	struct xrt_device *qright = xdevs[2];
+
+	bool using_qhmd = qwerty_hmd_available(qleft);
 
 	// clang-format off
 	// XXX: I'm definitely pushing some limits with so much clang-format off
@@ -160,7 +164,7 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 
 	bool change_focus = alt_down || alt_up || ctrl_down || ctrl_up;
 	if (change_focus) {
-		qwerty_release_all(qhmd);
+		if (using_qhmd) qwerty_release_all(qhmd);
 		qwerty_release_all(qright);
 		qwerty_release_all(qleft);
 	}
@@ -168,9 +172,11 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	struct xrt_device *qdev; // Focused device
 	if (ctrl_pressed) qdev = qleft;
 	else if (alt_pressed) qdev = qright;
-	else qdev = qhmd;
+	else if (using_qhmd) qdev = qhmd;
+	else /* if (!using_qhmd) */ qdev = qright;
 
-	// Default controller. Right one because some window managers capture alt+click actions before SDL
+	// Default controller for methods that only make sense for controllers.
+	// Right one because some window managers capture alt+click actions before SDL
 	struct xrt_device *qctrl = qdev != qhmd ? qdev : qright;
 
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
@@ -268,9 +274,12 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			// Check usage of qwerty device for emulating hmd and controllers
-			struct xrt_device *hmd = p->base.xdevs[0];
-			bool using_qwerty = hmd != NULL && !strcmp(hmd->serial, "Qwerty HMD");
+			// TODO: Get using_qwerty condition from somewhere else.
+			// Maybe add a new xrt_device_name and scan xdevs? An environment var?
+			// This is how I was doing it before enabling non-qwerty hmds to work:
+			// 	struct xrt_device *hmd = p->base.xdevs[0];
+			// 	bool using_qwerty = hmd != NULL && !strcmp(hmd->serial, "Qwerty HMD");
+			bool using_qwerty = true;
 			if (using_qwerty)
 				qwerty_process_inputs(p->base.xdevs, event);
 

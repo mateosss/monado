@@ -46,6 +46,9 @@ void qwerty_release_all(struct xrt_device *xdev);
 // Add yaw and pitch movement for the next frame
 void qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch);
 
+// Given an xdev qwerty device returns whether a qwerty HMD is in use or not.
+bool qwerty_hmd_available(struct xrt_device *xdev);
+
 #ifdef __cplusplus
 }
 #endif
