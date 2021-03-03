@@ -395,9 +395,11 @@ oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **
 
 	xrt_instance_get_prober(xinst, &p->base.xp);
 
-	// XXX for some reason p->base.xdevs is empty on monado-service, understand why
-	// XXX Having more than one owner for these pointers seems like a bad idea
-	// Fill sdl2_program xrt_devices
+	// XXXANS: for some reason p->base.xdevs is empty on monado-service, understand why
+	// ANS: gui_program was probably intended to be used only on monado-gui (hence the _hack prefix)
+
+	// XXX: ASK Having more than one owner for these pointers seems like a bad idea
+	// XXX: ASK Also, these pointers will be touched from the gui thread without a lock
 	for (size_t i = 0; i < NUM_XDEVS; i++) {
 		p->base.xdevs[i] = xdevs[i];
 	}

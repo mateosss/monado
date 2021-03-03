@@ -148,7 +148,9 @@ struct xrt_hmd_parts
  *
  * @ingroup xrt_iface
  */
-struct xrt_input // XXX Will need to update this probably on qwerty driver eventually
+// XXXANS: Will need to update this probably on qwerty driver eventually
+// ANS: Done
+struct xrt_input
 {
 	//! Is this input active.
 	bool active;
