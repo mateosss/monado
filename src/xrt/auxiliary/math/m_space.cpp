@@ -162,7 +162,8 @@ apply_relation(const struct xrt_space_relation *a,
 	if (af.has_linear_velocity) {
 		nf.has_linear_velocity = true;
 		struct xrt_vec3 tmp = {};
-		// XXX Wait what does multiplying a quaternion with a vector like this do without the inverse-sandwich-thing?
+		// XXXANS:Wait what does multiplying a quaternion with a vector like this do without the inverse-sandwich-thing?
+		// ANS: The * is overloaded with the proper inverse-sandwich-thing
 		math_quat_rotate_vec3(&b->pose.orientation, // Base rotation
 		                      &a->linear_velocity,  // In base space
 		                      &tmp);                // Output

@@ -1099,7 +1099,7 @@ struct oxr_system
 	VkPhysicalDevice vulkan_enable2_physical_device;
 };
 
-// XXX This macro may be useful for differentiating between head/left hand and right hand
+// XXX: This macro may be useful for differentiating between head/left hand and right hand
 #define GET_XDEV_BY_ROLE(SYS, ROLE) SYS->role.ROLE == XRT_DEVICE_ROLE_UNASSIGNED ? NULL : SYS->xdevs[SYS->role.ROLE]
 
 #define MAKE_EXT_STATUS(mixed_case, all_caps) bool mixed_case;
