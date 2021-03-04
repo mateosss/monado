@@ -35,8 +35,8 @@ struct qwerty_device
 
 	// Only used for controllers and when a qwerty hmd exists.
 	// If true, `pose` is relative to the qwerty HMD.
-	// TODO: Would be nice for it to also work with non-qwerty HMDs.
-	// TODO: Enough reason to separate qwerty_device into qwerty_hmd and qwerty_controller
+	// XXX: Would be nice for it to also work with non-qwerty HMDs.
+	// XXX: Enough reason to separate qwerty_device into qwerty_hmd and qwerty_controller
 	bool follow_hmd;
 
 	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
