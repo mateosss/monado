@@ -229,7 +229,7 @@ qwerty_hmd_create()
 }
 
 struct qwerty_device *
-qwerty_controller_create(bool is_left)
+qwerty_controller_create(struct qwerty_device *qhmd, bool is_left)
 {
 	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
@@ -238,7 +238,7 @@ qwerty_controller_create(bool is_left)
 	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
 	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
-	qc->follow_hmd = true;
+	qc->follow_hmd = qhmd != NULL;
 
 	// Fill xrt_device properties
 	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
@@ -299,7 +299,10 @@ qwerty_follow_hmd(struct xrt_device *xdev, bool follow)
 {
 	struct qwerty_device *qctrl = qwerty_device(xdev);
 
-	if (qctrl == qctrl->qdevs.hmd || qctrl->follow_hmd == follow)
+	bool no_qhmd = !qctrl->qdevs.hmd;
+	bool not_ctrl = qctrl == qctrl->qdevs.hmd;
+	bool unchanged = qctrl->follow_hmd == follow;
+	if (no_qhmd || not_ctrl || unchanged)
 		return;
 
 	struct xrt_space_graph graph = {0};
@@ -327,7 +330,10 @@ void
 qwerty_reset_controller_pose(struct xrt_device *xdev)
 {
 	struct qwerty_device *qctrl = qwerty_device(xdev);
-	if (qctrl == qctrl->qdevs.hmd)
+
+	bool no_qhmd = !qctrl->qdevs.hmd;
+	bool not_ctrl = qctrl == qctrl->qdevs.hmd;
+	if (no_qhmd || not_ctrl)
 		return;
 
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
@@ -367,4 +373,9 @@ qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch)
 	struct qwerty_device *qdev = qwerty_device(xdev);
 	qdev->yaw_delta += yaw * qdev->look_speed;
 	qdev->pitch_delta += pitch * qdev->look_speed;
+}
+
+bool qwerty_hmd_available(struct xrt_device *xdev) {
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	return qdev->qdevs.hmd != NULL;
 }

@@ -33,7 +33,9 @@ struct qwerty_device
 	bool select_clicked;
 	bool menu_clicked;
 
-	// Only used for controllers. If true, `pose` is relative to the HMD.
+	// Only used for controllers and when a qwerty hmd exists.
+	// If true, `pose` is relative to the qwerty HMD.
+	// TODO: Would be nice for it to also work with non-qwerty HMDs.
 	// TODO: Enough reason to separate qwerty_device into qwerty_hmd and qwerty_controller
 	bool follow_hmd;
 
@@ -46,4 +48,4 @@ struct qwerty_device *
 qwerty_hmd_create();
 
 struct qwerty_device *
-qwerty_controller_create(bool is_left);
+qwerty_controller_create(struct qwerty_device *qhmd, bool is_left);
