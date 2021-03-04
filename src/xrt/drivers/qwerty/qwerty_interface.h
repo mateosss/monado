@@ -4,8 +4,13 @@
 extern "C" {
 #endif
 
+typedef union SDL_Event SDL_Event;
+
 struct xrt_auto_prober *
 qwerty_create_auto_prober(void);
+
+void
+qwerty_try_process_inputs(struct xrt_device **xdevs, SDL_Event event);
 
 void qwerty_press_left(struct xrt_device *qh);
 void qwerty_release_left(struct xrt_device *qh);
