@@ -58,12 +58,11 @@ enum xrt_tracking_type
 	// The device(s) are tracked by external SLAM
 	XRT_TRACKING_TYPE_EXTERNAL_SLAM,
 
-	// XXX: Is it a good idea to add a new tracking type? Two reasons:
+	// XXXASK: Is it a good idea to add a new tracking type? Two reasons:
 	// 1. _NONE makes u_device_setup_tracking_origins modify tracking origins in
 	//     the app but this is not yet synced with the server
 	// 2. _NONE is not quite exact, for what I understand qwerty devices *are*
 	//    being tracked. Though I might be missunderstanding what tracking is.
-	// ASK
 
 	// The device(s) are tracked by other methods.
 	XRT_TRACKING_TYPE_OTHER,

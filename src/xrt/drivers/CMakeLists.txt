@@ -52,7 +52,7 @@ if(XRT_BUILD_DRIVER_QWERTY)
 		)
 
 	add_library(drv_qwerty STATIC ${QWERTY_SOURCE_FILES})
-	target_link_libraries(drv_qwerty PRIVATE xrt-interfaces aux_util) # TODO: Revise if this are only necessary linked libs for qwerty
+	target_link_libraries(drv_qwerty PRIVATE xrt-interfaces aux_util) # XXX: Revise if this are only necessary linked libs for qwerty
 	list(APPEND ENABLED_DRIVERS qwerty)
 endif()
 
