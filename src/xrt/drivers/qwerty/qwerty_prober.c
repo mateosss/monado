@@ -1,6 +1,11 @@
 #include "qwerty_device.h"
 #include "util/u_misc.h"
+#include "util/u_debug.h"
+#include "util/u_logging.h"
 #include "xrt/xrt_prober.h"
+
+// Using INFO as default to inform events real devices could report physically
+DEBUG_GET_ONCE_LOG_OPTION(qwerty_log, "QWERTY_LOG", U_LOGGING_INFO)
 
 struct qwerty_prober
 {
@@ -38,14 +43,19 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 
 	// All devices should be able to reference other ones, qdevs should only be written here.
 	struct qwerty_devices qdevs = {qhmd, qctrl_left, qctrl_right};
+	enum u_logging_level log_level = debug_get_log_option_qwerty_log();
 
 	if (hmd_wanted) {
 		qhmd->qdevs = qdevs;
+		qhmd->ll = log_level;
 		out_xdevs[0] = &qhmd->base;
 	}
 
 	qctrl_left->qdevs = qdevs;
 	qctrl_right->qdevs = qdevs;
+
+	qctrl_left->ll = log_level;
+	qctrl_right->ll = log_level;
 
 	out_xdevs[1 - !hmd_wanted] = &qctrl_left->base;
 	out_xdevs[2 - !hmd_wanted] = &qctrl_right->base;

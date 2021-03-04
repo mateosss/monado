@@ -33,6 +33,12 @@
 #define QWERTY_AIM 3
 #define QWERTY_VIBRATION 0
 
+#define QWERTY_TRACE(qd, ...) U_LOG_XDEV_IFL_T(&qd->base, qd->ll, __VA_ARGS__)
+#define QWERTY_DEBUG(qd, ...) U_LOG_XDEV_IFL_D(&qd->base, qd->ll, __VA_ARGS__)
+#define QWERTY_INFO(qd, ...) U_LOG_XDEV_IFL_I(&qd->base, qd->ll, __VA_ARGS__)
+#define QWERTY_WARN(qd, ...) U_LOG_XDEV_IFL_W(&qd->base, qd->ll, __VA_ARGS__)
+#define QWERTY_ERROR(qd, ...) U_LOG_XDEV_IFL_E(&qd->base, qd->ll, __VA_ARGS__)
+
 static inline struct qwerty_device *
 qwerty_device(struct xrt_device *xdev)
 {
@@ -47,13 +53,13 @@ qwerty_update_inputs(struct xrt_device *xdev)
 
 	xdev->inputs[QWERTY_SELECT].value.boolean = qdev->select_clicked;
 	if (qdev->select_clicked) {
-		printf("[QWERTY] [%s] Select click\n", xdev->str);
+		QWERTY_INFO(qdev, "[%s] Select click", xdev->str);
 		qdev->select_clicked = false;
 	}
 
 	xdev->inputs[QWERTY_MENU].value.boolean = qdev->menu_clicked;
 	if (qdev->menu_clicked) {
-		printf("[QWERTY] [%s] Menu click\n", xdev->str);
+		QWERTY_INFO(qdev, "[%s] Menu click", xdev->str);
 		qdev->menu_clicked = false;
 	}
 
@@ -69,14 +75,15 @@ qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_
 {
 	// XXX: Should probably be using DEBUG macros instead of printf's
 
+	struct qwerty_device *qd = qwerty_device(xdev);
 	float frequency = value->vibration.frequency;
 	float amplitude = value->vibration.amplitude;
 	time_duration_ns duration = value->vibration.duration;
 	if (amplitude || duration || frequency) {
-		printf(
-		    "[QWERTY] [%s] Haptic output: "
-		    "freq=%.2ff ampl=%.2ff dur=%ld\n",
-		    xdev->str, frequency, amplitude, duration);
+		QWERTY_INFO(qd,
+		            "[%s] Haptic output: \n"
+		            "\tfrequency=%.2f amplitude=%.2f duration=%ld",
+		            xdev->str, frequency, amplitude, duration);
 	}
 }
 
@@ -86,9 +93,11 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
-	// XXX: Remove these empty ifs
+	struct qwerty_device *qd = qwerty_device(xdev);
+
 	// XXXASK: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
 
+	// XXX: Remove these empty ifs
 	if (name == XRT_INPUT_GENERIC_HEAD_POSE) {
 		// printf(">>> XRT_INPUT_GENERIC_HEAD_POSE\n");
 	} else if (name == XRT_INPUT_SIMPLE_SELECT_CLICK) {
@@ -101,11 +110,9 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 		// printf(">>> XRT_INPUT_SIMPLE_AIM_POSE\n");
 	} else {
 		// XXXANS: Using unsigned, what should I use to be more specific for a enum? uint32_t?
-		// ANS: Enumerators in enums can have different sizes unfortunately. So just pray for these enumerators to fit into
-		printf("[QWERTY ERROR] Unexpected input name = 0x%04X\n", name >> 8);
+		// ANS: Enumerators in enums can have different sizes unfortunately. So just pray for these to fit
+		QWERTY_ERROR(qd, "Unexpected input name = 0x%04X", name >> 8);
 	}
-
-	struct qwerty_device *qd = qwerty_device(xdev);
 
 	// Position
 
@@ -136,6 +143,8 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 	math_quat_rotate(&qd->pose.orientation, &x_rotation, &qd->pose.orientation); // local-space pitch
 	math_quat_rotate(&y_rotation, &qd->pose.orientation, &qd->pose.orientation); // base-space yaw
 	math_quat_normalize(&qd->pose.orientation);
+
+	// Base Space Adjustment
 
 	if (name == XRT_INPUT_SIMPLE_GRIP_POSE && qd->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
@@ -210,12 +219,14 @@ qwerty_hmd_create()
 	info.views[1].fov = 85.0f * (M_PI / 180.0f);
 
 	if (!u_device_setup_split_side_by_side(&qh->base, &info)) {
-		printf("[QWERTY ERROR] Failed to setup basic device info\n");
+		QWERTY_ERROR(qh, "Failed to setup HMD properties");
 		qwerty_destroy(&qh->base);
 		return NULL;
 	}
 
 	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
+	snprintf(qh->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty HMD Tracker");
+
 	qh->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
 
 	qh->base.update_inputs = qwerty_update_inputs;
@@ -249,7 +260,7 @@ qwerty_controller_create(struct qwerty_device *qhmd, bool is_left)
 
 	// XXX: qc->base.*_tracking_supported bools are false. Is this semantically correct?
 	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", "Qwerty Tracker");
+	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
 
 	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 	qc->base.inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
@@ -374,7 +385,9 @@ qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch)
 	qdev->pitch_delta += pitch * qdev->look_speed;
 }
 
-bool qwerty_hmd_available(struct xrt_device *xdev) {
+bool
+qwerty_hmd_available(struct xrt_device *xdev)
+{
 	struct qwerty_device *qdev = qwerty_device(xdev);
 	return qdev->qdevs.hmd != NULL;
 }

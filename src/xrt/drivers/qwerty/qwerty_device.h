@@ -1,6 +1,9 @@
-#include "xrt/xrt_device.h"
-
+// XXX: Any SDPX/author format for the files?
 #pragma once
+
+#include "xrt/xrt_device.h"
+#include "util/u_logging.h"
+
 
 struct qwerty_devices
 {
@@ -14,6 +17,7 @@ struct qwerty_device
 	struct xrt_device base;
 	struct xrt_pose pose;        // Pose of controllers is relative to hmd pose if follow_hmd
 	struct qwerty_devices qdevs; // References to all qwerty devices. Same in all devices.
+	enum u_logging_level ll;
 
 	float movement_speed;
 	bool left_pressed;
