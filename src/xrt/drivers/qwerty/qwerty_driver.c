@@ -1,4 +1,4 @@
-// TODO: Check includes order in all files
+// XXX: Check includes order in all files
 // XXX: Should I be more explicit with my includes?
 
 #include "qwerty_device.h"
@@ -86,9 +86,8 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
-	// TODO: Remove these empty ifs
-	// XXX: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
-	// ASK
+	// XXX: Remove these empty ifs
+	// XXXASK: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
 
 	if (name == XRT_INPUT_GENERIC_HEAD_POSE) {
 		// printf(">>> XRT_INPUT_GENERIC_HEAD_POSE\n");

@@ -134,10 +134,10 @@ sdl2_window_init(struct sdl2_program *p)
 static void
 qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 {
-	// TODO: Think about a better way of obtaining qwerty_devices from xdevs than
+	// XXX: Think about a better way of obtaining qwerty_devices from xdevs than
 	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
 	struct xrt_device *qhmd = xdevs[0];
-	struct xrt_device *qleft = xdevs[1]; // TODO: Why q prefix? This should be xleft
+	struct xrt_device *qleft = xdevs[1]; // XXX: Why q prefix? This should be xleft
 	struct xrt_device *qright = xdevs[2];
 
 	bool using_qhmd = qwerty_hmd_available(qleft);
@@ -205,7 +205,7 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
 
-	// TODO: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
+	// XXX: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
 	// XXX: Look for other inconsistencies in the shortcuts usage and improve it
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f) qwerty_toggle_follow_hmd(qctrl);
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0) qwerty_toggle_follow_hmd(qctrl);
@@ -274,7 +274,7 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			// TODO: Get using_qwerty condition from somewhere else.
+			// XXX: Get using_qwerty condition from somewhere else.
 			// Maybe add a new xrt_device_name and scan xdevs? An environment var?
 			// This is how I was doing it before enabling non-qwerty hmds to work:
 			// 	struct xrt_device *hmd = p->base.xdevs[0];
@@ -407,8 +407,8 @@ oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **
 	// XXXANS: for some reason p->base.xdevs is empty on monado-service, understand why
 	// ANS: gui_program was probably intended to be used only on monado-gui (hence the _hack prefix)
 
-	// XXX: ASK Having more than one owner for these pointers seems like a bad idea
-	// XXX: ASK Also, these pointers will be touched from the gui thread without a lock
+	// XXXASK: Having more than one owner for these pointers seems like a bad idea
+	// XXXASK: Also, these pointers will be touched from the gui thread without a lock
 	for (size_t i = 0; i < NUM_XDEVS; i++) {
 		p->base.xdevs[i] = xdevs[i];
 	}
