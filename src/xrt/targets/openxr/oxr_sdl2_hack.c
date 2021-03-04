@@ -179,6 +179,7 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	// Right one because some window managers capture alt+click actions before SDL
 	struct xrt_device *qctrl = qdev != qhmd ? qdev : qright;
 
+	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qdev);
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) qwerty_press_right(qdev);
@@ -192,6 +193,7 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q) qwerty_press_down(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_q) qwerty_release_down(qdev);
 
+	// Arrow keys rotation
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LEFT) qwerty_press_look_left(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LEFT) qwerty_release_look_left(qdev);
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RIGHT) qwerty_press_look_right(qdev);
@@ -207,11 +209,19 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 
 	// XXX: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
 	// XXX: Look for other inconsistencies in the shortcuts usage and improve it
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f) qwerty_toggle_follow_hmd(qctrl);
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0) qwerty_toggle_follow_hmd(qctrl);
-	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_SPACE) qwerty_toggle_follow_hmd(qctrl);
 
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+	// Controllers follow/unfollow HMD
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
+		if (qdev != qhmd) qwerty_toggle_follow_hmd(qdev);
+		else { // If no controller is focused, set both to the same state
+			bool both_not_following = !qwerty_get_follow_hmd(qleft) && !qwerty_get_follow_hmd(qright);
+			qwerty_follow_hmd(qleft, both_not_following);
+			qwerty_follow_hmd(qright, both_not_following);
+		}
+	}
+
+	// Reset controller poses
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r && event.key.repeat == 0) {
 		if (ctrl_pressed) qwerty_reset_controller_pose(qleft);
 		else if (alt_pressed) qwerty_reset_controller_pose(qright);
 		else {
@@ -219,8 +229,11 @@ qwerty_process_inputs(struct xrt_device **xdevs, SDL_Event event)
 			qwerty_reset_controller_pose(qright);
 		}
 	}
+
+	// Movement speed
 	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(qdev, event.wheel.y);
 
+	// Sprinting
 	float sprint_steps = 5;
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, sprint_steps);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, -sprint_steps);

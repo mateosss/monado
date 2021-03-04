@@ -304,6 +304,13 @@ void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_
 void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
 // clang-format on
 
+bool
+qwerty_get_follow_hmd(struct xrt_device *xdev)
+{
+	struct qwerty_device *qctrl = qwerty_device(xdev);
+	return qctrl->follow_hmd;
+}
+
 void
 qwerty_follow_hmd(struct xrt_device *xdev, bool follow)
 {
