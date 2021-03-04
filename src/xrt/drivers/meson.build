@@ -235,8 +235,9 @@ lib_drv_qwerty = static_library(
 		'qwerty/qwerty_device.h',
 		'qwerty/qwerty_interface.h',
 		'qwerty/qwerty_prober.c',
+		'qwerty/qwerty_sdl.c',
 	),
 	include_directories: xrt_include,
-	dependencies: [aux],
+	dependencies: [aux, sdl2],
 	build_by_default: 'qwerty' in drivers,
 )
