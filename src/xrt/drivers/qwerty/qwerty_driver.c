@@ -180,7 +180,6 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 
 
 	bool qd_is_ctrl = name == XRT_INPUT_SIMPLE_GRIP_POSE;
-	// XXXSPLIT: should I support a qwerty_controller(qd) besides xd?
 	struct qwerty_controller *qc = qd_is_ctrl ? qwerty_controller(&qd->base) : NULL;
 	if (qd_is_ctrl && qc->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
