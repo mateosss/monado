@@ -67,7 +67,7 @@ struct qwerty_hmd *
 qwerty_hmd_create();
 
 struct qwerty_controller *
-qwerty_controller_create(struct qwerty_hmd *qh, bool is_left);
+qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
 
 // clang-format off
 void qwerty_press_left(struct qwerty_device *qd);
