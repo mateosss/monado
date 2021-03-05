@@ -6,17 +6,6 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-struct qwerty_hmd *
-qwerty_hmd(struct xrt_device *xd)
-{
-	return (struct qwerty_hmd *)xd;
-} // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
-struct qwerty_controller *
-qwerty_controller(struct xrt_device *xd)
-{
-	return (struct qwerty_controller *)xd;
-} // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
-
 void
 qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 {
