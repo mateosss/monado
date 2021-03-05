@@ -65,7 +65,7 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	// Default controller for methods that only make sense for controllers.
 	// qright default: some window managers capture alt+click actions before SDL
-	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : (struct qwerty_controller *)qdev; // XXXSPLIT: Review cast
+	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : qwerty_controller(&qdev->base);
 
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
