@@ -87,16 +87,6 @@ void qwerty_release_look_up(struct qwerty_device *qd);
 void qwerty_press_look_down(struct qwerty_device *qd);
 void qwerty_release_look_down(struct qwerty_device *qd);
 
-void qwerty_select_click(struct xrt_device *xdev);
-void qwerty_menu_click(struct xrt_device *xdev);
-
-bool qwerty_get_follow_hmd(struct xrt_device *xdev);
-void qwerty_follow_hmd(struct xrt_device *xdev, bool follow);
-void qwerty_toggle_follow_hmd(struct xrt_device *xdev);
-
-// Resets controller to initial pose and makes it follow the HMD
-void qwerty_reset_controller_pose(struct xrt_device *xdev);
-
 // Change movement speed in steps which are usually integers, though any float is allowed.
 void qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
 
@@ -108,4 +98,17 @@ void qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch);
 
 // Given an xdev qwerty device returns whether a qwerty HMD is in use or not.
 bool qwerty_hmd_available(struct qwerty_device *qd);
+
+// qwerty_controller methods
+
+void qwerty_select_click(struct qwerty_controller *qc);
+void qwerty_menu_click(struct qwerty_controller *qc);
+
+bool qwerty_get_follow_hmd(struct qwerty_controller *qc);
+void qwerty_follow_hmd(struct qwerty_controller *qc, bool follow);
+void qwerty_toggle_follow_hmd(struct qwerty_controller *qc);
+
+// Resets controller to initial pose and makes it follow the HMD
+void qwerty_reset_controller_pose(struct qwerty_controller *qc);
+
 // clang-format on

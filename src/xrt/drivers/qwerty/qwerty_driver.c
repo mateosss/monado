@@ -327,65 +327,62 @@ void qwerty_release_look_up(struct qwerty_device *qd) { qd->look_up_pressed = fa
 void qwerty_press_look_down(struct qwerty_device *qd) { qd->look_down_pressed = true; }
 void qwerty_release_look_down(struct qwerty_device *qd) { qd->look_down_pressed = false; }
 
-void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_clicked = true; }
-void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
+void qwerty_select_click(struct qwerty_controller *qc) { qc->base.select_clicked = true; }
+void qwerty_menu_click(struct qwerty_controller *qc) { qc->base.menu_clicked = true; }
 // clang-format on
 
 bool
-qwerty_get_follow_hmd(struct xrt_device *xdev)
+qwerty_get_follow_hmd(struct qwerty_controller *qc)
 {
-	struct qwerty_device *qctrl = qwerty_device(xdev);
-	return qctrl->follow_hmd;
+	return qc->base.follow_hmd;
 }
 
 void
-qwerty_follow_hmd(struct xrt_device *xdev, bool follow)
+qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 {
-	struct qwerty_device *qctrl = qwerty_device(xdev);
-
-	bool no_qhmd = !qctrl->qdevs.hmd;
-	bool not_ctrl = qctrl == qctrl->qdevs.hmd;
-	bool unchanged = qctrl->follow_hmd == follow;
+	struct qwerty_device *qd = &qc->base;
+	bool no_qhmd = !qd->qdevs.hmd;
+	bool not_ctrl = &qc->base == qd->qdevs.hmd;
+	bool unchanged = qd->follow_hmd == follow;
 	if (no_qhmd || not_ctrl || unchanged)
 		return;
 
 	struct xrt_space_graph graph = {0};
 	struct xrt_space_relation rel = {0};
 
-	m_space_graph_add_pose(&graph, &qctrl->pose);
+	m_space_graph_add_pose(&graph, &qd->pose);
 	if (follow) // From global to hmd
-		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qctrl->qdevs.hmd->pose);
+		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qd->qdevs.hmd->pose);
 	else // From hmd to global
-		m_space_graph_add_pose(&graph, &qctrl->qdevs.hmd->pose);
+		m_space_graph_add_pose(&graph, &qd->qdevs.hmd->pose);
 	m_space_graph_resolve(&graph, &rel);
 
-	qctrl->pose = rel.pose;
-	qctrl->follow_hmd = follow;
+	qd->pose = rel.pose;
+	qd->follow_hmd = follow;
 }
 
 void
-qwerty_toggle_follow_hmd(struct xrt_device *xdev)
+qwerty_toggle_follow_hmd(struct qwerty_controller *qc)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	qwerty_follow_hmd(xdev, !qdev->follow_hmd);
+	qwerty_follow_hmd(qc, !qc->base.follow_hmd);
 }
 
 void
-qwerty_reset_controller_pose(struct xrt_device *xdev)
+qwerty_reset_controller_pose(struct qwerty_controller *qc)
 {
-	struct qwerty_device *qctrl = qwerty_device(xdev);
+	struct qwerty_device *qd = &qc->base;
 
-	bool no_qhmd = !qctrl->qdevs.hmd;
-	bool not_ctrl = qctrl == qctrl->qdevs.hmd;
+	bool no_qhmd = !qd->qdevs.hmd;
+	bool not_ctrl = qd == qd->qdevs.hmd;
 	if (no_qhmd || not_ctrl)
 		return;
 
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
-	bool is_left = qctrl == qctrl->qdevs.lctrl;
+	bool is_left = qd == qd->qdevs.lctrl;
 
-	qwerty_follow_hmd(xdev, true);
+	qwerty_follow_hmd(qc, true);
 	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
-	qctrl->pose = pose;
+	qd->pose = pose;
 }
 
 void
