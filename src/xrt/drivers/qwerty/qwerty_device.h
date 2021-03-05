@@ -7,9 +7,9 @@
 
 struct qwerty_devices
 {
-	struct qwerty_device *hmd;
-	struct qwerty_device *lctrl;
-	struct qwerty_device *rctrl;
+	struct qwerty_hmd *hmd;
+	struct qwerty_controller *lctrl;
+	struct qwerty_controller *rctrl;
 };
 
 struct qwerty_device

@@ -26,12 +26,10 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	// XXXASK: Precondition xdevs[1] is a qwerty left controller
 	struct qwerty_controller *qleft = qwerty_controller(xdevs[1]);
 	struct qwerty_device *qd_left = &qleft->base;
-	struct xrt_device *xd_left = xdevs[1]; // XXSPLIT: Remove
 
 	// XXXASK: Precondition xdevs[2] is a qwerty right controller
 	struct qwerty_controller *qright = qwerty_controller(xdevs[2]);
 	struct qwerty_device *qd_right = &qright->base;
-	struct xrt_device *xd_right = xdevs[2]; // XXXSPLIT: Remove
 
 	// At this point xdevs[0] might not be a qwerty HMD, because the autoprober
 	// does not create a qwerty hmd if it was told an hmd was found before qwerty
@@ -75,8 +73,6 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	else if (alt_pressed) qdev = qd_right;
 	else if (using_qhmd) qdev = qd_hmd;
 	else /* if (!using_qhmd) */ qdev = qd_right;
-
-	struct xrt_device *xdev = &qdev->base; // XXXSPLIT: Review necessity of this var
 
 	// Default controller for methods that only make sense for controllers.
 	// qright default: some window managers capture alt+click actions before SDL
