@@ -64,11 +64,11 @@ qwerty_update_inputs(struct xrt_device *xdev)
 		qdev->menu_clicked = false;
 	}
 
-	// XXX: Wasn't necessary to set input timestamp as below, why?
+	// XXXFUT: Wasn't necessary to set input timestamp as below, why?
 	// xdev->inputs[i].timestamp = os_monotonic_get_ns();
 }
 
-// XXX: Just noticed that the psmv version of these functions use psmv_device as
+// XXXFUT: Just noticed that the psmv version of these functions use psmv_device as
 // prefix instead of just psmv check other drivers to know if it is the standard
 // name style for drivers
 static void
@@ -166,7 +166,7 @@ qwerty_get_view_pose(struct xrt_device *xdev,
                      uint32_t view_index,
                      struct xrt_pose *out_pose)
 {
-	// XXX: This behaviour is different from the majority of driver's
+	// XXXFUT: This behaviour is different from the majority of driver's
 	// get_view_pose. See if that behaviour could be better than this
 	// i.e. the "avoid -0.f" and "only flip if negative" if statements.
 	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
@@ -283,14 +283,14 @@ qwerty_controller_create(struct qwerty_device *qhmd, bool is_left)
 	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXX: qc->base.*_tracking_supported bools are false. Is this semantically correct?
+	// XXXFUT: qc->base.*_tracking_supported bools are false. Is this semantically correct?
 	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
 	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
 
 	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 	qc->base.inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
 	qc->base.inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXX: Understand aim inputs
+	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXXFUT: Understand aim inputs
 	qc->base.outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
 
 	qc->base.update_inputs = qwerty_update_inputs;

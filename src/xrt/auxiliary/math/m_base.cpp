@@ -124,7 +124,7 @@ math_vec3_normalize(struct xrt_vec3 *in)
 extern "C" void
 math_quat_from_angle_vector(float angle_rads, const struct xrt_vec3 *vector, struct xrt_quat *result)
 {
-	// XXX: This line has something interesting going on, l-value-something? Understand it.
+	// XXXFUT: This line has something interesting going on, l-value-something? Understand it.
 	map_quat(*result) = Eigen::AngleAxisf(angle_rads, copy(vector));
 }
 

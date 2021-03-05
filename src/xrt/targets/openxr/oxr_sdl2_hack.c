@@ -167,7 +167,7 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			// XXX: Caution here, qwerty driver is being accesed by the main thread as well
+			// XXXASK: Caution here, qwerty driver is being accesed by the main thread as well
 			if (qwerty_enabled)
 				qwerty_process_event(p->base.xdevs, event);
 
