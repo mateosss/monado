@@ -14,6 +14,7 @@
 #include "xrt/xrt_device.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 #define QWERTY_HMD_INITIAL_MOVEMENT_SPEED 0.002f // in meters per frame
 #define QWERTY_HMD_INITIAL_LOOK_SPEED 0.02f      // in radians per frame
@@ -24,7 +25,7 @@
 // clang-format off
 // Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
 #define QWERTY_HMD_INITIAL_POS (struct xrt_vec3){0, 1.6f, 0}
-#define QWERTY_CONTROLLER_INITIAL_POS(is_left) (struct xrt_vec3){is_left ? -0.2f : 0.2f, -0.3f, -0.5f}
+#define QWERTY_CONTROLLER_INITIAL_POS(is_left) (struct xrt_vec3){(is_left) ? -0.2f : 0.2f, -0.3f, -0.5f}
 // clang-format on
 
 // Indices for fake controller input components
@@ -40,22 +41,37 @@
 #define QWERTY_WARN(qd, ...) U_LOG_XDEV_IFL_W(&qd->base, qd->ll, __VA_ARGS__)
 #define QWERTY_ERROR(qd, ...) U_LOG_XDEV_IFL_E(&qd->base, qd->ll, __VA_ARGS__)
 
+static inline bool
+eq(void *a, void *b)
+{
+	return a == b;
+}
+
 static inline struct qwerty_device *
 qwerty_device(struct xrt_device *xdev)
 {
-	return (struct qwerty_device *)xdev;
+	struct qwerty_device *qd = (struct qwerty_device *)xdev;
+	bool is_qwerty_device = eq(qd, qd->qdevs.hmd) || eq(qd, qd->qdevs.lctrl) || eq(qd, qd->qdevs.rctrl);
+	assert(is_qwerty_device);
+	return qd;
 }
 
 struct qwerty_hmd *
 qwerty_hmd(struct xrt_device *xd)
 {
-	return (struct qwerty_hmd *)xd;
+	struct qwerty_hmd *qh = (struct qwerty_hmd *)xd;
+	bool is_qwerty_hmd = eq(qh, qh->base.qdevs.hmd);
+	assert(is_qwerty_hmd);
+	return qh;
 }
 
 struct qwerty_controller *
 qwerty_controller(struct xrt_device *xd)
 {
-	return (struct qwerty_controller *)xd;
+	struct qwerty_controller *qc = (struct qwerty_controller *)xd;
+	bool is_qwerty_controller = eq(qc, qc->base.qdevs.lctrl) || eq(qc, qc->base.qdevs.rctrl);
+	assert(is_qwerty_controller);
+	return qc;
 }
 
 static void
