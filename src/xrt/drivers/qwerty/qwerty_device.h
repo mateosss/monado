@@ -37,12 +37,6 @@ struct qwerty_device
 	bool select_clicked;
 	bool menu_clicked;
 
-	// Only used for controllers and when a qwerty hmd exists.
-	// If true, `pose` is relative to the qwerty HMD.
-	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
-	// XXX: Enough reason to separate qwerty_device into qwerty_hmd and qwerty_controller
-	bool follow_hmd;
-
 	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
 	float yaw_delta;
 	float pitch_delta;
@@ -56,7 +50,18 @@ struct qwerty_hmd
 struct qwerty_controller
 {
 	struct qwerty_device base;
+
+	// Only used when a qwerty hmd exists.
+	// If true, `pose` is relative to the qwerty HMD.
+	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
+	bool follow_hmd;
 };
+
+struct qwerty_hmd *
+qwerty_hmd(struct xrt_device *xd);
+
+struct qwerty_controller *
+qwerty_controller(struct xrt_device *xd);
 
 struct qwerty_hmd *
 qwerty_hmd_create();
