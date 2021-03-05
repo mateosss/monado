@@ -305,27 +305,27 @@ qwerty_controller_create(struct qwerty_hmd *qhmd, bool is_left)
 // Emulated actions
 
 // clang-format off
-void qwerty_press_left(struct xrt_device *qd) { qwerty_device(qd)->left_pressed = true; }
-void qwerty_release_left(struct xrt_device *qd) { qwerty_device(qd)->left_pressed = false; }
-void qwerty_press_right(struct xrt_device *qd) { qwerty_device(qd)->right_pressed = true; }
-void qwerty_release_right(struct xrt_device *qd) { qwerty_device(qd)->right_pressed = false; }
-void qwerty_press_forward(struct xrt_device *qd) { qwerty_device(qd)->forward_pressed = true; }
-void qwerty_release_forward(struct xrt_device *qd) { qwerty_device(qd)->forward_pressed = false; }
-void qwerty_press_backward(struct xrt_device *qd) { qwerty_device(qd)->backward_pressed = true; }
-void qwerty_release_backward(struct xrt_device *qd) { qwerty_device(qd)->backward_pressed = false; }
-void qwerty_press_up(struct xrt_device *qd) { qwerty_device(qd)->up_pressed = true; }
-void qwerty_release_up(struct xrt_device *qd) { qwerty_device(qd)->up_pressed = false; }
-void qwerty_press_down(struct xrt_device *qd) { qwerty_device(qd)->down_pressed = true; }
-void qwerty_release_down(struct xrt_device *qd) { qwerty_device(qd)->down_pressed = false; }
+void qwerty_press_left(struct qwerty_device *qd) { qd->left_pressed = true; }
+void qwerty_release_left(struct qwerty_device *qd) { qd->left_pressed = false; }
+void qwerty_press_right(struct qwerty_device *qd) { qd->right_pressed = true; }
+void qwerty_release_right(struct qwerty_device *qd) { qd->right_pressed = false; }
+void qwerty_press_forward(struct qwerty_device *qd) { qd->forward_pressed = true; }
+void qwerty_release_forward(struct qwerty_device *qd) { qd->forward_pressed = false; }
+void qwerty_press_backward(struct qwerty_device *qd) { qd->backward_pressed = true; }
+void qwerty_release_backward(struct qwerty_device *qd) { qd->backward_pressed = false; }
+void qwerty_press_up(struct qwerty_device *qd) { qd->up_pressed = true; }
+void qwerty_release_up(struct qwerty_device *qd) { qd->up_pressed = false; }
+void qwerty_press_down(struct qwerty_device *qd) { qd->down_pressed = true; }
+void qwerty_release_down(struct qwerty_device *qd) { qd->down_pressed = false; }
 
-void qwerty_press_look_left(struct xrt_device *qd) { qwerty_device(qd)->look_left_pressed = true; }
-void qwerty_release_look_left(struct xrt_device *qd) { qwerty_device(qd)->look_left_pressed = false; }
-void qwerty_press_look_right(struct xrt_device *qd) { qwerty_device(qd)->look_right_pressed = true; }
-void qwerty_release_look_right(struct xrt_device *qd) { qwerty_device(qd)->look_right_pressed = false; }
-void qwerty_press_look_up(struct xrt_device *qd) { qwerty_device(qd)->look_up_pressed = true; }
-void qwerty_release_look_up(struct xrt_device *qd) { qwerty_device(qd)->look_up_pressed = false; }
-void qwerty_press_look_down(struct xrt_device *qd) { qwerty_device(qd)->look_down_pressed = true; }
-void qwerty_release_look_down(struct xrt_device *qd) { qwerty_device(qd)->look_down_pressed = false; }
+void qwerty_press_look_left(struct qwerty_device *qd) { qd->look_left_pressed = true; }
+void qwerty_release_look_left(struct qwerty_device *qd) { qd->look_left_pressed = false; }
+void qwerty_press_look_right(struct qwerty_device *qd) { qd->look_right_pressed = true; }
+void qwerty_release_look_right(struct qwerty_device *qd) { qd->look_right_pressed = false; }
+void qwerty_press_look_up(struct qwerty_device *qd) { qd->look_up_pressed = true; }
+void qwerty_release_look_up(struct qwerty_device *qd) { qd->look_up_pressed = false; }
+void qwerty_press_look_down(struct qwerty_device *qd) { qd->look_down_pressed = true; }
+void qwerty_release_look_down(struct qwerty_device *qd) { qd->look_down_pressed = false; }
 
 void qwerty_select_click(struct xrt_device *xdev) { qwerty_device(xdev)->select_clicked = true; }
 void qwerty_menu_click(struct xrt_device *xdev) { qwerty_device(xdev)->menu_clicked = true; }
