@@ -11,11 +11,24 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 {
 	// XXXFUT: Think about a better way of obtaining qwerty_devices from xdevs than
 	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
-	struct xrt_device *qhmd = xdevs[0]; // This might not be a qwerty HMD
-	struct xrt_device *qleft = xdevs[1]; // XXX: Why q prefix? This should be xleft
-	struct xrt_device *qright = xdevs[2];
 
-	bool using_qhmd = qwerty_hmd_available(qleft);
+	// XXXASK: Precondition xdevs[1] is a qwerty left controller
+	struct qwerty_controller *qleft = qwerty_controller(xdevs[1]);
+	struct qwerty_device *qd_left = &qleft->base;
+
+	// XXXASK: Precondition xdevs[2] is a qwerty right controller
+	struct qwerty_controller *qright = qwerty_controller(xdevs[2]);
+	struct qwerty_device *qd_right = &qright->base;
+
+	// At this point xdevs[0] might not be a qwerty HMD, because the autoprober
+	// does not create a qwerty hmd if it was told an hmd was found before qwerty
+	// probing. However we are "sure", because it will break otherwise, that
+	// xd_left is a left qwerty_controller and so we can get qwerty info from it.
+	// XXXASK: Some mechanism should be in place to assert that about xd_left
+	bool using_qhmd = qd_left->qdevs.hmd != NULL;
+	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xdevs[0]) : NULL;
+	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
+
 
 	// clang-format off
 	// XXX: I'm definitely pushing some limits with so much clang-format off
@@ -39,20 +52,20 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	bool change_focus = alt_down || alt_up || ctrl_down || ctrl_up;
 	if (change_focus) {
-		if (using_qhmd) qwerty_release_all(qhmd);
-		qwerty_release_all(qright);
-		qwerty_release_all(qleft);
+		if (using_qhmd) qwerty_release_all(qd_hmd);
+		qwerty_release_all(qd_right);
+		qwerty_release_all(qd_left);
 	}
 
-	struct xrt_device *qdev; // Focused device
-	if (ctrl_pressed) qdev = qleft;
-	else if (alt_pressed) qdev = qright;
-	else if (using_qhmd) qdev = qhmd;
-	else /* if (!using_qhmd) */ qdev = qright;
+	struct qwerty_device *qdev; // Focused device
+	if (ctrl_pressed) qdev = qd_left;
+	else if (alt_pressed) qdev = qd_right;
+	else if (using_qhmd) qdev = qd_hmd;
+	else /* if (!using_qhmd) */ qdev = qd_right;
 
 	// Default controller for methods that only make sense for controllers.
-	// Right one because some window managers capture alt+click actions before SDL
-	struct xrt_device *qctrl = qdev != qhmd ? qdev : qright;
+	// qright default: some window managers capture alt+click actions before SDL
+	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : qwerty_controller(&qdev->base);
 
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
@@ -84,9 +97,9 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	// Controllers follow/unfollow HMD
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
-		if (qdev != qhmd) qwerty_toggle_follow_hmd(qdev);
+		if (qdev != qd_hmd) qwerty_follow_hmd(qctrl, !qctrl->follow_hmd);
 		else { // If no controller is focused, set both to the same state
-			bool both_not_following = !qwerty_get_follow_hmd(qleft) && !qwerty_get_follow_hmd(qright);
+			bool both_not_following = !qleft->follow_hmd && !qright->follow_hmd;
 			qwerty_follow_hmd(qleft, both_not_following);
 			qwerty_follow_hmd(qright, both_not_following);
 		}
