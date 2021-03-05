@@ -65,27 +65,27 @@ struct qwerty_controller *
 qwerty_controller_create(struct qwerty_hmd *qh, bool is_left);
 
 // clang-format off
-void qwerty_press_left(struct xrt_device *qh);
-void qwerty_release_left(struct xrt_device *qh);
-void qwerty_press_right(struct xrt_device *qh);
-void qwerty_release_right(struct xrt_device *qh);
-void qwerty_press_forward(struct xrt_device *qh);
-void qwerty_release_forward(struct xrt_device *qh);
-void qwerty_press_backward(struct xrt_device *qh);
-void qwerty_release_backward(struct xrt_device *qh);
-void qwerty_press_up(struct xrt_device *qh);
-void qwerty_release_up(struct xrt_device *qh);
-void qwerty_press_down(struct xrt_device *qh);
-void qwerty_release_down(struct xrt_device *qh);
+void qwerty_press_left(struct qwerty_device *qd);
+void qwerty_release_left(struct qwerty_device *qd);
+void qwerty_press_right(struct qwerty_device *qd);
+void qwerty_release_right(struct qwerty_device *qd);
+void qwerty_press_forward(struct qwerty_device *qd);
+void qwerty_release_forward(struct qwerty_device *qd);
+void qwerty_press_backward(struct qwerty_device *qd);
+void qwerty_release_backward(struct qwerty_device *qd);
+void qwerty_press_up(struct qwerty_device *qd);
+void qwerty_release_up(struct qwerty_device *qd);
+void qwerty_press_down(struct qwerty_device *qd);
+void qwerty_release_down(struct qwerty_device *qd);
 
-void qwerty_press_look_left(struct xrt_device *qh);
-void qwerty_release_look_left(struct xrt_device *qh);
-void qwerty_press_look_right(struct xrt_device *qh);
-void qwerty_release_look_right(struct xrt_device *qh);
-void qwerty_press_look_up(struct xrt_device *qh);
-void qwerty_release_look_up(struct xrt_device *qh);
-void qwerty_press_look_down(struct xrt_device *qh);
-void qwerty_release_look_down(struct xrt_device *qh);
+void qwerty_press_look_left(struct qwerty_device *qd);
+void qwerty_release_look_left(struct qwerty_device *qd);
+void qwerty_press_look_right(struct qwerty_device *qd);
+void qwerty_release_look_right(struct qwerty_device *qd);
+void qwerty_press_look_up(struct qwerty_device *qd);
+void qwerty_release_look_up(struct qwerty_device *qd);
+void qwerty_press_look_down(struct qwerty_device *qd);
+void qwerty_release_look_down(struct qwerty_device *qd);
 
 void qwerty_select_click(struct xrt_device *xdev);
 void qwerty_menu_click(struct xrt_device *xdev);
