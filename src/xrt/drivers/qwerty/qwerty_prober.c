@@ -49,7 +49,7 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 	struct qwerty_controller *qright = qwerty_controller_create(qhmd, false);
 
 	// All devices should be able to reference other ones, qdevs should only be written here.
-	struct qwerty_devices qdevs = {&qhmd->base, &qleft->base, &qright->base}; // XXXSPLIT
+	struct qwerty_devices qdevs = {qhmd, qleft, qright};
 	enum u_logging_level log_level = debug_get_log_option_qwerty_log();
 
 	struct qwerty_device *qd_hmd = &qhmd->base;

@@ -149,8 +149,9 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	if (name == XRT_INPUT_SIMPLE_GRIP_POSE && qd->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
-		m_space_graph_add_pose(&space_graph, &qd->pose);            // controller pose
-		m_space_graph_add_pose(&space_graph, &qd->qdevs.hmd->pose); // base space is hmd space
+		struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
+		m_space_graph_add_pose(&space_graph, &qd->pose);     // controller pose
+		m_space_graph_add_pose(&space_graph, &qd_hmd->pose); // base space is hmd space
 		m_space_graph_resolve(&space_graph, out_relation);
 	} else {
 		out_relation->pose = qd->pose;
@@ -347,14 +348,15 @@ qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 	if (no_qhmd || not_ctrl || unchanged)
 		return;
 
+	struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
 	struct xrt_space_graph graph = {0};
 	struct xrt_space_relation rel = {0};
 
 	m_space_graph_add_pose(&graph, &qd->pose);
 	if (follow) // From global to hmd
-		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qd->qdevs.hmd->pose);
+		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qd_hmd->pose);
 	else // From hmd to global
-		m_space_graph_add_pose(&graph, &qd->qdevs.hmd->pose);
+		m_space_graph_add_pose(&graph, &qd_hmd->pose);
 	m_space_graph_resolve(&graph, &rel);
 
 	qd->pose = rel.pose;
