@@ -7,6 +7,9 @@
 // Using INFO as default to inform events real devices could report physically
 DEBUG_GET_ONCE_LOG_OPTION(qwerty_log, "QWERTY_LOG", U_LOGGING_INFO)
 
+// Driver disabled by default as it does not work with arbitrary configurations
+DEBUG_GET_ONCE_BOOL_OPTION(qwerty_enable, "QWERTY_ENABLE", false)
+
 struct qwerty_prober
 {
 	struct xrt_auto_prober base;
@@ -32,6 +35,10 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
                         struct xrt_prober *xp,
                         struct xrt_device **out_xdevs)
 {
+	bool qwerty_enabled = debug_get_bool_option_qwerty_enable();
+	if (!qwerty_enabled)
+		return 0;
+
 	bool hmd_wanted = !no_hmds; // Hopefully easier to reason about
 
 	// XXX: How fine grained can the user control what controllers/hmd combination

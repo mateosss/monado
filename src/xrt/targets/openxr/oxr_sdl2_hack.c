@@ -45,6 +45,7 @@ oxr_sdl2_hack_stop(void **hack)
 #include <SDL2/SDL.h>
 
 DEBUG_GET_ONCE_BOOL_OPTION(gui, "OXR_DEBUG_GUI", false)
+DEBUG_GET_ONCE_BOOL_OPTION(qwerty_enable, "QWERTY_ENABLE", false)
 
 
 /*!
@@ -146,6 +147,9 @@ sdl2_loop(struct sdl2_program *p)
 	ImPlotContext *plot_ctx = ImPlot_CreateContext();
 	ImPlot_SetCurrentContext(plot_ctx);
 
+	// Using Qwerty driver
+	bool qwerty_enabled = debug_get_bool_option_qwerty_enable();
+
 	// Main loop
 	struct gui_imgui gui = {0};
 	gui.clear.r = 0.45f;
@@ -164,7 +168,8 @@ sdl2_loop(struct sdl2_program *p)
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
 			// XXX: Caution here, qwerty driver is being accesed by the main thread as well
-			qwerty_try_process_inputs(p->base.xdevs, event);
+			if (qwerty_enabled)
+				qwerty_process_event(p->base.xdevs, event);
 
 			if (event.type == SDL_QUIT) {
 				p->base.stopped = true;
