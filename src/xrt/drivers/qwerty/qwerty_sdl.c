@@ -25,7 +25,7 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	// probing. However we are "sure", because it will break otherwise, that
 	// xd_left is a left qwerty_controller and so we can get qwerty info from it.
 	// XXXASK: Some mechanism should be in place to assert that about xd_left
-	bool using_qhmd = qwerty_hmd_available(qd_left);
+	bool using_qhmd = qd_left->qdevs.hmd != NULL;
 	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xdevs[0]) : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
 
@@ -97,9 +97,9 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	// Controllers follow/unfollow HMD
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
-		if (qdev != qd_hmd) qwerty_toggle_follow_hmd(qctrl);
+		if (qdev != qd_hmd) qwerty_follow_hmd(qctrl, !qctrl->follow_hmd);
 		else { // If no controller is focused, set both to the same state
-			bool both_not_following = !qwerty_get_follow_hmd(qleft) && !qwerty_get_follow_hmd(qright);
+			bool both_not_following = !qleft->follow_hmd && !qright->follow_hmd;
 			qwerty_follow_hmd(qleft, both_not_following);
 			qwerty_follow_hmd(qright, both_not_following);
 		}

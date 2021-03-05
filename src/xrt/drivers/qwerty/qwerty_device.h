@@ -51,7 +51,7 @@ struct qwerty_controller
 	bool select_clicked;
 	bool menu_clicked;
 
-	// Only used when a qwerty hmd exists.
+	// Only used when a qwerty hmd exists. Use qwerty_follow_hmd() for setting it.
 	// If true, `pose` is relative to the qwerty HMD.
 	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
 	bool follow_hmd;
@@ -70,6 +70,9 @@ struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
 
 // clang-format off
+
+// Device methods
+
 void qwerty_press_left(struct qwerty_device *qd);
 void qwerty_release_left(struct qwerty_device *qd);
 void qwerty_press_right(struct qwerty_device *qd);
@@ -91,28 +94,19 @@ void qwerty_press_look_up(struct qwerty_device *qd);
 void qwerty_release_look_up(struct qwerty_device *qd);
 void qwerty_press_look_down(struct qwerty_device *qd);
 void qwerty_release_look_down(struct qwerty_device *qd);
-
-// Change movement speed in steps which are usually integers, though any float is allowed.
-void qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
-
-void qwerty_release_all(struct qwerty_device *qd);
-
 // XXX: Put proper doxygen documentation. See in which other functions I should put it.
 // Add yaw and pitch movement for the next frame
 void qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch);
 
-// Given an xdev qwerty device returns whether a qwerty HMD is in use or not.
-bool qwerty_hmd_available(struct qwerty_device *qd);
+// Change movement speed in steps which are usually integers, though any float is allowed.
+void qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
+void qwerty_release_all(struct qwerty_device *qd);
 
-// qwerty_controller methods
+// Controller methods
 
 void qwerty_select_click(struct qwerty_controller *qc);
 void qwerty_menu_click(struct qwerty_controller *qc);
-
-bool qwerty_get_follow_hmd(struct qwerty_controller *qc);
 void qwerty_follow_hmd(struct qwerty_controller *qc, bool follow);
-void qwerty_toggle_follow_hmd(struct qwerty_controller *qc);
-
 // Resets controller to initial pose and makes it follow the HMD
 void qwerty_reset_controller_pose(struct qwerty_controller *qc);
 
