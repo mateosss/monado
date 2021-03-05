@@ -48,11 +48,21 @@ struct qwerty_device
 	float pitch_delta;
 };
 
-struct qwerty_device *
+struct qwerty_hmd
+{
+	struct qwerty_device base;
+};
+
+struct qwerty_controller
+{
+	struct qwerty_device base;
+};
+
+struct qwerty_hmd *
 qwerty_hmd_create();
 
-struct qwerty_device *
-qwerty_controller_create(struct qwerty_device *qhmd, bool is_left);
+struct qwerty_controller *
+qwerty_controller_create(struct qwerty_hmd *qh, bool is_left);
 
 // clang-format off
 void qwerty_press_left(struct xrt_device *qh);

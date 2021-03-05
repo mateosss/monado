@@ -207,28 +207,26 @@ qwerty_setup_var_tracking(struct qwerty_device *qd)
 	u_var_add_ro_text(qd, "Toggle both or FC parenting to HMD", "F");
 }
 
-struct qwerty_device *
+struct qwerty_hmd *
 qwerty_hmd_create()
 {
-	// U_DEVICE_ALLOCATE makes a calloc and fill pointers to zeroed unique memory
-	// the properties set are commented below
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
 	size_t num_inputs = 1, num_outputs = 0;
-	struct qwerty_device *qh = U_DEVICE_ALLOCATE(struct qwerty_device, flags, num_inputs, num_outputs);
+	struct qwerty_hmd *qh = U_DEVICE_ALLOCATE(struct qwerty_hmd, flags, num_inputs, num_outputs);
 
-	// Fill qwerty specific properties
-	qh->pose.orientation.w = 1.f;
-	qh->pose.position = QWERTY_HMD_INITIAL_POS;
-	qh->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
-	qh->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
-	qh->follow_hmd = false;
+	struct qwerty_device *qd = &qh->base;
+	qd->pose.orientation.w = 1.f;
+	qd->pose.position = QWERTY_HMD_INITIAL_POS;
+	qd->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
+	qd->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
+	qd->follow_hmd = false;
 
-	// Fill xrt_device properties
-	qh->base.name = XRT_DEVICE_GENERIC_HMD;
-	qh->base.device_type = XRT_DEVICE_TYPE_HMD;
+	struct xrt_device *xd = &qd->base;
+	xd->name = XRT_DEVICE_GENERIC_HMD;
+	xd->device_type = XRT_DEVICE_TYPE_HMD;
 
-	snprintf(qh->base.str, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
-	snprintf(qh->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
+	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
+	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
 
 	// Fills qh->base.hmd
 	struct u_device_simple_info info;
@@ -241,64 +239,65 @@ qwerty_hmd_create()
 	info.views[0].fov = 85.0f * (M_PI / 180.0f);
 	info.views[1].fov = 85.0f * (M_PI / 180.0f);
 
-	if (!u_device_setup_split_side_by_side(&qh->base, &info)) {
-		QWERTY_ERROR(qh, "Failed to setup HMD properties");
-		qwerty_destroy(&qh->base);
+	if (!u_device_setup_split_side_by_side(xd, &info)) {
+		QWERTY_ERROR(qd, "Failed to setup HMD properties");
+		qwerty_destroy(xd);
 		return NULL;
 	}
 
-	qh->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	snprintf(qh->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty HMD Tracker");
+	xd->tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
+	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty HMD Tracker");
 
-	qh->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
+	xd->inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
 
-	qh->base.update_inputs = qwerty_update_inputs;
-	qh->base.get_tracked_pose = qwerty_get_tracked_pose;
-	qh->base.get_view_pose = qwerty_get_view_pose;
-	qh->base.destroy = qwerty_destroy;
-	u_distortion_mesh_set_none(&qh->base); // Fills qh->base.compute_distortion
+	xd->update_inputs = qwerty_update_inputs;
+	xd->get_tracked_pose = qwerty_get_tracked_pose;
+	xd->get_view_pose = qwerty_get_view_pose;
+	xd->destroy = qwerty_destroy;
+	u_distortion_mesh_set_none(xd); // Fills xd->compute_distortion()
 
-	qwerty_setup_var_tracking(qh);
+	qwerty_setup_var_tracking(qd);
 
 	return qh;
 }
 
-struct qwerty_device *
-qwerty_controller_create(struct qwerty_device *qhmd, bool is_left)
+struct qwerty_controller *
+qwerty_controller_create(struct qwerty_hmd *qhmd, bool is_left)
 {
-	struct qwerty_device *qc = U_DEVICE_ALLOCATE(struct qwerty_device, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
+	struct qwerty_controller *qc = U_DEVICE_ALLOCATE(struct qwerty_controller, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 
-	// Fill qwerty specific properties
-	qc->pose.orientation.w = 1.f;
-	qc->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
-	qc->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
-	qc->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
-	qc->follow_hmd = qhmd != NULL;
+	struct qwerty_device *qd = &qc->base;
+	qd->pose.orientation.w = 1.f;
+	qd->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
+	qd->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
+	qd->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
+	qd->follow_hmd = qhmd != NULL;
 
-	// Fill xrt_device properties
-	qc->base.name = XRT_DEVICE_SIMPLE_CONTROLLER;
-	qc->base.device_type = is_left ? XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER : XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
+	struct xrt_device *xd = &qd->base;
+
+	xd->name = XRT_DEVICE_SIMPLE_CONTROLLER;
+	xd->device_type = is_left ? XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER : XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
 
 	char *side_name = is_left ? "Left" : "Right";
-	snprintf(qc->base.str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
-	snprintf(qc->base.serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
+	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
+	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXXFUT: qc->base.*_tracking_supported bools are false. Is this semantically correct?
-	qc->base.tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	snprintf(qc->base.tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
+	// XXXFUT: xd->*_tracking_supported bools are false. Is this semantically correct?
+	xd->tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
+	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
 
-	qc->base.inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
-	qc->base.inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
-	qc->base.inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-	qc->base.inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXXFUT: Understand aim inputs
-	qc->base.outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
+	xd->inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
+	xd->inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
+	xd->inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
+	xd->inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXXFUT: Understand aim inputs
+	xd->outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
 
-	qc->base.update_inputs = qwerty_update_inputs;
-	qc->base.get_tracked_pose = qwerty_get_tracked_pose;
-	qc->base.set_output = qwerty_set_output;
-	qc->base.destroy = qwerty_destroy;
+	xd->update_inputs = qwerty_update_inputs;
+	xd->get_tracked_pose = qwerty_get_tracked_pose;
+	xd->set_output = qwerty_set_output;
+	xd->destroy = qwerty_destroy;
 
-	qwerty_setup_var_tracking(qc);
+	qwerty_setup_var_tracking(qd);
 
 	return qc;
 }
