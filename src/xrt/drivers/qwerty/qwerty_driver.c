@@ -48,9 +48,9 @@ eq(void *a, void *b)
 }
 
 static inline struct qwerty_device *
-qwerty_device(struct xrt_device *xdev)
+qwerty_device(struct xrt_device *xd)
 {
-	struct qwerty_device *qd = (struct qwerty_device *)xdev;
+	struct qwerty_device *qd = (struct qwerty_device *)xd;
 	bool is_qwerty_device = eq(qd, qd->qdevs.hmd) || eq(qd, qd->qdevs.lctrl) || eq(qd, qd->qdevs.rctrl);
 	assert(is_qwerty_device);
 	return qd;
@@ -75,39 +75,39 @@ qwerty_controller(struct xrt_device *xd)
 }
 
 static void
-qwerty_update_inputs(struct xrt_device *xdev)
+qwerty_update_inputs(struct xrt_device *xd)
 {
-	if (xdev->name != XRT_DEVICE_SIMPLE_CONTROLLER)
+	if (xd->name != XRT_DEVICE_SIMPLE_CONTROLLER)
 		return;
 
-	struct qwerty_controller *qc = qwerty_controller(xdev);
+	struct qwerty_controller *qc = qwerty_controller(xd);
 	struct qwerty_device *qd = &qc->base;
 
-	xdev->inputs[QWERTY_SELECT].value.boolean = qc->select_clicked;
+	xd->inputs[QWERTY_SELECT].value.boolean = qc->select_clicked;
 	if (qc->select_clicked) {
-		QWERTY_INFO(qd, "[%s] Select click", xdev->str);
+		QWERTY_INFO(qd, "[%s] Select click", xd->str);
 		qc->select_clicked = false;
 	}
 
-	xdev->inputs[QWERTY_MENU].value.boolean = qc->menu_clicked;
+	xd->inputs[QWERTY_MENU].value.boolean = qc->menu_clicked;
 	if (qc->menu_clicked) {
-		QWERTY_INFO(qd, "[%s] Menu click", xdev->str);
+		QWERTY_INFO(qd, "[%s] Menu click", xd->str);
 		qc->menu_clicked = false;
 	}
 
 	// XXXFUT: Wasn't necessary to set input timestamp as below, why?
-	// xdev->inputs[i].timestamp = os_monotonic_get_ns();
+	// xd->inputs[i].timestamp = os_monotonic_get_ns();
 }
 
 // XXXFUT: Just noticed that the psmv version of these functions use psmv_device as
 // prefix instead of just psmv check other drivers to know if it is the standard
 // name style for drivers
 static void
-qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_output_value *value)
+qwerty_set_output(struct xrt_device *xd, enum xrt_output_name name, union xrt_output_value *value)
 {
 	// XXX: Should probably be using DEBUG macros instead of printf's
 
-	struct qwerty_device *qd = qwerty_device(xdev);
+	struct qwerty_device *qd = qwerty_device(xd);
 	float frequency = value->vibration.frequency;
 	float amplitude = value->vibration.amplitude;
 	time_duration_ns duration = value->vibration.duration;
@@ -115,17 +115,17 @@ qwerty_set_output(struct xrt_device *xdev, enum xrt_output_name name, union xrt_
 		QWERTY_INFO(qd,
 		            "[%s] Haptic output: \n"
 		            "\tfrequency=%.2f amplitude=%.2f duration=%ld",
-		            xdev->str, frequency, amplitude, duration);
+		            xd->str, frequency, amplitude, duration);
 	}
 }
 
 static void
-qwerty_get_tracked_pose(struct xrt_device *xdev,
+qwerty_get_tracked_pose(struct xrt_device *xd,
                         enum xrt_input_name name,
                         uint64_t at_timestamp_ns,
                         struct xrt_space_relation *out_relation)
 {
-	struct qwerty_device *qd = qwerty_device(xdev);
+	struct qwerty_device *qd = qwerty_device(xd);
 
 	// XXXASK: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
 
@@ -180,7 +180,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 
 	bool qd_is_ctrl = name == XRT_INPUT_SIMPLE_GRIP_POSE;
-	// XXXSPLIT: should I support a qwerty_controller(qd) besides xdev?
+	// XXXSPLIT: should I support a qwerty_controller(qd) besides xd?
 	struct qwerty_controller *qc = qd_is_ctrl ? qwerty_controller(&qd->base) : NULL;
 	if (qd_is_ctrl && qc->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
@@ -197,7 +197,7 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 }
 
 static void
-qwerty_get_view_pose(struct xrt_device *xdev,
+qwerty_get_view_pose(struct xrt_device *xd,
                      struct xrt_vec3 *eye_relation,
                      uint32_t view_index,
                      struct xrt_pose *out_pose)
@@ -215,11 +215,11 @@ qwerty_get_view_pose(struct xrt_device *xdev,
 }
 
 static void
-qwerty_destroy(struct xrt_device *xdev)
+qwerty_destroy(struct xrt_device *xd)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	u_var_remove_root(qdev);
-	u_device_free(&qdev->base);
+	struct qwerty_device *qd = qwerty_device(xd);
+	u_var_remove_root(qd);
+	u_device_free(xd);
 }
 
 static void
@@ -307,6 +307,7 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	qd->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
 	qd->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qd->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
+	qwerty_setup_var_tracking(qd);
 
 	struct xrt_device *xd = &qd->base;
 
@@ -332,12 +333,10 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	xd->set_output = qwerty_set_output;
 	xd->destroy = qwerty_destroy;
 
-	qwerty_setup_var_tracking(qd);
-
 	return qc;
 }
 
-// Emulated actions
+// Device methods
 
 // clang-format off
 void qwerty_press_left(struct qwerty_device *qd) { qd->left_pressed = true; }
@@ -362,15 +361,45 @@ void qwerty_release_look_up(struct qwerty_device *qd) { qd->look_up_pressed = fa
 void qwerty_press_look_down(struct qwerty_device *qd) { qd->look_down_pressed = true; }
 void qwerty_release_look_down(struct qwerty_device *qd) { qd->look_down_pressed = false; }
 
+
+// clang-format on
+
+void
+qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch)
+{
+	qd->yaw_delta += yaw * qd->look_speed;
+	qd->pitch_delta += pitch * qd->look_speed;
+}
+
+void
+qwerty_change_movement_speed(struct qwerty_device *qd, float steps)
+{
+	qd->movement_speed *= powf(MOVEMENT_SPEED_STEP, steps);
+}
+
+void
+qwerty_release_all(struct qwerty_device *qd)
+{
+	qd->left_pressed = false;
+	qd->right_pressed = false;
+	qd->forward_pressed = false;
+	qd->backward_pressed = false;
+	qd->up_pressed = false;
+	qd->down_pressed = false;
+	qd->look_left_pressed = false;
+	qd->look_right_pressed = false;
+	qd->look_up_pressed = false;
+	qd->look_down_pressed = false;
+	qd->yaw_delta = 0;
+	qd->pitch_delta = 0;
+}
+
+// Controller methods
+
+// clang-format off
 void qwerty_select_click(struct qwerty_controller *qc) { qc->select_clicked = true; }
 void qwerty_menu_click(struct qwerty_controller *qc) { qc->menu_clicked = true; }
 // clang-format on
-
-bool
-qwerty_get_follow_hmd(struct qwerty_controller *qc)
-{
-	return qc->follow_hmd;
-}
 
 void
 qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
@@ -397,12 +426,6 @@ qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 }
 
 void
-qwerty_toggle_follow_hmd(struct qwerty_controller *qc)
-{
-	qwerty_follow_hmd(qc, !qc->follow_hmd);
-}
-
-void
 qwerty_reset_controller_pose(struct qwerty_controller *qc)
 {
 	struct qwerty_device *qd = &qc->base;
@@ -417,41 +440,4 @@ qwerty_reset_controller_pose(struct qwerty_controller *qc)
 	qwerty_follow_hmd(qc, true);
 	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
 	qd->pose = pose;
-}
-
-void
-qwerty_change_movement_speed(struct qwerty_device *qd, float steps)
-{
-	qd->movement_speed *= powf(MOVEMENT_SPEED_STEP, steps);
-}
-
-
-void
-qwerty_release_all(struct qwerty_device *qd)
-{
-	qd->left_pressed = false;
-	qd->right_pressed = false;
-	qd->forward_pressed = false;
-	qd->backward_pressed = false;
-	qd->up_pressed = false;
-	qd->down_pressed = false;
-	qd->look_left_pressed = false;
-	qd->look_right_pressed = false;
-	qd->look_up_pressed = false;
-	qd->look_down_pressed = false;
-	qd->yaw_delta = 0;
-	qd->pitch_delta = 0;
-}
-
-void
-qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch)
-{
-	qd->yaw_delta += yaw * qd->look_speed;
-	qd->pitch_delta += pitch * qd->look_speed;
-}
-
-bool
-qwerty_hmd_available(struct qwerty_device *qd)
-{
-	return qd->qdevs.hmd != NULL;
 }
