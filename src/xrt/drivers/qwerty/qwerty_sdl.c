@@ -7,19 +7,8 @@
 #include <stdbool.h>
 
 void
-qwerty_try_process_inputs(struct xrt_device **xdevs, SDL_Event event)
+qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 {
-
-  // XXX: Get using_qwerty condition from somewhere else.
-  // Maybe add a new xrt_device_name and scan xdevs? An environment var?
-  // This is how I was doing it before enabling non-qwerty hmds to work:
-  // 	struct xrt_device *hmd = p->base.xdevs[0];
-  // 	bool using_qwerty = hmd != NULL && !strcmp(hmd->serial, "Qwerty HMD");
-  // EDIT: Using QWERTY_ENABLE env var while also documenting qwerty for now just works
-  // in two setups: alone, or just with another hmd, not with another controllers
-  bool using_qwerty = true;
-  if (!using_qwerty) return;
-
 	// XXX: Think about a better way of obtaining qwerty_devices from xdevs than
 	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
 	struct xrt_device *qhmd = xdevs[0]; // This might not be a qwerty HMD
