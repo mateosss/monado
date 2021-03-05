@@ -9,7 +9,7 @@
 void
 qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 {
-	// XXX: Think about a better way of obtaining qwerty_devices from xdevs than
+	// XXXFUT: Think about a better way of obtaining qwerty_devices from xdevs than
 	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
 	struct xrt_device *qhmd = xdevs[0]; // This might not be a qwerty HMD
 	struct xrt_device *qleft = xdevs[1]; // XXX: Why q prefix? This should be xleft
@@ -21,7 +21,7 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	// XXX: I'm definitely pushing some limits with so much clang-format off
 	// it is mainly for the oneline ifs that I think are more readable
 
-	// XXX: This static vars seem a bad idea, maybe should use
+	// XXXFUT: This static vars seem a bad idea, maybe should use
 	// SDL_GetKeyboardState but I quickly read that is only for SDL2 and I
 	// think monado should support SDL1 as well. Also this `*_pressed = true`
 	// logic is repeated in qwerty_device, smells bad.
@@ -81,9 +81,6 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	// Select and menu clicks only for controllers.
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
-
-	// XXX: The behaviour of the F key is not consistent to that of the R key in that touching F without ctrl or alt does not affect both controllers.
-	// XXX: Look for other inconsistencies in the shortcuts usage and improve it
 
 	// Controllers follow/unfollow HMD
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
