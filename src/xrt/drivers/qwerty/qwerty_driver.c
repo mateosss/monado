@@ -61,18 +61,22 @@ qwerty_controller(struct xrt_device *xd)
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
+	if (xdev->name != XRT_DEVICE_SIMPLE_CONTROLLER)
+		return;
 
-	xdev->inputs[QWERTY_SELECT].value.boolean = qdev->select_clicked;
-	if (qdev->select_clicked) {
-		QWERTY_INFO(qdev, "[%s] Select click", xdev->str);
-		qdev->select_clicked = false;
+	struct qwerty_controller *qc = qwerty_controller(xdev);
+	struct qwerty_device *qd = &qc->base;
+
+	xdev->inputs[QWERTY_SELECT].value.boolean = qc->select_clicked;
+	if (qc->select_clicked) {
+		QWERTY_INFO(qd, "[%s] Select click", xdev->str);
+		qc->select_clicked = false;
 	}
 
-	xdev->inputs[QWERTY_MENU].value.boolean = qdev->menu_clicked;
-	if (qdev->menu_clicked) {
-		QWERTY_INFO(qdev, "[%s] Menu click", xdev->str);
-		qdev->menu_clicked = false;
+	xdev->inputs[QWERTY_MENU].value.boolean = qc->menu_clicked;
+	if (qc->menu_clicked) {
+		QWERTY_INFO(qd, "[%s] Menu click", xdev->str);
+		qc->menu_clicked = false;
 	}
 
 	// XXXFUT: Wasn't necessary to set input timestamp as below, why?
@@ -342,8 +346,8 @@ void qwerty_release_look_up(struct qwerty_device *qd) { qd->look_up_pressed = fa
 void qwerty_press_look_down(struct qwerty_device *qd) { qd->look_down_pressed = true; }
 void qwerty_release_look_down(struct qwerty_device *qd) { qd->look_down_pressed = false; }
 
-void qwerty_select_click(struct qwerty_controller *qc) { qc->base.select_clicked = true; }
-void qwerty_menu_click(struct qwerty_controller *qc) { qc->base.menu_clicked = true; }
+void qwerty_select_click(struct qwerty_controller *qc) { qc->select_clicked = true; }
+void qwerty_menu_click(struct qwerty_controller *qc) { qc->menu_clicked = true; }
 // clang-format on
 
 bool

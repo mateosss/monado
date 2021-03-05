@@ -33,10 +33,6 @@ struct qwerty_device
 	bool look_up_pressed;
 	bool look_down_pressed;
 
-	// Controller buttons, unused for hmd
-	bool select_clicked;
-	bool menu_clicked;
-
 	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
 	float yaw_delta;
 	float pitch_delta;
@@ -50,6 +46,10 @@ struct qwerty_hmd
 struct qwerty_controller
 {
 	struct qwerty_device base;
+
+	// Controller buttons, unused for hmd
+	bool select_clicked;
+	bool menu_clicked;
 
 	// Only used when a qwerty hmd exists.
 	// If true, `pose` is relative to the qwerty HMD.
