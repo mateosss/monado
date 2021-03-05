@@ -46,6 +46,17 @@ qwerty_device(struct xrt_device *xdev)
 	return (struct qwerty_device *)xdev;
 }
 
+struct qwerty_hmd *
+qwerty_hmd(struct xrt_device *xd)
+{
+	return (struct qwerty_hmd *)xd;
+}
+
+struct qwerty_controller *
+qwerty_controller(struct xrt_device *xd)
+{
+	return (struct qwerty_controller *)xd;
+}
 
 static void
 qwerty_update_inputs(struct xrt_device *xdev)
@@ -147,7 +158,11 @@ qwerty_get_tracked_pose(struct xrt_device *xdev,
 
 	// Base Space Adjustment
 
-	if (name == XRT_INPUT_SIMPLE_GRIP_POSE && qd->follow_hmd) {
+
+	bool qd_is_ctrl = name == XRT_INPUT_SIMPLE_GRIP_POSE;
+	// XXXSPLIT: should I support a qwerty_controller(qd) besides xdev?
+	struct qwerty_controller *qc = qd_is_ctrl ? qwerty_controller(&qd->base) : NULL;
+	if (qd_is_ctrl && qc->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
 		struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
 		m_space_graph_add_pose(&space_graph, &qd->pose);     // controller pose
@@ -220,7 +235,6 @@ qwerty_hmd_create()
 	qd->pose.position = QWERTY_HMD_INITIAL_POS;
 	qd->movement_speed = QWERTY_HMD_INITIAL_MOVEMENT_SPEED;
 	qd->look_speed = QWERTY_HMD_INITIAL_LOOK_SPEED;
-	qd->follow_hmd = false;
 
 	struct xrt_device *xd = &qd->base;
 	xd->name = XRT_DEVICE_GENERIC_HMD;
@@ -266,13 +280,13 @@ struct qwerty_controller *
 qwerty_controller_create(struct qwerty_hmd *qhmd, bool is_left)
 {
 	struct qwerty_controller *qc = U_DEVICE_ALLOCATE(struct qwerty_controller, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
+	qc->follow_hmd = qhmd != NULL;
 
 	struct qwerty_device *qd = &qc->base;
 	qd->pose.orientation.w = 1.f;
 	qd->pose.position = QWERTY_CONTROLLER_INITIAL_POS(is_left);
 	qd->movement_speed = QWERTY_CONTROLLER_INITIAL_MOVEMENT_SPEED;
 	qd->look_speed = QWERTY_CONTROLLER_INITIAL_LOOK_SPEED;
-	qd->follow_hmd = qhmd != NULL;
 
 	struct xrt_device *xd = &qd->base;
 
@@ -335,7 +349,7 @@ void qwerty_menu_click(struct qwerty_controller *qc) { qc->base.menu_clicked = t
 bool
 qwerty_get_follow_hmd(struct qwerty_controller *qc)
 {
-	return qc->base.follow_hmd;
+	return qc->follow_hmd;
 }
 
 void
@@ -343,9 +357,8 @@ qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 {
 	struct qwerty_device *qd = &qc->base;
 	bool no_qhmd = !qd->qdevs.hmd;
-	bool not_ctrl = &qc->base == qd->qdevs.hmd;
-	bool unchanged = qd->follow_hmd == follow;
-	if (no_qhmd || not_ctrl || unchanged)
+	bool unchanged = qc->follow_hmd == follow;
+	if (no_qhmd || unchanged)
 		return;
 
 	struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
@@ -360,13 +373,13 @@ qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 	m_space_graph_resolve(&graph, &rel);
 
 	qd->pose = rel.pose;
-	qd->follow_hmd = follow;
+	qc->follow_hmd = follow;
 }
 
 void
 qwerty_toggle_follow_hmd(struct qwerty_controller *qc)
 {
-	qwerty_follow_hmd(qc, !qc->base.follow_hmd);
+	qwerty_follow_hmd(qc, !qc->follow_hmd);
 }
 
 void
@@ -375,12 +388,11 @@ qwerty_reset_controller_pose(struct qwerty_controller *qc)
 	struct qwerty_device *qd = &qc->base;
 
 	bool no_qhmd = !qd->qdevs.hmd;
-	bool not_ctrl = qd == qd->qdevs.hmd;
-	if (no_qhmd || not_ctrl)
+	if (no_qhmd)
 		return;
 
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
-	bool is_left = qd == qd->qdevs.lctrl;
+	bool is_left = qc == qd->qdevs.lctrl;
 
 	qwerty_follow_hmd(qc, true);
 	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
