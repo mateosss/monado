@@ -389,39 +389,38 @@ qwerty_reset_controller_pose(struct xrt_device *xdev)
 }
 
 void
-qwerty_change_movement_speed(struct xrt_device *xdev, float steps)
+qwerty_change_movement_speed(struct qwerty_device *qd, float steps)
 {
-	qwerty_device(xdev)->movement_speed *= powf(MOVEMENT_SPEED_STEP, steps);
+	qd->movement_speed *= powf(MOVEMENT_SPEED_STEP, steps);
 }
 
 
 void
-qwerty_release_all(struct xrt_device *xdev)
+qwerty_release_all(struct qwerty_device *qd)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	qdev->left_pressed = false;
-	qdev->right_pressed = false;
-	qdev->forward_pressed = false;
-	qdev->backward_pressed = false;
-	qdev->up_pressed = false;
-	qdev->down_pressed = false;
-	qdev->look_left_pressed = false;
-	qdev->look_right_pressed = false;
-	qdev->look_up_pressed = false;
-	qdev->look_down_pressed = false;
+	qd->left_pressed = false;
+	qd->right_pressed = false;
+	qd->forward_pressed = false;
+	qd->backward_pressed = false;
+	qd->up_pressed = false;
+	qd->down_pressed = false;
+	qd->look_left_pressed = false;
+	qd->look_right_pressed = false;
+	qd->look_up_pressed = false;
+	qd->look_down_pressed = false;
+	qd->yaw_delta = 0;
+	qd->pitch_delta = 0;
 }
 
 void
-qwerty_add_look_delta(struct xrt_device *xdev, float yaw, float pitch)
+qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	qdev->yaw_delta += yaw * qdev->look_speed;
-	qdev->pitch_delta += pitch * qdev->look_speed;
+	qd->yaw_delta += yaw * qd->look_speed;
+	qd->pitch_delta += pitch * qd->look_speed;
 }
 
 bool
-qwerty_hmd_available(struct xrt_device *xdev)
+qwerty_hmd_available(struct qwerty_device *qd)
 {
-	struct qwerty_device *qdev = qwerty_device(xdev);
-	return qdev->qdevs.hmd != NULL;
+	return qd->qdevs.hmd != NULL;
 }

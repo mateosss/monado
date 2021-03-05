@@ -6,32 +6,42 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-struct qwerty_hmd *qwerty_hmd(struct xrt_device *xd) { return (struct qwerty_hmd *)xd; } // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
-struct qwerty_controller *qwerty_controller(struct xrt_device *xd) { return (struct qwerty_controller *)xd; } // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
+struct qwerty_hmd *
+qwerty_hmd(struct xrt_device *xd)
+{
+	return (struct qwerty_hmd *)xd;
+} // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
+struct qwerty_controller *
+qwerty_controller(struct xrt_device *xd)
+{
+	return (struct qwerty_controller *)xd;
+} // XXXSPLIT: Review necessity and should it be in qwerty_device.h better?
 
 void
 qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 {
 	// XXXFUT: Think about a better way of obtaining qwerty_devices from xdevs than
 	// hardcoding xdevs[] indices. Maybe adding a QWERTY xrt_device_name?
-	struct xrt_device *xd_hmd = xdevs[0];
-	struct xrt_device *xd_left = xdevs[1];
-	struct xrt_device *xd_right = xdevs[2];
 
-	// At this point xd_hmd might not be a qwerty HMD, because the autoprober
-	// creates only controllers when it is telled an hmd was found before qwerty
+	// XXXASK: Precondition xdevs[1] is a qwerty left controller
+	struct qwerty_controller *qleft = qwerty_controller(xdevs[1]);
+	struct qwerty_device *qd_left = &qleft->base;
+	struct xrt_device *xd_left = xdevs[1]; // XXSPLIT: Remove
+
+	// XXXASK: Precondition xdevs[2] is a qwerty right controller
+	struct qwerty_controller *qright = qwerty_controller(xdevs[2]);
+	struct qwerty_device *qd_right = &qright->base;
+	struct xrt_device *xd_right = xdevs[2]; // XXXSPLIT: Remove
+
+	// At this point xdevs[0] might not be a qwerty HMD, because the autoprober
+	// does not create a qwerty hmd if it was told an hmd was found before qwerty
 	// probing. However we are "sure", because it will break otherwise, that
 	// xd_left is a left qwerty_controller and so we can get qwerty info from it.
 	// XXXASK: Some mechanism should be in place to assert that about xd_left
-	bool using_qhmd = qwerty_hmd_available(xd_left);
-
-	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xd_hmd) : NULL;
-	struct qwerty_controller *qleft = qwerty_controller(xd_left);
-	struct qwerty_controller *qright = qwerty_controller(xd_right);
-
+	bool using_qhmd = qwerty_hmd_available(qd_left);
+	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xdevs[0]) : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
-	struct qwerty_device *qd_left = &qleft->base;
-	struct qwerty_device *qd_right = &qright->base;
+
 
 	// clang-format off
 	// XXX: I'm definitely pushing some limits with so much clang-format off
@@ -55,9 +65,9 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	bool change_focus = alt_down || alt_up || ctrl_down || ctrl_up;
 	if (change_focus) {
-		if (using_qhmd) qwerty_release_all(xd_hmd); // XXXSPLIT
-		qwerty_release_all(xd_right); // XXXSPLIT
-		qwerty_release_all(xd_left); // XXXSPLIT
+		if (using_qhmd) qwerty_release_all(qd_hmd);
+		qwerty_release_all(qd_right);
+		qwerty_release_all(qd_left);
 	}
 
 	struct qwerty_device *qdev; // Focused device
@@ -121,12 +131,12 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	}
 
 	// Movement speed
-	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(xdev, event.wheel.y);
+	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(qdev, event.wheel.y);
 
 	// Sprinting
 	float sprint_steps = 5;
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(xdev, sprint_steps);
-	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(xdev, -sprint_steps);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, sprint_steps);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, -sprint_steps);
 	// clang-format on
 
 	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT)
@@ -136,6 +146,6 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 		float sensitivity = 0.1f; // 1px moves `sensitivity` look_speed units
 		float yaw = -event.motion.xrel * sensitivity;
 		float pitch = -event.motion.yrel * sensitivity;
-		qwerty_add_look_delta(xdev, yaw, pitch);
+		qwerty_add_look_delta(qdev, yaw, pitch);
 	}
 }
