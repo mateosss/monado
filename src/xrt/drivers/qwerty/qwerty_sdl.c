@@ -107,26 +107,26 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_DOWN) qwerty_release_look_down(qdev);
 
 	// Select and menu clicks only for controllers.
-	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(&qctrl->base.base); // XXXSPLIT
-	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(&qctrl->base.base); // XXXSPLIT
+	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
+	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
 
 	// Controllers follow/unfollow HMD
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
-		if (qdev != qd_hmd) qwerty_toggle_follow_hmd(xdev);
+		if (qdev != qd_hmd) qwerty_toggle_follow_hmd(qctrl);
 		else { // If no controller is focused, set both to the same state
-			bool both_not_following = !qwerty_get_follow_hmd(xd_left) && !qwerty_get_follow_hmd(xd_right);
-			qwerty_follow_hmd(xd_left, both_not_following);
-			qwerty_follow_hmd(xd_right, both_not_following);
+			bool both_not_following = !qwerty_get_follow_hmd(qleft) && !qwerty_get_follow_hmd(qright);
+			qwerty_follow_hmd(qleft, both_not_following);
+			qwerty_follow_hmd(qright, both_not_following);
 		}
 	}
 
 	// Reset controller poses
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r && event.key.repeat == 0) {
-		if (ctrl_pressed) qwerty_reset_controller_pose(xd_left);
-		else if (alt_pressed) qwerty_reset_controller_pose(xd_right);
+		if (ctrl_pressed) qwerty_reset_controller_pose(qleft);
+		else if (alt_pressed) qwerty_reset_controller_pose(qright);
 		else {
-			qwerty_reset_controller_pose(xd_left);
-			qwerty_reset_controller_pose(xd_right);
+			qwerty_reset_controller_pose(qleft);
+			qwerty_reset_controller_pose(qright);
 		}
 	}
 
