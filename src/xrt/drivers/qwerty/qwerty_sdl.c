@@ -2,7 +2,7 @@
 // XXX: Proper documentation for this file
 
 #include "xrt/xrt_device.h"
-#include "qwerty_interface.h"
+#include "qwerty_device.h"
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
