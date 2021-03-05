@@ -45,8 +45,8 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 	// they want? It would be nice to provide total control of that to the user.
 
 	struct qwerty_hmd *qhmd = hmd_wanted ? qwerty_hmd_create(): NULL;
-	struct qwerty_controller *qleft = qwerty_controller_create(qhmd, true);
-	struct qwerty_controller *qright = qwerty_controller_create(qhmd, false);
+	struct qwerty_controller *qleft = qwerty_controller_create(true, qhmd);
+	struct qwerty_controller *qright = qwerty_controller_create(false, qhmd);
 
 	// All devices should be able to reference other ones, qdevs should only be written here.
 	struct qwerty_devices qdevs = {qhmd, qleft, qright};

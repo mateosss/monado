@@ -297,7 +297,7 @@ qwerty_hmd_create()
 }
 
 struct qwerty_controller *
-qwerty_controller_create(struct qwerty_hmd *qhmd, bool is_left)
+qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 {
 	struct qwerty_controller *qc = U_DEVICE_ALLOCATE(struct qwerty_controller, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
 	qc->follow_hmd = qhmd != NULL;
