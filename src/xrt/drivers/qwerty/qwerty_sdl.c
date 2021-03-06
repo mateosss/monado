@@ -119,6 +119,8 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 
 	// Movement speed
 	if (event.type == SDL_MOUSEWHEEL) qwerty_change_movement_speed(qdev, event.wheel.y);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_KP_PLUS) qwerty_change_movement_speed(qdev, 1);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_KP_MINUS) qwerty_change_movement_speed(qdev, -1);
 
 	// Sprinting
 	float sprint_steps = 5;
