@@ -174,6 +174,10 @@ xrt_auto_prober_creator target_auto_list[] = {
     // Dummy headset driver last.
     dummy_create_auto_prober,
 #endif
+#ifdef XRT_BUILD_DRIVER_QWERTY
+    qwerty_create_auto_prober,
+#endif
+
     NULL, // Terminate
 };
 

@@ -13,6 +13,7 @@ struct qwerty_system
 	struct qwerty_controller *lctrl;
 	struct qwerty_controller *rctrl;
 	enum u_logging_level ll;
+	bool process_keys;
 };
 
 struct qwerty_device
