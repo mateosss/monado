@@ -235,7 +235,8 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 
 	u_var_add_root(qs, "Qwerty System", true);
 	u_var_add_ro_text(qs, "", "Qwerty System");
-	u_var_add_log_level(qs, &qs->ll, "log level");
+	u_var_add_log_level(qs, &qs->ll, "log_level");
+	u_var_add_bool(qs, &qs->process_keys, "process_keys");
 
 	if (qd_hmd) {
 		u_var_add_ro_text(qs, "", qd_hmd->base.str);
@@ -374,6 +375,7 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
 	qs->lctrl = qleft;
 	qs->rctrl = qright;
 	qs->ll = log_level;
+	qs->process_keys = true;
 
 	if (qhmd)
 		qhmd->base.sys = qs;
