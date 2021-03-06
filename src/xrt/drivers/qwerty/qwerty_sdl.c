@@ -25,10 +25,12 @@ qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
 	// probing. However we are "sure", because it will break otherwise, that
 	// xd_left is a left qwerty_controller and so we can get qwerty info from it.
 	// XXXASK: Some mechanism should be in place to assert that about xd_left
-	bool using_qhmd = qd_left->qdevs.hmd != NULL;
+	bool using_qhmd = qd_left->sys->hmd != NULL;
 	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xdevs[0]) : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
 
+	if (!qd_left->sys->process_keys)
+		return;
 
 	// clang-format off
 	// XXX: I'm definitely pushing some limits with so much clang-format off

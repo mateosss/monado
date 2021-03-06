@@ -44,30 +44,19 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 	// XXXFUT: How fine grained can the user control what controllers/hmd combination
 	// they want? It would be nice to provide total control of that to the user.
 
-	struct qwerty_hmd *qhmd = hmd_wanted ? qwerty_hmd_create(): NULL;
+	struct qwerty_hmd *qhmd = hmd_wanted ? qwerty_hmd_create() : NULL;
 	struct qwerty_controller *qleft = qwerty_controller_create(true, qhmd);
 	struct qwerty_controller *qright = qwerty_controller_create(false, qhmd);
 
-	// All devices should be able to reference other ones, qdevs should only be written here.
-	struct qwerty_devices qdevs = {qhmd, qleft, qright};
 	enum u_logging_level log_level = debug_get_log_option_qwerty_log();
+	qwerty_system_create(qhmd, qleft, qright, log_level);
 
 	struct qwerty_device *qd_hmd = &qhmd->base;
 	struct qwerty_device *qd_left = &qleft->base;
 	struct qwerty_device *qd_right = &qright->base;
 
-	if (hmd_wanted) {
-		qd_hmd->qdevs = qdevs;
-		qd_hmd->ll = log_level;
+	if (hmd_wanted)
 		out_xdevs[0] = &qd_hmd->base;
-	}
-
-	qd_left->qdevs = qdevs;
-	qd_right->qdevs = qdevs;
-
-	qd_left->ll = log_level;
-	qd_right->ll = log_level;
-
 	out_xdevs[1 - !hmd_wanted] = &qd_left->base;
 	out_xdevs[2 - !hmd_wanted] = &qd_right->base;
 
