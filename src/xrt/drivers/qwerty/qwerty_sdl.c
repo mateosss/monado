@@ -1,5 +1,9 @@
-// Connection between SDL and qwerty drivers, translates user input into driver actions.
-// XXX: Proper documentation for this file
+/*!
+ * @file
+ * @brief Connection between user-generated SDL events and qwerty devices.
+ * @author Mateo de Mayo <mateodemayo@gmail.com>
+ * @ingroup drv_qwerty
+ */
 
 #include "xrt/xrt_device.h"
 #include "qwerty_device.h"

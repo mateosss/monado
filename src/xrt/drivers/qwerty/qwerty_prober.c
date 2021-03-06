@@ -1,3 +1,10 @@
+/*!
+ * @file
+ * @brief Qwerty devices @ref xrt_auto_prober "autoprober".
+ * @author Mateo de Mayo <mateodemayo@gmail.com>
+ * @ingroup drv_qwerty
+ */
+
 #include "qwerty_device.h"
 #include "util/u_misc.h"
 #include "util/u_debug.h"

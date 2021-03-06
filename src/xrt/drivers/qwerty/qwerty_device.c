@@ -1,3 +1,10 @@
+/*!
+ * @file
+ * @brief Implementation of qwerty_device related methods.
+ * @author Mateo de Mayo <mateodemayo@gmail.com>
+ * @ingroup drv_qwerty
+ */
+
 // XXX: Check includes order in all files
 // XXX: Should I be more explicit with my includes?
 
