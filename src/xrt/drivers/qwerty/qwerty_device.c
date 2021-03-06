@@ -360,6 +360,7 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	u_var_add_ro_text(qs, "Rotate FD", "Hold right click");
 	u_var_add_ro_text(qs, "Hold for movement speed", "LSHIFT");
 	u_var_add_ro_text(qs, "Modify FD movement speed", "Mouse wheel");
+	u_var_add_ro_text(qs, "Modify FD movement speed", "Numpad +/-");
 	u_var_add_ro_text(qs, "Reset both or FC pose", "R");
 	u_var_add_ro_text(qs, "Toggle both or FC parenting to HMD", "F");
 }
