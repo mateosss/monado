@@ -35,11 +35,11 @@
 #define QWERTY_AIM 3
 #define QWERTY_VIBRATION 0
 
-#define QWERTY_TRACE(qd, ...) U_LOG_XDEV_IFL_T(&qd->base, qd->ll, __VA_ARGS__)
-#define QWERTY_DEBUG(qd, ...) U_LOG_XDEV_IFL_D(&qd->base, qd->ll, __VA_ARGS__)
-#define QWERTY_INFO(qd, ...) U_LOG_XDEV_IFL_I(&qd->base, qd->ll, __VA_ARGS__)
-#define QWERTY_WARN(qd, ...) U_LOG_XDEV_IFL_W(&qd->base, qd->ll, __VA_ARGS__)
-#define QWERTY_ERROR(qd, ...) U_LOG_XDEV_IFL_E(&qd->base, qd->ll, __VA_ARGS__)
+#define QWERTY_TRACE(qd, ...) U_LOG_XDEV_IFL_T(&qd->base, qd->sys->ll, __VA_ARGS__)
+#define QWERTY_DEBUG(qd, ...) U_LOG_XDEV_IFL_D(&qd->base, qd->sys->ll, __VA_ARGS__)
+#define QWERTY_INFO(qd, ...) U_LOG_XDEV_IFL_I(&qd->base, qd->sys->ll, __VA_ARGS__)
+#define QWERTY_WARN(qd, ...) U_LOG_XDEV_IFL_W(&qd->base, qd->sys->ll, __VA_ARGS__)
+#define QWERTY_ERROR(qd, ...) U_LOG_XDEV_IFL_E(&qd->base, qd->sys->ll, __VA_ARGS__)
 
 static void
 qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd);
@@ -342,7 +342,10 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 }
 
 struct qwerty_system *
-qwerty_system_create(struct qwerty_hmd *qhmd, struct qwerty_controller *qleft, struct qwerty_controller *qright)
+qwerty_system_create(struct qwerty_hmd *qhmd,
+                     struct qwerty_controller *qleft,
+                     struct qwerty_controller *qright,
+                     enum u_logging_level log_level)
 {
 	bool using_two_qwerty_controllers = !qhmd && qleft && qright;
 	bool using_all_qwerty_devices = qhmd && qleft && qright;
@@ -353,6 +356,7 @@ qwerty_system_create(struct qwerty_hmd *qhmd, struct qwerty_controller *qleft, s
 	qs->hmd = qhmd;
 	qs->lctrl = qleft;
 	qs->rctrl = qright;
+	qs->ll = log_level;
 
 	if (qhmd)
 		qhmd->base.sys = qs;
