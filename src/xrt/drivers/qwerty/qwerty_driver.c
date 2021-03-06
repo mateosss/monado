@@ -47,6 +47,8 @@ qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd);
 static void
 qwerty_system_destroy(struct qwerty_system *qs);
 
+// xrt_device functions
+
 static inline bool
 eq(void *a, void *b)
 {
@@ -226,49 +228,6 @@ qwerty_destroy(struct xrt_device *xd)
 	u_device_free(xd);
 }
 
-static void
-qwerty_setup_var_tracking(struct qwerty_system *qs)
-{
-	struct qwerty_device *qd_hmd = qs->hmd ? &qs->hmd->base : NULL;
-	struct qwerty_device *qd_left = &qs->lctrl->base;
-	struct qwerty_device *qd_right = &qs->rctrl->base;
-
-	u_var_add_root(qs, "Qwerty System", true);
-	u_var_add_ro_text(qs, "", "Qwerty System");
-	u_var_add_log_level(qs, &qs->ll, "log_level");
-	u_var_add_bool(qs, &qs->process_keys, "process_keys");
-
-	if (qd_hmd) {
-		u_var_add_ro_text(qs, "", qd_hmd->base.str);
-		u_var_add_pose(qs, &qd_hmd->pose, "hmd.pose");
-		u_var_add_f32(qs, &qd_hmd->movement_speed, "hmd.movement_speed");
-		u_var_add_f32(qs, &qd_hmd->look_speed, "hmd.look_speed");
-	}
-
-	u_var_add_ro_text(qs, "", qd_left->base.str);
-	u_var_add_pose(qs, &qd_left->pose, "left.pose");
-	u_var_add_f32(qs, &qd_left->movement_speed, "left.movement_speed");
-	u_var_add_f32(qs, &qd_left->look_speed, "left.look_speed");
-
-	u_var_add_ro_text(qs, "", qd_right->base.str);
-	u_var_add_pose(qs, &qd_right->pose, "right.pose");
-	u_var_add_f32(qs, &qd_right->movement_speed, "right.movement_speed");
-	u_var_add_f32(qs, &qd_right->look_speed, "right.look_speed");
-
-	u_var_add_gui_header(qs, NULL, "Help");
-	u_var_add_ro_text(qs, "FD: focused device. FC: focused controller.", "Notation");
-	u_var_add_ro_text(qs, "HMD is FD by default. Right is FC by default", "Defaults");
-	u_var_add_ro_text(qs, "Hold left/right FD", "LCTRL/LALT");
-	u_var_add_ro_text(qs, "Move FD", "WASDQE");
-	u_var_add_ro_text(qs, "Rotate FD", "Arrow keys");
-	u_var_add_ro_text(qs, "Rotate FD", "Hold right click");
-	u_var_add_ro_text(qs, "Hold for movement speed", "LSHIFT");
-	u_var_add_ro_text(qs, "Modify FD movement speed", "Mouse wheel");
-	u_var_add_ro_text(qs, "Reset both or FC pose", "R");
-	u_var_add_ro_text(qs, "Toggle both or FC parenting to HMD", "F");
-
-}
-
 struct qwerty_hmd *
 qwerty_hmd_create()
 {
@@ -357,6 +316,50 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	xd->destroy = qwerty_destroy;
 
 	return qc;
+}
+
+// System methods
+
+static void
+qwerty_setup_var_tracking(struct qwerty_system *qs)
+{
+	struct qwerty_device *qd_hmd = qs->hmd ? &qs->hmd->base : NULL;
+	struct qwerty_device *qd_left = &qs->lctrl->base;
+	struct qwerty_device *qd_right = &qs->rctrl->base;
+
+	u_var_add_root(qs, "Qwerty System", true);
+	u_var_add_ro_text(qs, "", "Qwerty System");
+	u_var_add_log_level(qs, &qs->ll, "log_level");
+	u_var_add_bool(qs, &qs->process_keys, "process_keys");
+
+	if (qd_hmd) {
+		u_var_add_ro_text(qs, "", qd_hmd->base.str);
+		u_var_add_pose(qs, &qd_hmd->pose, "hmd.pose");
+		u_var_add_f32(qs, &qd_hmd->movement_speed, "hmd.movement_speed");
+		u_var_add_f32(qs, &qd_hmd->look_speed, "hmd.look_speed");
+	}
+
+	u_var_add_ro_text(qs, "", qd_left->base.str);
+	u_var_add_pose(qs, &qd_left->pose, "left.pose");
+	u_var_add_f32(qs, &qd_left->movement_speed, "left.movement_speed");
+	u_var_add_f32(qs, &qd_left->look_speed, "left.look_speed");
+
+	u_var_add_ro_text(qs, "", qd_right->base.str);
+	u_var_add_pose(qs, &qd_right->pose, "right.pose");
+	u_var_add_f32(qs, &qd_right->movement_speed, "right.movement_speed");
+	u_var_add_f32(qs, &qd_right->look_speed, "right.look_speed");
+
+	u_var_add_gui_header(qs, NULL, "Help");
+	u_var_add_ro_text(qs, "FD: focused device. FC: focused controller.", "Notation");
+	u_var_add_ro_text(qs, "HMD is FD by default. Right is FC by default", "Defaults");
+	u_var_add_ro_text(qs, "Hold left/right FD", "LCTRL/LALT");
+	u_var_add_ro_text(qs, "Move FD", "WASDQE");
+	u_var_add_ro_text(qs, "Rotate FD", "Arrow keys");
+	u_var_add_ro_text(qs, "Rotate FD", "Hold right click");
+	u_var_add_ro_text(qs, "Hold for movement speed", "LSHIFT");
+	u_var_add_ro_text(qs, "Modify FD movement speed", "Mouse wheel");
+	u_var_add_ro_text(qs, "Reset both or FC pose", "R");
+	u_var_add_ro_text(qs, "Toggle both or FC parenting to HMD", "F");
 }
 
 struct qwerty_system *
