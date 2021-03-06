@@ -231,7 +231,7 @@ lib_drv_arduino = static_library(
 lib_drv_qwerty = static_library(
 	'drv_qwerty',
 	files(
-		'qwerty/qwerty_driver.c',
+		'qwerty/qwerty_device.c',
 		'qwerty/qwerty_device.h',
 		'qwerty/qwerty_interface.h',
 		'qwerty/qwerty_prober.c',

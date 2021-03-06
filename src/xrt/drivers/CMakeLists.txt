@@ -45,7 +45,7 @@ endif()
 
 if(XRT_BUILD_DRIVER_QWERTY)
 	set(QWERTY_SOURCE_FILES
-		qwerty/qwerty_driver.c
+		qwerty/qwerty_device.c
 		qwerty/qwerty_device.h
 		qwerty/qwerty_interface.h
 		qwerty/qwerty_prober.c
