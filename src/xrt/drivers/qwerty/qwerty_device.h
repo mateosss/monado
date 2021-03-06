@@ -5,7 +5,9 @@
 #include "util/u_logging.h"
 
 
-struct qwerty_devices
+// XXXASK: Used the same concept as hydra_system and survive_system but they
+// derive from xrt_tracking_origin
+struct qwerty_system
 {
 	struct qwerty_hmd *hmd;
 	struct qwerty_controller *lctrl;
@@ -15,8 +17,8 @@ struct qwerty_devices
 struct qwerty_device
 {
 	struct xrt_device base;
-	struct xrt_pose pose;        // Pose of controllers is relative to hmd pose if follow_hmd
-	struct qwerty_devices qdevs; // References to all qwerty devices. Same in all devices.
+	struct xrt_pose pose;      // Pose of controllers is relative to hmd pose if follow_hmd
+	struct qwerty_system *sys; // References to all qwerty devices. Same in all devices.
 	enum u_logging_level ll;
 
 	float movement_speed;
@@ -68,6 +70,9 @@ qwerty_hmd_create();
 
 struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
+
+struct qwerty_system *
+qwerty_system_create(struct qwerty_hmd *qhmd, struct qwerty_controller *qleft, struct qwerty_controller *qright);
 
 // clang-format off
 
