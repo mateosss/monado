@@ -328,23 +328,25 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	struct qwerty_device *qd_right = &qs->rctrl->base;
 
 	u_var_add_root(qs, "Qwerty System", true);
-	u_var_add_ro_text(qs, "", "Qwerty System");
 	u_var_add_log_level(qs, &qs->ll, "log_level");
 	u_var_add_bool(qs, &qs->process_keys, "process_keys");
 
 	if (qd_hmd) {
-		u_var_add_ro_text(qs, "", qd_hmd->base.str);
+		// u_var_add_ro_text(qs, "", qd_hmd->base.str);
+		u_var_add_gui_header(qs, NULL, qd_hmd->base.str);
 		u_var_add_pose(qs, &qd_hmd->pose, "hmd.pose");
 		u_var_add_f32(qs, &qd_hmd->movement_speed, "hmd.movement_speed");
 		u_var_add_f32(qs, &qd_hmd->look_speed, "hmd.look_speed");
 	}
 
-	u_var_add_ro_text(qs, "", qd_left->base.str);
+	// u_var_add_ro_text(qs, "", qd_left->base.str);
+	u_var_add_gui_header(qs, NULL, qd_left->base.str);
 	u_var_add_pose(qs, &qd_left->pose, "left.pose");
 	u_var_add_f32(qs, &qd_left->movement_speed, "left.movement_speed");
 	u_var_add_f32(qs, &qd_left->look_speed, "left.look_speed");
 
-	u_var_add_ro_text(qs, "", qd_right->base.str);
+	// u_var_add_ro_text(qs, "", qd_right->base.str);
+	u_var_add_gui_header(qs, NULL, qd_right->base.str);
 	u_var_add_pose(qs, &qd_right->pose, "right.pose");
 	u_var_add_f32(qs, &qd_right->movement_speed, "right.movement_speed");
 	u_var_add_f32(qs, &qd_right->look_speed, "right.look_speed");
