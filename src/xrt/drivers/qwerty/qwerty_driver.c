@@ -41,6 +41,12 @@
 #define QWERTY_WARN(qd, ...) U_LOG_XDEV_IFL_W(&qd->base, qd->ll, __VA_ARGS__)
 #define QWERTY_ERROR(qd, ...) U_LOG_XDEV_IFL_E(&qd->base, qd->ll, __VA_ARGS__)
 
+static void
+qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd);
+
+static void
+qwerty_system_destroy(struct qwerty_system *qs);
+
 static inline bool
 eq(void *a, void *b)
 {
@@ -51,7 +57,7 @@ static inline struct qwerty_device *
 qwerty_device(struct xrt_device *xd)
 {
 	struct qwerty_device *qd = (struct qwerty_device *)xd;
-	bool is_qwerty_device = eq(qd, qd->qdevs.hmd) || eq(qd, qd->qdevs.lctrl) || eq(qd, qd->qdevs.rctrl);
+	bool is_qwerty_device = eq(qd, qd->sys->hmd) || eq(qd, qd->sys->lctrl) || eq(qd, qd->sys->rctrl);
 	assert(is_qwerty_device);
 	return qd;
 }
@@ -60,7 +66,7 @@ struct qwerty_hmd *
 qwerty_hmd(struct xrt_device *xd)
 {
 	struct qwerty_hmd *qh = (struct qwerty_hmd *)xd;
-	bool is_qwerty_hmd = eq(qh, qh->base.qdevs.hmd);
+	bool is_qwerty_hmd = eq(qh, qh->base.sys->hmd);
 	assert(is_qwerty_hmd);
 	return qh;
 }
@@ -69,7 +75,7 @@ struct qwerty_controller *
 qwerty_controller(struct xrt_device *xd)
 {
 	struct qwerty_controller *qc = (struct qwerty_controller *)xd;
-	bool is_qwerty_controller = eq(qc, qc->base.qdevs.lctrl) || eq(qc, qc->base.qdevs.rctrl);
+	bool is_qwerty_controller = eq(qc, qc->base.sys->lctrl) || eq(qc, qc->base.sys->rctrl);
 	assert(is_qwerty_controller);
 	return qc;
 }
@@ -178,12 +184,11 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 
 	// Base Space Adjustment
 
-
 	bool qd_is_ctrl = name == XRT_INPUT_SIMPLE_GRIP_POSE;
 	struct qwerty_controller *qc = qd_is_ctrl ? qwerty_controller(&qd->base) : NULL;
 	if (qd_is_ctrl && qc->follow_hmd) {
 		struct xrt_space_graph space_graph = {0};
-		struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
+		struct qwerty_device *qd_hmd = &qd->sys->hmd->base;
 		m_space_graph_add_pose(&space_graph, &qd->pose);     // controller pose
 		m_space_graph_add_pose(&space_graph, &qd_hmd->pose); // base space is hmd space
 		m_space_graph_resolve(&space_graph, out_relation);
@@ -217,6 +222,7 @@ static void
 qwerty_destroy(struct xrt_device *xd)
 {
 	struct qwerty_device *qd = qwerty_device(xd);
+	qwerty_system_remove(qd->sys, qd);
 	u_var_remove_root(qd);
 	u_device_free(xd);
 }
@@ -335,6 +341,56 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	return qc;
 }
 
+struct qwerty_system *
+qwerty_system_create(struct qwerty_hmd *qhmd, struct qwerty_controller *qleft, struct qwerty_controller *qright)
+{
+	bool using_two_qwerty_controllers = !qhmd && qleft && qright;
+	bool using_all_qwerty_devices = qhmd && qleft && qright;
+	bool using_valid_setup = using_two_qwerty_controllers || using_all_qwerty_devices;
+	assert(using_valid_setup);
+
+	struct qwerty_system *qs = U_TYPED_CALLOC(struct qwerty_system);
+	qs->hmd = qhmd;
+	qs->lctrl = qleft;
+	qs->rctrl = qright;
+
+	if (qhmd)
+		qhmd->base.sys = qs;
+	qleft->base.sys = qs;
+	qright->base.sys = qs;
+
+	return qs;
+}
+
+static void
+qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd)
+{
+	void *dev = (void *)qd;
+	void *hmd = (void *)qs->hmd;
+	void *lctrl = (void *)qs->lctrl;
+	void *rctrl = (void *)qs->rctrl;
+
+	// clang-format off
+	if (dev == hmd) qs->hmd = NULL;
+	else if (dev == lctrl) qs->lctrl = NULL;
+	else if (dev == rctrl) qs->rctrl = NULL;
+	else assert(false && "Trying to remove a device that is not in the qwerty system");
+	// clang-format on
+
+	bool all_devices_clean = !qs->hmd && !qs->lctrl && !qs->rctrl;
+	if (all_devices_clean)
+		qwerty_system_destroy(qs);
+}
+
+static void
+qwerty_system_destroy(struct qwerty_system *qs)
+{
+	// XXX: Repeated in qwerty_system_remove, probably should be docuemnted as a precondition.
+	bool all_devices_clean = !qs->hmd && !qs->lctrl && !qs->rctrl;
+	assert(all_devices_clean); // Can't destroy a system without previously destroying its devices.
+	free(qs);
+}
+
 // Device methods
 
 // clang-format off
@@ -359,8 +415,6 @@ void qwerty_press_look_up(struct qwerty_device *qd) { qd->look_up_pressed = true
 void qwerty_release_look_up(struct qwerty_device *qd) { qd->look_up_pressed = false; }
 void qwerty_press_look_down(struct qwerty_device *qd) { qd->look_down_pressed = true; }
 void qwerty_release_look_down(struct qwerty_device *qd) { qd->look_down_pressed = false; }
-
-
 // clang-format on
 
 void
@@ -404,12 +458,12 @@ void
 qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 {
 	struct qwerty_device *qd = &qc->base;
-	bool no_qhmd = !qd->qdevs.hmd;
+	bool no_qhmd = !qd->sys->hmd;
 	bool unchanged = qc->follow_hmd == follow;
 	if (no_qhmd || unchanged)
 		return;
 
-	struct qwerty_device *qd_hmd = &qd->qdevs.hmd->base;
+	struct qwerty_device *qd_hmd = &qd->sys->hmd->base;
 	struct xrt_space_graph graph = {0};
 	struct xrt_space_relation rel = {0};
 
@@ -429,12 +483,12 @@ qwerty_reset_controller_pose(struct qwerty_controller *qc)
 {
 	struct qwerty_device *qd = &qc->base;
 
-	bool no_qhmd = !qd->qdevs.hmd;
+	bool no_qhmd = !qd->sys->hmd;
 	if (no_qhmd)
 		return;
 
 	struct xrt_quat quat_identity = {0, 0, 0, 1};
-	bool is_left = qc == qd->qdevs.lctrl;
+	bool is_left = qc == qd->sys->lctrl;
 
 	qwerty_follow_hmd(qc, true);
 	struct xrt_pose pose = {quat_identity, QWERTY_CONTROLLER_INITIAL_POS(is_left)};
