@@ -1,4 +1,9 @@
-// XXX: Any SDPX/author format for the files?
+/*!
+ * @file
+ * @brief Internal header for qwerty_device and its friends.
+ * @author Mateo de Mayo <mateodemayo@gmail.com>
+ * @ingroup drv_qwerty
+ */
 #pragma once
 
 #include "xrt/xrt_device.h"
