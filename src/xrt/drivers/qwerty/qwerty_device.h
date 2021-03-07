@@ -6,8 +6,8 @@
  */
 #pragma once
 
-#include "xrt/xrt_device.h"
 #include "util/u_logging.h"
+#include "xrt/xrt_device.h"
 
 #ifdef __cplusplus
 extern "C" {

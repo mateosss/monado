@@ -35,8 +35,10 @@ target_link_libraries(${RUNTIME_TARGET} PUBLIC
 
 # message(WARNING "\n>>> This is a warning")
 # message(WARNING "\n>>> RUNTIME_TARGET=${RUNTIME_TARGET}")
+# message(WARNING "\n>>> QWERTY_SOURCE_FILES=${QWERTY_SOURCE_FILES}")
 target_link_libraries(${RUNTIME_TARGET} PRIVATE drv_qwerty)
 target_include_directories(${RUNTIME_TARGET} PRIVATE ../../drivers/qwerty)
+# XXXASK: for meson I did a drv_qwerty_include, I couldn't do it on cmake
 
 if(XRT_HAVE_OPENGL)
 	target_link_libraries(${RUNTIME_TARGET} PUBLIC aux_ogl)

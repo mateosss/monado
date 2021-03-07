@@ -53,7 +53,9 @@ if(XRT_BUILD_DRIVER_QWERTY)
 		)
 
 	add_library(drv_qwerty STATIC ${QWERTY_SOURCE_FILES})
-	target_link_libraries(drv_qwerty PRIVATE xrt-interfaces aux_util ${SDL2_LIBRARIES}) # XXX: Revise if this are only necessary linked libs for qwerty
+	# XXXANS: Revise if this are only necessary linked libs for qwerty,
+	# ANS: xrt-interfaces seems that can be removed though it is present in all the other drivers
+	target_link_libraries(drv_qwerty PRIVATE xrt-interfaces aux_util ${SDL2_LIBRARIES})
 	list(APPEND ENABLED_DRIVERS qwerty)
 endif()
 
