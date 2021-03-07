@@ -18,14 +18,12 @@ xr_api_major = 1
 
 hack_deps = []
 hack_src = [ 'oxr_sdl2_hack.c']
-hack_libs = []
+hack_libs = [lib_drv_qwerty]
 hack_incs = [
 	glad_include,
 	imgui_include,
+	drv_qwerty_include,
 ]
-
-hack_libs += lib_drv_qwerty
-hack_incs += include_directories('../../drivers/qwerty')
 
 if sdl2.found()
 	hack_deps += sdl2
