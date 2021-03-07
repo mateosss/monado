@@ -69,13 +69,13 @@ struct qwerty_controller
 {
 	struct qwerty_device base;
 
-	bool select_clicked; //!< input/select/click.
-	bool menu_clicked;   //!< input/menu/click
+	bool select_clicked;
+	bool menu_clicked;
 
 	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
 	/*!
 	 * Only used when a qwerty_hmd exists in the system.
-	 * Use qwerty_follow_hmd() for setting it.
+	 * Do not modify directly; use qwerty_follow_hmd().
 	 * If true, `pose` is relative to the qwerty_hmd.
 	 */
 	bool follow_hmd;
@@ -83,9 +83,11 @@ struct qwerty_controller
 
 /*!
  * @name Qwerty System
- * qwerty_system methods
+ * @memberof qwerty_system
+ * qwerty_system public methods
  * @{
  */
+//! @public @memberof qwerty_system <!-- Trick for doxygen -->
 
 struct qwerty_system *
 qwerty_system_create(struct qwerty_hmd *qhmd,
@@ -99,9 +101,11 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
 
 /*!
  * @name Qwerty Device
- * qwerty_device methods
+ * @memberof qwerty_device
+ * qwerty_device public methods
  * @{
  */
+//! @public @memberof qwerty_device <!-- Trick for doxygen -->
 
 // clang-format off
 void qwerty_press_left(struct qwerty_device *qd);
@@ -145,9 +149,11 @@ qwerty_release_all(struct qwerty_device *qd);
 
 /*!
  * @name Qwerty HMD
- * qwerty_hmd methods
+ * @memberof qwerty_hmd
+ * qwerty_hmd public methods
  * @{
  */
+//! @public @memberof qwerty_hmd <!-- Trick for doxygen -->
 
 struct qwerty_hmd *
 qwerty_hmd_create();
@@ -162,9 +168,11 @@ qwerty_hmd(struct xrt_device *xd);
 
 /*!
  * @name Qwerty Controller
- * qwerty_controller methods
+ * @memberof qwerty_controller
+ * qwerty_controller public methods
  * @{
  */
+//! @public @memberof qwerty_controller <!-- Trick for doxygen -->
 
 struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
