@@ -9,25 +9,37 @@
 #include "xrt/xrt_device.h"
 #include "util/u_logging.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// XXXASK: Used the same concept as hydra_system and survive_system but they
-// derive from xrt_tracking_origin
+/*!
+ * @addtogroup drv_qwerty
+ * @{
+ */
+
+// XXXASK: qwerty_system uses the same concept as hydra_system and
+// survive_system but they derive from xrt_tracking_origin
+
+//! Container of qwerty devices and driver properties.
 struct qwerty_system
 {
 	struct qwerty_hmd *hmd;
 	struct qwerty_controller *lctrl;
 	struct qwerty_controller *rctrl;
 	enum u_logging_level ll;
-	bool process_keys;
+	bool process_keys; //!< If false disable keyboard and mouse input
 };
 
+//! Fake device that modifies its tracked pose through its methods.
+//! @implements xrt_device
 struct qwerty_device
 {
 	struct xrt_device base;
-	struct xrt_pose pose;      // Pose of controllers is relative to hmd pose if follow_hmd
-	struct qwerty_system *sys; // References to all qwerty devices. Same in all devices.
+	struct xrt_pose pose;      //!< Internal pose state
+	struct qwerty_system *sys; //!< Reference to the system this device is in.
 
-	float movement_speed;
+	float movement_speed; //!< In meters per frame
 	bool left_pressed;
 	bool right_pressed;
 	bool forward_pressed;
@@ -35,47 +47,45 @@ struct qwerty_device
 	bool up_pressed;
 	bool down_pressed;
 
-	float look_speed;
+	float look_speed; //!< In radians per frame
 	bool look_left_pressed;
 	bool look_right_pressed;
 	bool look_up_pressed;
 	bool look_down_pressed;
 
-	// How much extra yaw and pitch to add for the next pose. Then reset to 0.
-	float yaw_delta;
-	float pitch_delta;
+	float yaw_delta;   //!< How much extra yaw to add for the next pose. Then reset to 0.
+	float pitch_delta; //!< Similar to `yaw`
 };
 
+//! @implements qwerty_device
 struct qwerty_hmd
 {
 	struct qwerty_device base;
 };
 
+//! Supports input actions and can be attached to the HMD pose.
+//! @implements qwerty_device
 struct qwerty_controller
 {
 	struct qwerty_device base;
 
-	// Controller buttons, unused for hmd
-	bool select_clicked;
-	bool menu_clicked;
+	bool select_clicked; //!< input/select/click.
+	bool menu_clicked;   //!< input/menu/click
 
-	// Only used when a qwerty hmd exists. Use qwerty_follow_hmd() for setting it.
-	// If true, `pose` is relative to the qwerty HMD.
 	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
+	/*!
+	 * Only used when a qwerty_hmd exists in the system.
+	 * Use qwerty_follow_hmd() for setting it.
+	 * If true, `pose` is relative to the qwerty_hmd.
+	 */
 	bool follow_hmd;
 };
 
-struct qwerty_hmd *
-qwerty_hmd(struct xrt_device *xd);
-
-struct qwerty_controller *
-qwerty_controller(struct xrt_device *xd);
-
-struct qwerty_hmd *
-qwerty_hmd_create();
-
-struct qwerty_controller *
-qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
+/*!
+ * @name Qwerty System
+ * qwerty_system methods
+ * @{
+ */
 
 struct qwerty_system *
 qwerty_system_create(struct qwerty_hmd *qhmd,
@@ -83,10 +93,17 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
                      struct qwerty_controller *qright,
                      enum u_logging_level log_level);
 
+/*!
+ * @}
+ */
+
+/*!
+ * @name Qwerty Device
+ * qwerty_device methods
+ * @{
+ */
+
 // clang-format off
-
-// Device methods
-
 void qwerty_press_left(struct qwerty_device *qd);
 void qwerty_release_left(struct qwerty_device *qd);
 void qwerty_press_right(struct qwerty_device *qd);
@@ -108,20 +125,78 @@ void qwerty_press_look_up(struct qwerty_device *qd);
 void qwerty_release_look_up(struct qwerty_device *qd);
 void qwerty_press_look_down(struct qwerty_device *qd);
 void qwerty_release_look_down(struct qwerty_device *qd);
-// XXX: Put proper doxygen documentation. See in which other functions I should put it.
-// Add yaw and pitch movement for the next frame
-void qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch);
-
-// Change movement speed in steps which are usually integers, though any float is allowed.
-void qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
-void qwerty_release_all(struct qwerty_device *qd);
-
-// Controller methods
-
-void qwerty_select_click(struct qwerty_controller *qc);
-void qwerty_menu_click(struct qwerty_controller *qc);
-void qwerty_follow_hmd(struct qwerty_controller *qc, bool follow);
-// Resets controller to initial pose and makes it follow the HMD
-void qwerty_reset_controller_pose(struct qwerty_controller *qc);
-
 // clang-format on
+
+//! Add yaw and pitch movement for the next frame
+void
+qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch);
+
+//! Change movement speed in steps which are usually integers, though any float is allowed.
+void
+qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
+
+//! Release all movement input
+void
+qwerty_release_all(struct qwerty_device *qd);
+
+/*!
+ * @}
+ */
+
+/*!
+ * @name Qwerty HMD
+ * qwerty_hmd methods
+ * @{
+ */
+
+struct qwerty_hmd *
+qwerty_hmd_create();
+
+//! Cast to qwerty_hmd. Ensures returning a valid HMD or crashing.
+struct qwerty_hmd *
+qwerty_hmd(struct xrt_device *xd);
+
+/*!
+ * @}
+ */
+
+/*!
+ * @name Qwerty Controller
+ * qwerty_controller methods
+ * @{
+ */
+
+struct qwerty_controller *
+qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
+
+//! Cast to qwerty_controller. Ensures returning a valid controller or crashing.
+struct qwerty_controller *
+qwerty_controller(struct xrt_device *xd);
+
+//! Simulate input/select/click
+void
+qwerty_select_click(struct qwerty_controller *qc);
+
+//! Simulate input/menu/click
+void
+qwerty_menu_click(struct qwerty_controller *qc);
+
+//! Attach/detach the pose of `qc` to its HMD. Only works when a qwerty_hmd is present.
+void
+qwerty_follow_hmd(struct qwerty_controller *qc, bool follow);
+
+//! Resets controller to initial pose and makes it follow the HMD
+void
+qwerty_reset_controller_pose(struct qwerty_controller *qc);
+
+/*!
+ * @}
+ */
+
+/*!
+ * @}
+ */
+
+#ifdef __cplusplus
+}
+#endif
