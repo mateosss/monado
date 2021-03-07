@@ -5,10 +5,12 @@
  * @ingroup drv_qwerty
  */
 
-#include "xrt/xrt_device.h"
 #include "qwerty_device.h"
+#include "xrt/xrt_device.h"
 #include <SDL2/SDL.h>
-#include <stdbool.h>
+
+// XXXASK: In the build files there are conditionals for when SDL2 is not found in the system
+// should qwerty be available only if SDL2 is?
 
 void
 qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)

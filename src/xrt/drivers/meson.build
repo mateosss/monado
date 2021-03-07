@@ -255,3 +255,5 @@ lib_drv_qwerty = static_library(
 	dependencies: [aux, sdl2],
 	build_by_default: 'qwerty' in drivers,
 )
+
+drv_qwerty_include = include_directories('qwerty')

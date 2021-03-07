@@ -12,10 +12,8 @@ hack_libs = []
 hack_incs = [
 	glad_include,
 	imgui_include,
+	drv_qwerty_include,
 ]
-
-# hack_incs += drv_include
-hack_incs += include_directories('../../drivers/qwerty')
 
 if sdl2.found()
 	hack_deps += sdl2
