@@ -17,6 +17,3 @@ target_link_libraries(tests_input_transform PRIVATE
 	xrt-external-openxr
 	aux_util)
 add_test(NAME input_transform COMMAND tests_input_transform --success)
-
-# XXXFUT: Why is it necessary for the meson.build file to have the oxr_sdl2_hack.c and
-# therefore the qwerty includes but no for this cmake file?

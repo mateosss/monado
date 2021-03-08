@@ -119,11 +119,6 @@ psvr_prober_autoprobe(struct xrt_auto_prober *xap,
 	}
 
 	out_xdevs[0] = dev;
-	// XXXFUT: this shuld `return dev != NULL;` as psvr_device_create can return
-	// NULL, same for other drivers. It was already a problem in other drivers
-	// but my autoprobe-many patch made it worse. Make a MR for this.
-	// EDIT: Just saw that this MR solved the problem for this psvr driver https://gitlab.freedesktop.org/monado/monado/-/merge_requests/704/diffs?commit_id=92d94ddcc760bbd19c72930734ea54039e3fc0f7
-	// but still the problem remains in other drivers.
 	return 1;
 }
 

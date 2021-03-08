@@ -46,8 +46,6 @@ struct gui_program
 
 	struct gui_scene_manager *gsm;
 
-	// XXXANS: This is empty in ipc service run for some reason, will fill manually
-	// ANS: See XXXANS comment in oxr_sdl2_hack_start
 	struct xrt_device *xdevs[NUM_XDEVS];
 	struct xrt_instance *instance;
 	struct xrt_prober *xp;
