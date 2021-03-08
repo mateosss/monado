@@ -26,7 +26,7 @@ struct xrt_auto_prober *
 qwerty_create_auto_prober(void);
 
 /*!
- * Process an SDL_Event (like a key press) and dispatches the appropiate action
+ * Process an SDL_Event (like a key press) and dispatches the appropriate action
  * to the right qwerty_device.
  *
  * @pre `xdevs[1]` and `xdevs[2]` point respectively to left and right qwerty_controller.
