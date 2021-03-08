@@ -38,7 +38,6 @@ struct xrt_device;
  */
 #define R_HEADER_VALUE (*(uint64_t *)"mndrmt1\0")
 
-
 /*!
  * Data per controller.
  */

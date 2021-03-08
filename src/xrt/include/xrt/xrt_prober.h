@@ -10,7 +10,6 @@
 #pragma once
 
 #include "xrt/xrt_device.h"
-#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {

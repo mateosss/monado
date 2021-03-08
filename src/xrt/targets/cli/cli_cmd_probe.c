@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "xrt/xrt_prober.h"
 #include "xrt/xrt_instance.h"
 #include "xrt/xrt_device.h"
 #include "xrt/xrt_prober.h"
@@ -43,12 +42,6 @@ cli_cmd_probe(int argc, const char **argv)
 	if (ret != 0) {
 		return do_exit(&xi, 0);
 	}
-
-	struct xrt_prober *myxp = NULL;
-	xrt_instance_get_prober(xi, &myxp);
-	// 3: 0x1a2c:0x2c27; usb.product USB Keyboard
-	xrt_prober_probe(myxp);
-	xrt_prober_dump(myxp);
 
 	// Need to prime the prober with devices before dumping and listing.
 	printf(" :: Probing and selecting!\n");
