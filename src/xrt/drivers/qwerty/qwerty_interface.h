@@ -5,14 +5,13 @@
  * @ingroup drv_qwerty
  */
 
-// XXXASK: The usage of author is correct?
-// XXXASK: How to do the copyright/SPDX sections?
-
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef union SDL_Event SDL_Event;
 
 /*!
  * @defgroup drv_qwerty Qwerty driver
@@ -21,8 +20,6 @@ extern "C" {
  * @brief Driver for emulated HMD and controllers through keyboard and mouse.
  * @{
  */
-
-typedef union SDL_Event SDL_Event;
 
 //! Create an auto prober for qwerty devices.
 struct xrt_auto_prober *
