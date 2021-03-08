@@ -48,9 +48,6 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 
 	bool hmd_wanted = !no_hmds; // Hopefully easier to reason about
 
-	// XXXFUT: How fine grained can the user control what controllers/hmd combination
-	// they want? It would be nice to provide total control of that to the user.
-
 	struct qwerty_hmd *qhmd = hmd_wanted ? qwerty_hmd_create() : NULL;
 	struct qwerty_controller *qleft = qwerty_controller_create(true, qhmd);
 	struct qwerty_controller *qright = qwerty_controller_create(false, qhmd);

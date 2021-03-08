@@ -5,9 +5,6 @@
  * @ingroup drv_qwerty
  */
 
-// XXX: Check includes order in all files
-// XXX: Should I be more explicit with my includes?
-
 #include "qwerty_device.h"
 
 #include "util/u_device.h"
@@ -31,7 +28,7 @@
 #define MOVEMENT_SPEED_STEP 1.25f // Multiplier for how fast will mov speed increase/decrease
 
 // clang-format off
-// Values taken from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
+// Values copied from u_device_setup_tracking_origins. CONTROLLER relative to HMD.
 #define QWERTY_HMD_INITIAL_POS (struct xrt_vec3){0, 1.6f, 0}
 #define QWERTY_CONTROLLER_INITIAL_POS(is_left) (struct xrt_vec3){(is_left) ? -0.2f : 0.2f, -0.3f, -0.5f}
 // clang-format on
@@ -110,19 +107,11 @@ qwerty_update_inputs(struct xrt_device *xd)
 		QWERTY_INFO(qd, "[%s] Menu click", xd->str);
 		qc->menu_clicked = false;
 	}
-
-	// XXXFUT: Wasn't necessary to set input timestamp as below, why?
-	// xd->inputs[i].timestamp = os_monotonic_get_ns();
 }
 
-// XXXFUT: Just noticed that the psmv version of these functions use psmv_device as
-// prefix instead of just psmv check other drivers to know if it is the standard
-// name style for drivers
 static void
 qwerty_set_output(struct xrt_device *xd, enum xrt_output_name name, union xrt_output_value *value)
 {
-	// XXX: Should probably be using DEBUG macros instead of printf's
-
 	struct qwerty_device *qd = qwerty_device(xd);
 	float frequency = value->vibration.frequency;
 	float amplitude = value->vibration.amplitude;
@@ -143,37 +132,23 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 {
 	struct qwerty_device *qd = qwerty_device(xd);
 
-	// XXXASK: How much nullcheck/nullcheck-print/assert/comment for function preconditions?
-
-	// XXX: Remove these empty ifs
-	if (name == XRT_INPUT_GENERIC_HEAD_POSE) {
-		// printf(">>> XRT_INPUT_GENERIC_HEAD_POSE\n");
-	} else if (name == XRT_INPUT_SIMPLE_SELECT_CLICK) {
-		// printf(">>> XRT_INPUT_SIMPLE_SELECT_CLICK\n");
-	} else if (name == XRT_INPUT_SIMPLE_MENU_CLICK) {
-		// printf(">>> XRT_INPUT_SIMPLE_MENU_CLICK\n");
-	} else if (name == XRT_INPUT_SIMPLE_GRIP_POSE) {
-		// printf(">>> XRT_INPUT_SIMPLE_GRIP_POSE\n");
-	} else if (name == XRT_INPUT_SIMPLE_AIM_POSE) {
-		// printf(">>> XRT_INPUT_SIMPLE_AIM_POSE\n");
-	} else {
-		// XXXANS: Using unsigned, what should I use to be more specific for a enum? uint32_t?
-		// ANS: Enumerators in enums can have different sizes unfortunately. So just pray for these to fit
+	if (name != XRT_INPUT_GENERIC_HEAD_POSE && name != XRT_INPUT_SIMPLE_GRIP_POSE) {
 		QWERTY_ERROR(qd, "Unexpected input name = 0x%04X", name >> 8);
+		return;
 	}
 
 	// Position
 
 	struct xrt_vec3 pos_delta = {
 	    qd->movement_speed * (qd->right_pressed - qd->left_pressed),
-	    0, // Up/down movement will be global
+	    0, // Up/down movement will be relative to base space
 	    qd->movement_speed * (qd->backward_pressed - qd->forward_pressed),
 	};
 	math_quat_rotate_vec3(&qd->pose.orientation, &pos_delta, &pos_delta);
 	pos_delta.y += qd->movement_speed * (qd->up_pressed - qd->down_pressed);
 	math_vec3_accum(&pos_delta, &qd->pose.position);
 
-	// Rotation
+	// Orientation
 
 	// View rotation caused by keys
 	float y_look_speed = qd->look_speed * (qd->look_left_pressed - qd->look_right_pressed);
@@ -182,7 +157,8 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 	// View rotation caused by mouse
 	y_look_speed += qd->yaw_delta;
 	x_look_speed += qd->pitch_delta;
-	qd->yaw_delta = qd->pitch_delta = 0;
+	qd->yaw_delta = 0;
+	qd->pitch_delta = 0;
 
 	struct xrt_quat x_rotation, y_rotation;
 	struct xrt_vec3 x_axis = {1, 0, 0}, y_axis = {0, 1, 0};
@@ -192,7 +168,7 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 	math_quat_rotate(&y_rotation, &qd->pose.orientation, &qd->pose.orientation); // base-space yaw
 	math_quat_normalize(&qd->pose.orientation);
 
-	// Base Space Adjustment
+	// HMD Parenting
 
 	bool qd_is_ctrl = name == XRT_INPUT_SIMPLE_GRIP_POSE;
 	struct qwerty_controller *qc = qd_is_ctrl ? qwerty_controller(&qd->base) : NULL;
@@ -216,9 +192,6 @@ qwerty_get_view_pose(struct xrt_device *xd,
                      uint32_t view_index,
                      struct xrt_pose *out_pose)
 {
-	// XXXFUT: This behaviour is different from the majority of driver's
-	// get_view_pose. See if that behaviour could be better than this
-	// i.e. the "avoid -0.f" and "only flip if negative" if statements.
 	struct xrt_pose pose = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
 	bool is_left = view_index == 0;
 	float adjust = is_left ? -0.5f : 0.5f;
@@ -231,6 +204,8 @@ qwerty_get_view_pose(struct xrt_device *xd,
 static void
 qwerty_destroy(struct xrt_device *xd)
 {
+	// Note: do not destroy a single device of a qwerty system or its var tracking
+	// ui will make a null reference
 	struct qwerty_device *qd = qwerty_device(xd);
 	qwerty_system_remove(qd->sys, qd);
 	u_device_free(xd);
@@ -242,6 +217,7 @@ qwerty_hmd_create()
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
 	size_t num_inputs = 1, num_outputs = 0;
 	struct qwerty_hmd *qh = U_DEVICE_ALLOCATE(struct qwerty_hmd, flags, num_inputs, num_outputs);
+	assert(qh);
 
 	struct qwerty_device *qd = &qh->base;
 	qd->pose.orientation.w = 1.f;
@@ -256,7 +232,7 @@ qwerty_hmd_create()
 	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
 	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
 
-	// Fills qh->base.hmd
+	// Fill in xd->hmd
 	struct u_device_simple_info info;
 	info.display.w_pixels = 1280;
 	info.display.h_pixels = 720;
@@ -270,6 +246,7 @@ qwerty_hmd_create()
 	if (!u_device_setup_split_side_by_side(xd, &info)) {
 		QWERTY_ERROR(qd, "Failed to setup HMD properties");
 		qwerty_destroy(xd);
+		assert(false);
 		return NULL;
 	}
 
@@ -282,7 +259,7 @@ qwerty_hmd_create()
 	xd->get_tracked_pose = qwerty_get_tracked_pose;
 	xd->get_view_pose = qwerty_get_view_pose;
 	xd->destroy = qwerty_destroy;
-	u_distortion_mesh_set_none(xd); // Fills xd->compute_distortion()
+	u_distortion_mesh_set_none(xd); // Fill in xd->compute_distortion()
 
 	return qh;
 }
@@ -291,6 +268,9 @@ struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 {
 	struct qwerty_controller *qc = U_DEVICE_ALLOCATE(struct qwerty_controller, U_DEVICE_ALLOC_TRACKING_NONE, 4, 1);
+	assert(qc);
+	qc->select_clicked = false;
+	qc->menu_clicked = false;
 	qc->follow_hmd = qhmd != NULL;
 
 	struct qwerty_device *qd = &qc->base;
@@ -308,14 +288,13 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
 
-	// XXXFUT: xd->*_tracking_supported bools are false. Is this semantically correct?
 	xd->tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
 	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
 
 	xd->inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 	xd->inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
 	xd->inputs[QWERTY_GRIP].name = XRT_INPUT_SIMPLE_GRIP_POSE;
-	xd->inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // XXXFUT: Understand aim inputs
+	xd->inputs[QWERTY_AIM].name = XRT_INPUT_SIMPLE_AIM_POSE; // @todo: aim input not implemented
 	xd->outputs[QWERTY_VIBRATION].name = XRT_OUTPUT_NAME_SIMPLE_VIBRATION;
 
 	xd->update_inputs = qwerty_update_inputs;
@@ -340,20 +319,17 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	u_var_add_bool(qs, &qs->process_keys, "process_keys");
 
 	if (qd_hmd) {
-		// u_var_add_ro_text(qs, "", qd_hmd->base.str);
 		u_var_add_gui_header(qs, NULL, qd_hmd->base.str);
 		u_var_add_pose(qs, &qd_hmd->pose, "hmd.pose");
 		u_var_add_f32(qs, &qd_hmd->movement_speed, "hmd.movement_speed");
 		u_var_add_f32(qs, &qd_hmd->look_speed, "hmd.look_speed");
 	}
 
-	// u_var_add_ro_text(qs, "", qd_left->base.str);
 	u_var_add_gui_header(qs, NULL, qd_left->base.str);
 	u_var_add_pose(qs, &qd_left->pose, "left.pose");
 	u_var_add_f32(qs, &qd_left->movement_speed, "left.movement_speed");
 	u_var_add_f32(qs, &qd_left->look_speed, "left.look_speed");
 
-	// u_var_add_ro_text(qs, "", qd_right->base.str);
 	u_var_add_gui_header(qs, NULL, qd_right->base.str);
 	u_var_add_pose(qs, &qd_right->pose, "right.pose");
 	u_var_add_f32(qs, &qd_right->movement_speed, "right.movement_speed");
@@ -424,9 +400,8 @@ qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd)
 static void
 qwerty_system_destroy(struct qwerty_system *qs)
 {
-	// XXX: Repeated in qwerty_system_remove, probably should be docuemnted as a precondition.
 	bool all_devices_clean = !qs->hmd && !qs->lctrl && !qs->rctrl;
-	assert(all_devices_clean); // Can't destroy a system without previously destroying its devices.
+	assert(all_devices_clean && "Tried to destroy a qwerty_system without destroying its devices before.");
 	u_var_remove_root(qs);
 	free(qs);
 }

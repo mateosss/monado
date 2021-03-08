@@ -18,9 +18,6 @@ extern "C" {
  * @{
  */
 
-// XXXASK: qwerty_system uses the same concept as hydra_system and
-// survive_system but they derive from xrt_tracking_origin
-
 //! Container of qwerty devices and driver properties.
 struct qwerty_system
 {
@@ -54,7 +51,7 @@ struct qwerty_device
 	bool look_down_pressed;
 
 	float yaw_delta;   //!< How much extra yaw to add for the next pose. Then reset to 0.
-	float pitch_delta; //!< Similar to `yaw`
+	float pitch_delta; //!< Similar to `yaw_delta`
 };
 
 //! @implements qwerty_device
@@ -72,13 +69,12 @@ struct qwerty_controller
 	bool select_clicked;
 	bool menu_clicked;
 
-	// XXXFUT: Would be nice for it to also work with non-qwerty HMDs.
 	/*!
 	 * Only used when a qwerty_hmd exists in the system.
 	 * Do not modify directly; use qwerty_follow_hmd().
 	 * If true, `pose` is relative to the qwerty_hmd.
 	 */
-	bool follow_hmd;
+	bool follow_hmd; // @todo: Make this work with non-qwerty HMDs.
 };
 
 /*!
@@ -135,7 +131,7 @@ void qwerty_release_look_down(struct qwerty_device *qd);
 void
 qwerty_add_look_delta(struct qwerty_device *qd, float yaw, float pitch);
 
-//! Change movement speed in steps which are usually integers, though any float is allowed.
+//! Change movement speed in exponential steps (usually integers, but any float allowed)
 void
 qwerty_change_movement_speed(struct qwerty_device *qd, float steps);
 
@@ -155,6 +151,7 @@ qwerty_release_all(struct qwerty_device *qd);
  */
 //! @public @memberof qwerty_hmd <!-- Trick for doxygen -->
 
+//! Create qwerty_hmd. Crash on fail.
 struct qwerty_hmd *
 qwerty_hmd_create();
 
@@ -174,6 +171,7 @@ qwerty_hmd(struct xrt_device *xd);
  */
 //! @public @memberof qwerty_controller <!-- Trick for doxygen -->
 
+//! Create qwerty_controller. Crash on fail.
 struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
 
@@ -193,7 +191,7 @@ qwerty_menu_click(struct qwerty_controller *qc);
 void
 qwerty_follow_hmd(struct qwerty_controller *qc, bool follow);
 
-//! Resets controller to initial pose and makes it follow the HMD
+//! Reset controller to initial pose and makes it follow the HMD
 void
 qwerty_reset_controller_pose(struct qwerty_controller *qc);
 
