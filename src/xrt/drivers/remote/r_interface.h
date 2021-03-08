@@ -39,8 +39,6 @@ struct xrt_device;
 #define R_HEADER_VALUE (*(uint64_t *)"mndrmt1\0")
 
 
-// XXXFUT: Could I have used a remote controller for keyboard/mouse movement instead of a driver?
-
 /*!
  * Data per controller.
  */

@@ -183,8 +183,6 @@ struct ipc_shared_memory
 	 *
 	 * Only @ref num_itracks elements are populated/valid.
 	 */
-	// XXXANS: Shared tracking here, may be useful
-	// ANS: Won't care about the tracking origin problem for now. Solved with _NONE tracking.
 	struct ipc_shared_tracking_origin itracks[IPC_SHARED_MAX_DEVICES];
 
 	/*!

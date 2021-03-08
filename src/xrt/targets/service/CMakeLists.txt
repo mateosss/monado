@@ -92,4 +92,4 @@ if(XRT_HAVE_SDL2)
 		)
 endif()
 
-target_include_directories(monado-service PRIVATE ../../drivers/qwerty) # XXXASK: for meson I did a drv_qwerty_include, I couldn't do it on cmake
+target_include_directories(monado-service PRIVATE ../../drivers/qwerty)

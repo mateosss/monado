@@ -176,7 +176,7 @@ cmake_dependent_option(XRT_HAVE_GST "Enable gstreamer" ON "GST_FOUND" OFF)
 
 
 cmake_dependent_option(XRT_BUILD_DRIVER_PSVR "Enable PSVR HMD driver" ON "HIDAPI_FOUND" OFF)
-cmake_dependent_option(XRT_BUILD_DRIVER_RS "Enable RealSense device driver" ON "realsense2_FOUND" OFF) # XXXFUT: Where does realsense2_FOUND get set?
+cmake_dependent_option(XRT_BUILD_DRIVER_RS "Enable RealSense device driver" ON "realsense2_FOUND" OFF)
 cmake_dependent_option(XRT_BUILD_DRIVER_VIVE "Enable driver for HTC Vive, Vive Pro, Valve Index, and their controllers" ON "ZLIB_FOUND AND XRT_HAVE_LINUX" OFF)
 cmake_dependent_option(XRT_BUILD_DRIVER_OHMD "Enable OpenHMD driver" ON "OPENHMD_FOUND" OFF)
 cmake_dependent_option(XRT_BUILD_DRIVER_HANDTRACKING "Enable Camera Hand Tracking driver" ON "XRT_HAVE_V4L2" OFF)
@@ -221,7 +221,7 @@ list(APPEND AVAILABLE_DRIVERS
 	"V4L2"
 	"VF"
 	"VIVE"
-	"QWERTY" # XXXASK: Order
+	"QWERTY"
 	)
 
 

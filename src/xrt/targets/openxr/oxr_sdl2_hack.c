@@ -167,9 +167,10 @@ sdl2_loop(struct sdl2_program *p)
 		while (SDL_PollEvent(&event)) {
 			igImGui_ImplSDL2_ProcessEvent(&event);
 
-			// XXXASK: Caution here, qwerty driver is being accesed by the main thread as well
-			if (qwerty_enabled)
+			// Caution here, qwerty driver is being accesed by the main thread as well
+			if (qwerty_enabled) {
 				qwerty_process_event(p->base.xdevs, event);
+			}
 
 			if (event.type == SDL_QUIT) {
 				p->base.stopped = true;
@@ -292,11 +293,6 @@ oxr_sdl2_hack_start(void *hack, struct xrt_instance *xinst, struct xrt_device **
 
 	xrt_instance_get_prober(xinst, &p->base.xp);
 
-	// XXXANS: for some reason p->base.xdevs is empty on monado-service, understand why
-	// ANS: gui_program was probably intended to be used only on monado-gui (hence the _hack prefix)
-
-	// XXXASK: Having more than one owner for these pointers seems like a bad idea
-	// XXXASK: Also, these pointers will be touched from the gui thread without a lock
 	for (size_t i = 0; i < NUM_XDEVS; i++) {
 		p->base.xdevs[i] = xdevs[i];
 	}
