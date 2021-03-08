@@ -12,7 +12,6 @@
 
 #include "xrt/xrt_prober.h"
 #include "xrt/xrt_instance.h"
-#include <stdio.h>
 
 #include "util/u_misc.h"
 

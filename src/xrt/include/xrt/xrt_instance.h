@@ -11,7 +11,6 @@
 
 #include "xrt/xrt_compiler.h"
 #include "xrt/xrt_defines.h"
-#include <stdio.h>
 
 
 #ifdef __cplusplus

@@ -16,8 +16,6 @@
 #include "os/os_hid.h"
 #include "p_prober.h"
 
-#include <stdio.h>
-
 #ifdef XRT_HAVE_V4L2
 #include "v4l2/v4l2_interface.h"
 #endif
@@ -885,6 +883,7 @@ select_device(struct xrt_prober *xp, struct xrt_device **xdevs, size_t num_xdevs
 		P_DEBUG(p, "Destroying '%s'", xdevs[i]->str);
 		xrt_device_destroy(&xdevs[i]);
 	}
+
 	return 0;
 }
 

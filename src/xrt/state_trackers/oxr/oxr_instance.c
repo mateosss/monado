@@ -291,6 +291,7 @@ oxr_instance_create(struct oxr_logger *log, const XrInstanceCreateInfo *createIn
 	struct xrt_vec3 global_tracking_origin_offset = {debug_get_float_option_tracking_origin_offset_x(),
 	                                                 debug_get_float_option_tracking_origin_offset_y(),
 	                                                 debug_get_float_option_tracking_origin_offset_z()};
+
 	u_device_setup_tracking_origins(dev, GET_XDEV_BY_ROLE(sys, left), GET_XDEV_BY_ROLE(sys, right),
 	                                &global_tracking_origin_offset);
 
