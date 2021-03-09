@@ -26,14 +26,19 @@ struct xrt_auto_prober *
 qwerty_create_auto_prober(void);
 
 /*!
- * Process an SDL_Event (like a key press) and dispatches the appropriate action
- * to the right qwerty_device.
+ * Process an SDL_Event (like a key press) and dispatches a suitable action
+ * to the appropiate qwerty_device.
  *
- * @pre `xdevs[1]` and `xdevs[2]` point respectively to left and right qwerty_controller.
- * @note `xdevs[0]` might not point to a qwerty_hmd.
+ * @note A qwerty_controller might not be in use (for example if you have
+ * physical controllers connected), though its memory will be modified by these
+ * events regardless. A qwerty_hmd not in use will not be modified as it never
+ * gets created.
+ *
+ * @todo Would be good to update the default focused device based on which
+ * devices are in use.
  */
 void
-qwerty_process_event(struct xrt_device **xdevs, SDL_Event event);
+qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event event);
 
 /*!
  * @}

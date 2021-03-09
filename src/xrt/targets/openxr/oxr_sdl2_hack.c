@@ -169,7 +169,7 @@ sdl2_loop(struct sdl2_program *p)
 
 			// Caution here, qwerty driver is being accessed by the main thread as well
 			if (qwerty_enabled) {
-				qwerty_process_event(p->base.xdevs, event);
+				qwerty_process_event(p->base.xdevs, NUM_XDEVS, event);
 			}
 
 			if (event.type == SDL_QUIT) {
