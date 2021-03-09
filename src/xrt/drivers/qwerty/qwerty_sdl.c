@@ -15,17 +15,47 @@
 // Amount of look_speed units a mouse delta of 1px in screen space will rotate the device
 #define SENSITIVITY 0.1f
 
-void
-qwerty_process_event(struct xrt_device **xdevs, SDL_Event event)
+static void
+find_qwerty_devices(struct xrt_device **xdevs,
+                    size_t num_xdevs,
+                    struct xrt_device **xd_hmd,
+                    struct xrt_device **xd_left,
+                    struct xrt_device **xd_right)
 {
-	struct qwerty_controller *qleft = qwerty_controller(xdevs[1]);
+	for (size_t i = 0; i < num_xdevs; i++) {
+		if (xdevs[i] == NULL)
+			continue;
+		else if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0)
+			*xd_hmd = xdevs[i];
+		else if (strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0)
+			*xd_left = xdevs[i];
+		else if (strcmp(xdevs[i]->str, QWERTY_RIGHT_STR) == 0)
+			*xd_right = xdevs[i];
+	}
+}
+
+void
+qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event event)
+{
+	static struct xrt_device *xd_hmd = NULL;
+	static struct xrt_device *xd_left = NULL;
+	static struct xrt_device *xd_right = NULL;
+
+	// We can cache the devices as they don't get destroyed during runtime
+	static bool devices_cached = false;
+	if (!devices_cached) {
+		find_qwerty_devices(xdevs, num_xdevs, &xd_hmd, &xd_left, &xd_right);
+		devices_cached = true;
+	}
+
+	struct qwerty_controller *qleft = qwerty_controller(xd_left);
 	struct qwerty_device *qd_left = &qleft->base;
 
-	struct qwerty_controller *qright = qwerty_controller(xdevs[2]);
+	struct qwerty_controller *qright = qwerty_controller(xd_right);
 	struct qwerty_device *qd_right = &qright->base;
 
 	bool using_qhmd = qd_left->sys->hmd != NULL;
-	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xdevs[0]) : NULL;
+	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xd_hmd) : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
 
 	struct qwerty_system *qsys = qd_left->sys;
