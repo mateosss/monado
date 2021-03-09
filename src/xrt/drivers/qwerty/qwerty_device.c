@@ -229,8 +229,8 @@ qwerty_hmd_create()
 	xd->name = XRT_DEVICE_GENERIC_HMD;
 	xd->device_type = XRT_DEVICE_TYPE_HMD;
 
-	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
-	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty HMD");
+	snprintf(xd->str, XRT_DEVICE_NAME_LEN, QWERTY_HMD_STR);
+	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, QWERTY_HMD_STR);
 
 	// Fill in xd->hmd
 	struct u_device_simple_info info;
@@ -251,7 +251,7 @@ qwerty_hmd_create()
 	}
 
 	xd->tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty HMD Tracker");
+	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, QWERTY_HMD_TRACKER_STR);
 
 	xd->inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
 
@@ -284,12 +284,13 @@ qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd)
 	xd->name = XRT_DEVICE_SIMPLE_CONTROLLER;
 	xd->device_type = is_left ? XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER : XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
 
-	char *side_name = is_left ? "Left" : "Right";
-	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
-	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "Qwerty %s Controller", side_name);
+	char *controller_name = is_left ? QWERTY_LEFT_STR : QWERTY_RIGHT_STR;
+	snprintf(xd->str, XRT_DEVICE_NAME_LEN, "%s", controller_name);
+	snprintf(xd->serial, XRT_DEVICE_NAME_LEN, "%s", controller_name);
 
 	xd->tracking_origin->type = XRT_TRACKING_TYPE_OTHER;
-	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "Qwerty %s Controller Tracker", side_name);
+	char *tracker_name = is_left ? QWERTY_LEFT_TRACKER_STR : QWERTY_RIGHT_TRACKER_STR;
+	snprintf(xd->tracking_origin->name, XRT_TRACKING_NAME_LEN, "%s", tracker_name);
 
 	xd->inputs[QWERTY_SELECT].name = XRT_INPUT_SIMPLE_SELECT_CLICK;
 	xd->inputs[QWERTY_MENU].name = XRT_INPUT_SIMPLE_MENU_CLICK;
