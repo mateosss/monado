@@ -9,6 +9,13 @@
 #include "util/u_logging.h"
 #include "xrt/xrt_device.h"
 
+#define QWERTY_HMD_STR "Qwerty HMD"
+#define QWERTY_HMD_TRACKER_STR QWERTY_HMD_STR " Tracker"
+#define QWERTY_LEFT_STR "Qwerty Left Controller"
+#define QWERTY_LEFT_TRACKER_STR QWERTY_LEFT_STR " Tracker"
+#define QWERTY_RIGHT_STR "Qwerty Right Controller"
+#define QWERTY_RIGHT_TRACKER_STR QWERTY_RIGHT_STR " Tracker"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
