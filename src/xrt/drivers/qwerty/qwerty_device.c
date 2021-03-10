@@ -60,7 +60,7 @@ eq(void *a, void *b)
 	return a == b;
 }
 
-static inline struct qwerty_device *
+struct qwerty_device *
 qwerty_device(struct xrt_device *xd)
 {
 	struct qwerty_device *qd = (struct qwerty_device *)xd;

@@ -110,6 +110,10 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
  */
 //! @public @memberof qwerty_device <!-- Trick for doxygen -->
 
+//! Cast to qwerty_device. Ensures returning a valid device or crashing.
+struct qwerty_device *
+qwerty_device(struct xrt_device *xd);
+
 // clang-format off
 void qwerty_press_left(struct qwerty_device *qd);
 void qwerty_release_left(struct qwerty_device *qd);
