@@ -61,6 +61,31 @@ default_qwerty_device(struct xrt_device **xdevs,
 	return default_qdev;
 }
 
+// Determines the default controller based on which devices are in use
+struct qwerty_controller *
+default_qwerty_controller(struct xrt_device **xdevs,
+                      size_t num_xdevs,
+                      struct xrt_device *xd_hmd,
+                      struct xrt_device *xd_left,
+                      struct xrt_device *xd_right)
+{
+	// XXX: Very similar to default_qwerty_device DRY
+	int head, left, right;
+	head = left = right = XRT_DEVICE_ROLE_UNASSIGNED;
+	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
+
+	struct qwerty_controller *default_qctrl = NULL;
+	if (xdevs[right] == xd_right)
+		default_qctrl = qwerty_controller(xd_right);
+	else if (xdevs[left] == xd_left)
+		default_qctrl = qwerty_controller(xd_left);
+	else // Even here, xd_right is allocated and so we can modify it
+		default_qctrl = qwerty_controller(xd_right);
+
+	// XXX: Consider using NULL and stopping qwerty in the "else" case
+	return default_qctrl;
+}
+
 void
 qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event event)
 {
@@ -118,11 +143,11 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	else if (alt_pressed) qdev = qd_right;
 	else qdev = default_qdev;
 
-	// Default controller for qwerty_controller specific methods. `qright` by
-	// default because some window managers capture alt+click actions before SDL
-	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : qwerty_controller(&qdev->base);
-	// XXX: Should not be qright, shoul de be a default_qctrl will fail when using
-	// a right non-qwerty controller with a left qwerty controller
+	// Default main controller
+	struct qwerty_controller *default_qctrl = default_qwerty_controller(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
+
+	// Determinr main controller for qwerty_controller specific methods
+	struct qwerty_controller *qctrl = qdev == qd_hmd ? default_qctrl : qwerty_controller(&qdev->base);
 
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
