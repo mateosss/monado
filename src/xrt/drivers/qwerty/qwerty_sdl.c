@@ -82,12 +82,18 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 		qwerty_release_all(qd_left);
 	}
 
+	// Default focused device
+	struct qwerty_device *default_qdev = using_qhmd ? qd_hmd : qd_right;
+
 	// Determine focused device
 	struct qwerty_device *qdev;
 	if (ctrl_pressed) qdev = qd_left;
 	else if (alt_pressed) qdev = qd_right;
-	else if (using_qhmd) qdev = qd_hmd;
-	else /* if (!using_qhmd) */ qdev = qd_right;
+	else qdev = default_qdev;
+
+	// Default controller for qwerty_controller specific methods. `qright` by
+	// default because some window managers capture alt+click actions before SDL
+	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : qwerty_controller(&qdev->base);
 
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
@@ -131,10 +137,6 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 		float pitch = -event.motion.yrel * SENSITIVITY;
 		qwerty_add_look_delta(qdev, yaw, pitch);
 	}
-
-	// Default controller for qwerty_controller specific methods. `qright` by
-	// default because some window managers capture alt+click actions before SDL
-	struct qwerty_controller *qctrl = qdev == qd_hmd ? qright : qwerty_controller(&qdev->base);
 
 	// Select and menu clicks only for controllers.
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
