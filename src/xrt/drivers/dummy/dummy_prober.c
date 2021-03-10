@@ -52,10 +52,21 @@ dummy_prober_autoprobe(struct xrt_auto_prober *xap,
 	struct dummy_prober *dp = dummy_prober(xap);
 	(void)dp;
 
-	// Do not create a dummy HMD if we are not looking for HMDs.
-	if (no_hmds) {
-		return 0;
+	static int hack = 3;
+	if (hack) {
+		out_xdevs[0] = dummy_hmd_create();
+		out_xdevs[0]->device_type = XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
+		out_xdevs[0]->hmd = NULL;
+		snprintf(out_xdevs[0]->str, XRT_DEVICE_NAME_LEN, "Dummy HACK %d", hack);
+		snprintf(out_xdevs[0]->serial, XRT_DEVICE_NAME_LEN, "Dummy HACK %d", hack);
+		hack--;
+		return 1;
 	}
+
+	// Do not create a dummy HMD if we are not looking for HMDs.
+	// if (no_hmds) {
+	// 	return 0;
+	// }
 
 	out_xdevs[0] = dummy_hmd_create();
 	return 1;

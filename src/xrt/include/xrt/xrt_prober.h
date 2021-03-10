@@ -42,7 +42,7 @@ struct os_hid_device;
  */
 #define XRT_MAX_DEVICES_PER_PROBE 16
 
-#define MAX_AUTO_PROBERS 8
+#define MAX_AUTO_PROBERS 16
 
 /*!
  * Entry for a single device.
