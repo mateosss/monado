@@ -1074,13 +1074,12 @@ ipc_server_main(int argc, char **argv)
 
 	init_server_state(s);
 
-	/* ---- HACK ---- */
-	// Copy ipc_devices back as xrt_devices
 	struct xrt_device *xdevs[IPC_SERVER_NUM_XDEVS];
 	for (size_t i = 0; i < IPC_SERVER_NUM_XDEVS; i++) {
 		xdevs[i] = s->idevs[i].xdev;
 	}
 
+	/* ---- HACK ---- */
 	oxr_sdl2_hack_start(s->hack, s->xinst, xdevs);
 	/* ---- HACK ---- */
 

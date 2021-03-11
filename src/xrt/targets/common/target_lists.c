@@ -76,7 +76,7 @@
 
 /*!
  * Each entry should be a vendor ID (VID), product ID (PID), a "found" function,
- * a string literal name and a driver name.
+ * and a string literal name.
  *
  * The "found" function must return `int` and take as parameters:
  *

@@ -147,7 +147,7 @@ sdl2_loop(struct sdl2_program *p)
 	ImPlotContext *plot_ctx = ImPlot_CreateContext();
 	ImPlot_SetCurrentContext(plot_ctx);
 
-	// Using Qwerty driver
+	// Setup qwerty driver usage
 	bool qwerty_enabled = debug_get_bool_option_qwerty_enable();
 
 	// Main loop
