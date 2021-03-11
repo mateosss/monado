@@ -212,7 +212,7 @@ qwerty_destroy(struct xrt_device *xd)
 }
 
 struct qwerty_hmd *
-qwerty_hmd_create()
+qwerty_hmd_create(void)
 {
 	enum u_device_alloc_flags flags = U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE;
 	size_t num_inputs = 1, num_outputs = 0;

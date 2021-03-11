@@ -165,9 +165,9 @@ qwerty_release_all(struct qwerty_device *qd);
  */
 //! @public @memberof qwerty_hmd <!-- Trick for doxygen -->
 
-//! Create qwerty_hmd. Crash on fail.
+//! Create qwerty_hmd. Crash on failure.
 struct qwerty_hmd *
-qwerty_hmd_create();
+qwerty_hmd_create(void);
 
 //! Cast to qwerty_hmd. Ensures returning a valid HMD or crashing.
 struct qwerty_hmd *
@@ -185,7 +185,7 @@ qwerty_hmd(struct xrt_device *xd);
  */
 //! @public @memberof qwerty_controller <!-- Trick for doxygen -->
 
-//! Create qwerty_controller. Crash on fail.
+//! Create qwerty_controller. Crash on failure.
 struct qwerty_controller *
 qwerty_controller_create(bool is_left, struct qwerty_hmd *qhmd);
 
