@@ -348,6 +348,9 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	u_var_add_ro_text(qs, "Modify FD movement speed", "Numpad +/-");
 	u_var_add_ro_text(qs, "Reset both or FC pose", "R");
 	u_var_add_ro_text(qs, "Toggle both or FC parenting to HMD", "F");
+	u_var_add_ro_text(qs, "FC Select click", "Left Click");
+	u_var_add_ro_text(qs, "FC Menu click", "Middle Click");
+
 }
 
 struct qwerty_system *

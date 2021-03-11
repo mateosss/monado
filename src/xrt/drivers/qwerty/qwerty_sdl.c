@@ -35,7 +35,7 @@ find_qwerty_devices(struct xrt_device **xdevs,
 	}
 }
 
-// Determines the default device based on which devices are in use
+// Determines the default qwerty device based on which devices are in use
 struct qwerty_device *
 default_qwerty_device(struct xrt_device **xdevs,
                       size_t num_xdevs,
@@ -57,19 +57,17 @@ default_qwerty_device(struct xrt_device **xdevs,
 	else // Even here, xd_right is allocated and so we can modify it
 		default_qdev = qwerty_device(xd_right);
 
-	// XXX: Consider using NULL and stopping qwerty in the "else" case
 	return default_qdev;
 }
 
-// Determines the default controller based on which devices are in use
+// Determines the default qwerty controller based on which devices are in use
 struct qwerty_controller *
 default_qwerty_controller(struct xrt_device **xdevs,
-                      size_t num_xdevs,
-                      struct xrt_device *xd_hmd,
-                      struct xrt_device *xd_left,
-                      struct xrt_device *xd_right)
+                          size_t num_xdevs,
+                          struct xrt_device *xd_hmd,
+                          struct xrt_device *xd_left,
+                          struct xrt_device *xd_right)
 {
-	// XXX: Very similar to default_qwerty_device DRY
 	int head, left, right;
 	head = left = right = XRT_DEVICE_ROLE_UNASSIGNED;
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
@@ -82,7 +80,6 @@ default_qwerty_controller(struct xrt_device **xdevs,
 	else // Even here, xd_right is allocated and so we can modify it
 		default_qctrl = qwerty_controller(xd_right);
 
-	// XXX: Consider using NULL and stopping qwerty in the "else" case
 	return default_qctrl;
 }
 
@@ -93,12 +90,24 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	static struct xrt_device *xd_left = NULL;
 	static struct xrt_device *xd_right = NULL;
 
+	static bool alt_pressed = false;
+	static bool ctrl_pressed = false;
+
+	// Default focused device: the one focused when CTRL and ALT are not pressed
+	static struct qwerty_device *default_qdev;
+	// Default focused controller: the one used for qwerty_controller specific methods
+	static struct qwerty_controller *default_qctrl;
+
 	// We can cache the devices as they don't get destroyed during runtime
-	static bool devices_cached = false;
-	if (!devices_cached) {
+	static bool cached = false;
+	if (!cached) {
 		find_qwerty_devices(xdevs, num_xdevs, &xd_hmd, &xd_left, &xd_right);
-		devices_cached = true;
+		default_qdev = default_qwerty_device(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
+		default_qctrl = default_qwerty_controller(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
+		cached = true;
 	}
+
+	// Initialize different views of the same pointers.
 
 	struct qwerty_controller *qleft = qwerty_controller(xd_left);
 	struct qwerty_device *qd_left = &qleft->base;
@@ -115,9 +124,7 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 		return;
 
 	// clang-format off
-	static bool alt_pressed = false;
-	static bool ctrl_pressed = false;
-
+	// CTRL/ALT keys logic
 	bool alt_down = event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LALT;
 	bool alt_up = event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LALT;
 	bool ctrl_down = event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LCTRL;
@@ -134,20 +141,14 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 		qwerty_release_all(qd_left);
 	}
 
-	// Default focused device: the one focused when CTRL and ALT are not pressed
-	struct qwerty_device *default_qdev = default_qwerty_device(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
-
 	// Determine focused device
 	struct qwerty_device *qdev;
 	if (ctrl_pressed) qdev = qd_left;
 	else if (alt_pressed) qdev = qd_right;
 	else qdev = default_qdev;
 
-	// Default main controller
-	struct qwerty_controller *default_qctrl = default_qwerty_controller(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
-
-	// Determinr main controller for qwerty_controller specific methods
-	struct qwerty_controller *qctrl = qdev == qd_hmd ? default_qctrl : qwerty_controller(&qdev->base);
+	// Determine focused controller for qwerty_controller specific methods
+	struct qwerty_controller *qctrl = qdev != qd_hmd ? qwerty_controller(&qdev->base) : default_qctrl;
 
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
