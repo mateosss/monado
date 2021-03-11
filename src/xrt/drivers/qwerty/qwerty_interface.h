@@ -33,9 +33,6 @@ qwerty_create_auto_prober(void);
  * physical controllers connected), though its memory will be modified by these
  * events regardless. A qwerty_hmd not in use will not be modified as it never
  * gets created.
- *
- * @todo Would be good to update the default focused device based on which
- * devices are in use.
  */
 void
 qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event event);
