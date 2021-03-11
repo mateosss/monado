@@ -181,9 +181,9 @@ qwerty_get_tracked_pose(struct xrt_device *xd,
 	} else {
 		out_relation->pose = qd->pose;
 	}
-	out_relation->relation_flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
-	                               XRT_SPACE_RELATION_POSITION_VALID_BIT |
-	                               XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT;
+	out_relation->relation_flags =
+	    XRT_SPACE_RELATION_ORIENTATION_VALID_BIT | XRT_SPACE_RELATION_POSITION_VALID_BIT |
+	    XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_POSITION_TRACKED_BIT;
 }
 
 static void
