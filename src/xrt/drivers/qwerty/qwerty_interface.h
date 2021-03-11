@@ -27,7 +27,7 @@ qwerty_create_auto_prober(void);
 
 /*!
  * Process an SDL_Event (like a key press) and dispatches a suitable action
- * to the appropiate qwerty_device.
+ * to the appropriate qwerty_device.
  *
  * @note A qwerty_controller might not be in use (for example if you have
  * physical controllers connected), though its memory will be modified by these

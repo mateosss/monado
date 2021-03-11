@@ -26,7 +26,8 @@ find_qwerty_devices(struct xrt_device **xdevs,
 	for (size_t i = 0; i < num_xdevs; i++) {
 		if (xdevs[i] == NULL)
 			continue;
-		else if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0)
+
+		if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0)
 			*xd_hmd = xdevs[i];
 		else if (strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0)
 			*xd_left = xdevs[i];

@@ -32,8 +32,8 @@ struct qwerty_system
 	struct qwerty_controller *lctrl;
 	struct qwerty_controller *rctrl;
 	enum u_logging_level ll;
-	bool process_keys; //!< If false disable keyboard and mouse input
-	bool hmd_focused; //!< For gui var tracking only, true if hmd is the focused device
+	bool process_keys;  //!< If false disable keyboard and mouse input
+	bool hmd_focused;   //!< For gui var tracking only, true if hmd is the focused device
 	bool lctrl_focused; //!< Same as `hmd_focused` but for the left controller
 	bool rctrl_focused; //!< Same as `hmd_focused` but for the right controller
 };
