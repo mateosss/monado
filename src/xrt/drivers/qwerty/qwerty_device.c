@@ -52,13 +52,14 @@ qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd);
 static void
 qwerty_system_destroy(struct qwerty_system *qs);
 
-// xrt_device functions
-
+// Compare any two pointers without verbose casts
 static inline bool
 eq(void *a, void *b)
 {
 	return a == b;
 }
+
+// xrt_device functions
 
 struct qwerty_device *
 qwerty_device(struct xrt_device *xd)
@@ -387,15 +388,10 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
 static void
 qwerty_system_remove(struct qwerty_system *qs, struct qwerty_device *qd)
 {
-	void *dev = (void *)qd;
-	void *hmd = (void *)qs->hmd;
-	void *lctrl = (void *)qs->lctrl;
-	void *rctrl = (void *)qs->rctrl;
-
 	// clang-format off
-	if (dev == hmd) qs->hmd = NULL;
-	else if (dev == lctrl) qs->lctrl = NULL;
-	else if (dev == rctrl) qs->rctrl = NULL;
+	if (eq(qd, qs->hmd)) qs->hmd = NULL;
+	else if (eq(qd, qs->lctrl)) qs->lctrl = NULL;
+	else if (eq(qd, qs->rctrl)) qs->rctrl = NULL;
 	else assert(false && "Trying to remove a device that is not in the qwerty system");
 	// clang-format on
 
