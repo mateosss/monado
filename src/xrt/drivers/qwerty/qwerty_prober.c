@@ -14,7 +14,7 @@
 // Using INFO as default to inform events real devices could report physically
 DEBUG_GET_ONCE_LOG_OPTION(qwerty_log, "QWERTY_LOG", U_LOGGING_INFO)
 
-// Driver disabled by default as it does not work with arbitrary configurations
+// Driver disabled by default for being experimental
 DEBUG_GET_ONCE_BOOL_OPTION(qwerty_enable, "QWERTY_ENABLE", false)
 
 struct qwerty_prober
