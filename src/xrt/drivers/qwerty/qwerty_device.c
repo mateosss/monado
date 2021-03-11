@@ -319,6 +319,12 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	u_var_add_log_level(qs, &qs->ll, "log_level");
 	u_var_add_bool(qs, &qs->process_keys, "process_keys");
 
+	u_var_add_ro_text(qs, "", "Focused Device");
+	if (qd_hmd)
+		u_var_add_bool(qs, &qs->hmd_focused, "HMD Focused");
+	u_var_add_bool(qs, &qs->lctrl_focused, "Left Controller Focused");
+	u_var_add_bool(qs, &qs->rctrl_focused, "Right Controller Focused");
+
 	if (qd_hmd) {
 		u_var_add_gui_header(qs, NULL, qd_hmd->base.str);
 		u_var_add_pose(qs, &qd_hmd->pose, "hmd.pose");
@@ -350,7 +356,6 @@ qwerty_setup_var_tracking(struct qwerty_system *qs)
 	u_var_add_ro_text(qs, "Toggle both or FC parenting to HMD", "F");
 	u_var_add_ro_text(qs, "FC Select click", "Left Click");
 	u_var_add_ro_text(qs, "FC Menu click", "Middle Click");
-
 }
 
 struct qwerty_system *

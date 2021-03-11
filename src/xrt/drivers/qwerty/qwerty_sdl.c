@@ -150,6 +150,11 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	// Determine focused controller for qwerty_controller specific methods
 	struct qwerty_controller *qctrl = qdev != qd_hmd ? qwerty_controller(&qdev->base) : default_qctrl;
 
+	// Update gui tracked variables
+	qsys->hmd_focused = qdev == qd_hmd;
+	qsys->lctrl_focused = qdev == qd_left;
+	qsys->rctrl_focused = qdev == qd_right;
+
 	// WASDQE Movement
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) qwerty_press_left(qdev);
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_a) qwerty_release_left(qdev);
