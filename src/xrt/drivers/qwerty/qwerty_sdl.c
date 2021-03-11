@@ -116,7 +116,7 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	struct qwerty_controller *qright = qwerty_controller(xd_right);
 	struct qwerty_device *qd_right = &qright->base;
 
-	bool using_qhmd = qd_left->sys->hmd != NULL;
+	bool using_qhmd = xd_hmd != NULL;
 	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xd_hmd) : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
 
