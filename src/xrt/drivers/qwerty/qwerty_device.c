@@ -364,10 +364,8 @@ qwerty_system_create(struct qwerty_hmd *qhmd,
                      struct qwerty_controller *qright,
                      enum u_logging_level log_level)
 {
-	bool using_two_qwerty_controllers = !qhmd && qleft && qright;
-	bool using_all_qwerty_devices = qhmd && qleft && qright;
-	bool using_valid_setup = using_two_qwerty_controllers || using_all_qwerty_devices;
-	assert(using_valid_setup);
+	assert(qleft && "Cannot create a qwerty system when Left controller is NULL");
+	assert(qright && "Cannot create a qwerty system when Right controller is NULL");
 
 	struct qwerty_system *qs = U_TYPED_CALLOC(struct qwerty_system);
 	qs->hmd = qhmd;
