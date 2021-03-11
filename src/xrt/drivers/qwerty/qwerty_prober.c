@@ -55,14 +55,14 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 	enum u_logging_level log_level = debug_get_log_option_qwerty_log();
 	qwerty_system_create(qhmd, qleft, qright, log_level);
 
-	struct qwerty_device *qd_hmd = &qhmd->base;
-	struct qwerty_device *qd_left = &qleft->base;
-	struct qwerty_device *qd_right = &qright->base;
+	struct xrt_device *xd_hmd = &qhmd->base.base;
+	struct xrt_device *xd_left = &qleft->base.base;
+	struct xrt_device *xd_right = &qright->base.base;
 
 	if (hmd_wanted)
-		out_xdevs[0] = &qd_hmd->base;
-	out_xdevs[1 - !hmd_wanted] = &qd_left->base;
-	out_xdevs[2 - !hmd_wanted] = &qd_right->base;
+		out_xdevs[0] = xd_hmd;
+	out_xdevs[1 - !hmd_wanted] = xd_left;
+	out_xdevs[2 - !hmd_wanted] = xd_right;
 
 	int num_qwerty_devices = hmd_wanted + 2;
 	return num_qwerty_devices;
