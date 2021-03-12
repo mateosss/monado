@@ -15,7 +15,6 @@
 
 #include "os/os_threading.h"
 
-#include "qwerty_interface.h"
 
 struct xrt_instance;
 
@@ -41,6 +40,8 @@ oxr_sdl2_hack_stop(void **hack)
 
 #include "gui/gui_common.h"
 #include "gui/gui_imgui.h"
+
+#include "qwerty_interface.h"
 
 #include <SDL2/SDL.h>
 
