@@ -33,9 +33,6 @@ target_link_libraries(${RUNTIME_TARGET} PUBLIC
 	aux_math
 	)
 
-target_link_libraries(${RUNTIME_TARGET} PRIVATE drv_qwerty)
-target_include_directories(${RUNTIME_TARGET} PRIVATE ../../drivers/qwerty)
-
 if(XRT_HAVE_OPENGL)
 	target_link_libraries(${RUNTIME_TARGET} PUBLIC aux_ogl)
 endif()
@@ -45,9 +42,11 @@ if(XRT_HAVE_SDL2)
 		st_gui
 		imgui_impl_sdl
 		${SDL2_LIBRARIES}
+		drv_qwerty
 		)
 	target_include_directories(${RUNTIME_TARGET} PRIVATE
 		${SDL2_INCLUDE_DIRS}
+		../../drivers/qwerty
 		)
 endif()
 

@@ -157,7 +157,7 @@ if 'v4l2' in drivers
 endif
 
 if 'auto' in drivers
-	drivers += ['dummy', 'hdk', 'hydra', 'ns', 'psmv', 'remote', 'qwerty']
+	drivers += ['dummy', 'hdk', 'hydra', 'ns', 'psmv', 'remote']
 endif
 
 openhmd = dependency('openhmd', required: openhmd_required)
@@ -219,6 +219,10 @@ if not get_option('dbus').disabled() and dbus.found()
 	if 'auto' in drivers and 'arduino' not in drivers
 		drivers += ['arduino']
 	endif
+endif
+
+if sdl2.found() and ('auto' in drivers and 'qwerty' not in drivers)
+	drivers += ['qwerty']
 endif
 
 if drivers.length() == 0 or drivers == ['auto']

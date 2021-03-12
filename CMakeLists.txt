@@ -185,7 +185,6 @@ cmake_dependent_option(XRT_BUILD_DRIVER_ARDUINO "Enable Arduino input device wit
 cmake_dependent_option(XRT_BUILD_DRIVER_ILLIXR "Enable ILLIXR driver" ON "ILLIXR_PATH" OFF)
 
 option(XRT_BUILD_DRIVER_DUMMY "Enable dummy driver" ON)
-option(XRT_BUILD_DRIVER_QWERTY "Enable Qwerty driver" ON)
 cmake_dependent_option(XRT_BUILD_DRIVER_REMOTE "Enable remote debugging driver" ON "XRT_HAVE_LINUX OR ANDROID" OFF)
 
 # These all use the Monado internal hid wrapper.
@@ -199,6 +198,7 @@ cmake_dependent_option(XRT_BUILD_DRIVER_VF "Build video frame driver (for video 
 cmake_dependent_option(XRT_BUILD_DRIVER_SURVIVE "Enable libsurvive driver" ON "SURVIVE_FOUND" OFF)
 
 cmake_dependent_option(XRT_BUILD_DRIVER_ANDROID "Enable Android sensors driver" ON "ANDROID" OFF)
+cmake_dependent_option(XRT_BUILD_DRIVER_QWERTY "Enable Qwerty driver" ON "XRT_HAVE_SDL2" OFF)
 
 # You can set this from a superproject to add a driver
 # All drivers must be listed in here to be included in the generated header!
