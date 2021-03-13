@@ -1,3 +1,5 @@
+// Copyright 2021, Mateo de Mayo.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
  * @brief Interface to @ref drv_qwerty.

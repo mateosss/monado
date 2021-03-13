@@ -1,3 +1,5 @@
+// Copyright 2021, Mateo de Mayo.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
  * @brief Implementation of qwerty_device related methods.

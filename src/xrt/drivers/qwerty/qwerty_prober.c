@@ -1,3 +1,5 @@
+// Copyright 2021, Mateo de Mayo.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * @file
  * @brief Qwerty devices @ref xrt_auto_prober "autoprober".
