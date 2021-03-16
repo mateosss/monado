@@ -43,10 +43,10 @@ if(XRT_HAVE_SDL2)
 		imgui_impl_sdl
 		${SDL2_LIBRARIES}
 		drv_qwerty
+		drv_qwerty_includes
 		)
 	target_include_directories(${RUNTIME_TARGET} PRIVATE
 		${SDL2_INCLUDE_DIRS}
-		../../drivers/qwerty
 		)
 endif()
 
