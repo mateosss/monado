@@ -26,15 +26,17 @@ find_qwerty_devices(struct xrt_device **xdevs,
                     struct xrt_device **xd_right)
 {
 	for (size_t i = 0; i < num_xdevs; i++) {
-		if (xdevs[i] == NULL)
+		if (xdevs[i] == NULL) {
 			continue;
+		}
 
-		if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0)
+		if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0) {
 			*xd_hmd = xdevs[i];
-		else if (strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0)
+		} else if (strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0) {
 			*xd_left = xdevs[i];
-		else if (strcmp(xdevs[i]->str, QWERTY_RIGHT_STR) == 0)
+		} else if (strcmp(xdevs[i]->str, QWERTY_RIGHT_STR) == 0) {
 			*xd_right = xdevs[i];
+		}
 	}
 }
 
@@ -51,14 +53,15 @@ default_qwerty_device(struct xrt_device **xdevs,
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
 
 	struct qwerty_device *default_qdev = NULL;
-	if (xdevs[head] == xd_hmd)
+	if (xdevs[head] == xd_hmd) {
 		default_qdev = qwerty_device(xd_hmd);
-	else if (xdevs[right] == xd_right)
+	} else if (xdevs[right] == xd_right) {
 		default_qdev = qwerty_device(xd_right);
-	else if (xdevs[left] == xd_left)
+	} else if (xdevs[left] == xd_left) {
 		default_qdev = qwerty_device(xd_left);
-	else // Even here, xd_right is allocated and so we can modify it
+	} else { // Even here, xd_right is allocated and so we can modify it
 		default_qdev = qwerty_device(xd_right);
+	}
 
 	return default_qdev;
 }
@@ -76,12 +79,13 @@ default_qwerty_controller(struct xrt_device **xdevs,
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
 
 	struct qwerty_controller *default_qctrl = NULL;
-	if (xdevs[right] == xd_right)
+	if (xdevs[right] == xd_right) {
 		default_qctrl = qwerty_controller(xd_right);
-	else if (xdevs[left] == xd_left)
+	} else if (xdevs[left] == xd_left) {
 		default_qctrl = qwerty_controller(xd_left);
-	else // Even here, xd_right is allocated and so we can modify it
+	} else { // Even here, xd_right is allocated and so we can modify it
 		default_qctrl = qwerty_controller(xd_right);
+	}
 
 	return default_qctrl;
 }
@@ -123,8 +127,9 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
 
 	struct qwerty_system *qsys = qd_left->sys;
-	if (!qsys->process_keys)
+	if (!qsys->process_keys) {
 		return;
+	}
 
 	// clang-format off
 	// CTRL/ALT keys logic
@@ -192,8 +197,9 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, -SPRINT_STEPS);
 
 	// Mouse rotation
-	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT)
+	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
 		SDL_SetRelativeMouseMode(false);
+	}
 	if (event.type == SDL_MOUSEMOTION && event.motion.state & SDL_BUTTON_RMASK) {
 		SDL_SetRelativeMouseMode(true);
 		float yaw = -event.motion.xrel * SENSITIVITY;
@@ -205,10 +211,13 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) qwerty_select_click(qctrl);
 	if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_MIDDLE) qwerty_menu_click(qctrl);
 
+	// clang-format on
+
 	// Controllers follow/unfollow HMD
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_f && event.key.repeat == 0) {
-		if (qdev != qd_hmd) qwerty_follow_hmd(qctrl, !qctrl->follow_hmd);
-		else { // If no controller is focused, set both to the same state
+		if (qdev != qd_hmd) {
+			qwerty_follow_hmd(qctrl, !qctrl->follow_hmd);
+		} else { // If no controller is focused, set both to the same state
 			bool both_not_following = !qleft->follow_hmd && !qright->follow_hmd;
 			qwerty_follow_hmd(qleft, both_not_following);
 			qwerty_follow_hmd(qright, both_not_following);
@@ -217,12 +226,12 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 
 	// Reset controller poses
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r && event.key.repeat == 0) {
-		if (qdev != qd_hmd) qwerty_reset_controller_pose(qctrl);
-		else { // If no controller is focused, reset both
+		if (qdev != qd_hmd) {
+			qwerty_reset_controller_pose(qctrl);
+		} else { // If no controller is focused, reset both
 			qwerty_reset_controller_pose(qleft);
 			qwerty_reset_controller_pose(qright);
 		}
 	}
 
-	// clang-format on
 }

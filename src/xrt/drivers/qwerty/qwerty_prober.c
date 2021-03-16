@@ -45,8 +45,9 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
                         struct xrt_device **out_xdevs)
 {
 	bool qwerty_enabled = debug_get_bool_option_qwerty_enable();
-	if (!qwerty_enabled)
+	if (!qwerty_enabled) {
 		return 0;
+	}
 
 	bool hmd_wanted = !no_hmds; // Hopefully easier to reason about
 
@@ -61,8 +62,9 @@ qwerty_prober_autoprobe(struct xrt_auto_prober *xap,
 	struct xrt_device *xd_left = &qleft->base.base;
 	struct xrt_device *xd_right = &qright->base.base;
 
-	if (hmd_wanted)
+	if (hmd_wanted) {
 		out_xdevs[0] = xd_hmd;
+	}
 	out_xdevs[1 - !hmd_wanted] = xd_left;
 	out_xdevs[2 - !hmd_wanted] = xd_right;
 
