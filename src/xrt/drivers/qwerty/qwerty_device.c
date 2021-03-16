@@ -511,10 +511,11 @@ qwerty_follow_hmd(struct qwerty_controller *qc, bool follow)
 	struct xrt_space_relation rel = {0};
 
 	m_space_graph_add_pose(&graph, &qd->pose);
-	if (follow) // From global to hmd
+	if (follow) { // From global to hmd
 		m_space_graph_add_inverted_pose_if_not_identity(&graph, &qd_hmd->pose);
-	else // From hmd to global
+	} else { // From hmd to global
 		m_space_graph_add_pose(&graph, &qd_hmd->pose);
+	}
 	m_space_graph_resolve(&graph, &rel);
 
 	qd->pose = rel.pose;
