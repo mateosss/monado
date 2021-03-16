@@ -12,9 +12,6 @@
 #include "xrt/xrt_device.h"
 #include <SDL2/SDL.h>
 
-// Amount of movement_speed steps to increase when sprinting
-#define SPRINT_STEPS 5
-
 // Amount of look_speed units a mouse delta of 1px in screen space will rotate the device
 #define SENSITIVITY 0.1f
 
@@ -193,8 +190,8 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_KP_MINUS) qwerty_change_movement_speed(qdev, -1);
 
 	// Sprinting
-	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, SPRINT_STEPS);
-	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_change_movement_speed(qdev, -SPRINT_STEPS);
+	if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LSHIFT) qwerty_press_sprint(qdev);
+	if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_LSHIFT) qwerty_release_sprint(qdev);
 
 	// Mouse rotation
 	if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
