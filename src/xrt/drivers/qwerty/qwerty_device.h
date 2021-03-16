@@ -30,9 +30,9 @@ extern "C" {
 //! Container of qwerty devices and driver properties.
 struct qwerty_system
 {
-	struct qwerty_hmd *hmd;
-	struct qwerty_controller *lctrl;
-	struct qwerty_controller *rctrl;
+	struct qwerty_hmd *hmd;          //!< Can be NULL
+	struct qwerty_controller *lctrl; //!< Cannot be NULL
+	struct qwerty_controller *rctrl; //!< Cannot be NULL
 	enum u_logging_level ll;
 	bool process_keys;  //!< If false disable keyboard and mouse input
 	bool hmd_focused;   //!< For gui var tracking only, true if hmd is the focused device
@@ -63,8 +63,8 @@ struct qwerty_device
 	bool look_down_pressed;
 
 	bool sprint_pressed; //!< Movement speed boost
-	float yaw_delta;   //!< How much extra yaw to add for the next pose. Then reset to 0.
-	float pitch_delta; //!< Similar to `yaw_delta`
+	float yaw_delta;     //!< How much extra yaw to add for the next pose. Then reset to 0.
+	float pitch_delta;   //!< Similar to `yaw_delta`
 };
 
 //! @implements qwerty_device

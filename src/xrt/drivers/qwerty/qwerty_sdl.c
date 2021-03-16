@@ -11,43 +11,44 @@
 #include "util/u_device.h"
 #include "xrt/xrt_device.h"
 #include <SDL2/SDL.h>
+#include <assert.h>
 
 // Amount of look_speed units a mouse delta of 1px in screen space will rotate the device
 #define SENSITIVITY 0.1f
 
-static void
-find_qwerty_devices(struct xrt_device **xdevs,
-                    size_t num_xdevs,
-                    struct xrt_device **xd_hmd,
-                    struct xrt_device **xd_left,
-                    struct xrt_device **xd_right)
+static struct qwerty_system *
+find_qwerty_system(struct xrt_device **xdevs, size_t num_xdevs)
 {
+	struct xrt_device *xdev = NULL;
 	for (size_t i = 0; i < num_xdevs; i++) {
 		if (xdevs[i] == NULL) {
 			continue;
 		}
-
-		if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0) {
-			*xd_hmd = xdevs[i];
-		} else if (strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0) {
-			*xd_left = xdevs[i];
-		} else if (strcmp(xdevs[i]->str, QWERTY_RIGHT_STR) == 0) {
-			*xd_right = xdevs[i];
+		if (strcmp(xdevs[i]->str, QWERTY_HMD_STR) == 0 || strcmp(xdevs[i]->str, QWERTY_LEFT_STR) == 0 ||
+		    strcmp(xdevs[i]->str, QWERTY_RIGHT_STR) == 0) {
+			xdev = xdevs[i];
+			break;
 		}
 	}
+
+	assert(xdev != NULL && "There is no device in xdevs with the name of a qwerty device");
+	struct qwerty_device *qdev = qwerty_device(xdev);
+	struct qwerty_system *qsys = qdev->sys;
+	assert(qsys != NULL && "The qwerty_system of a qwerty_device was null");
+	return qsys;
 }
 
 // Determines the default qwerty device based on which devices are in use
-struct qwerty_device *
-default_qwerty_device(struct xrt_device **xdevs,
-                      size_t num_xdevs,
-                      struct xrt_device *xd_hmd,
-                      struct xrt_device *xd_left,
-                      struct xrt_device *xd_right)
+static struct qwerty_device *
+default_qwerty_device(struct xrt_device **xdevs, size_t num_xdevs, struct qwerty_system *qsys)
 {
 	int head, left, right;
 	head = left = right = XRT_DEVICE_ROLE_UNASSIGNED;
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
+
+	struct xrt_device *xd_hmd = qsys->hmd ? &qsys->hmd->base.base : NULL;
+	struct xrt_device *xd_left = &qsys->lctrl->base.base;
+	struct xrt_device *xd_right = &qsys->rctrl->base.base;
 
 	struct qwerty_device *default_qdev = NULL;
 	if (xdevs[head] == xd_hmd) {
@@ -64,16 +65,16 @@ default_qwerty_device(struct xrt_device **xdevs,
 }
 
 // Determines the default qwerty controller based on which devices are in use
-struct qwerty_controller *
-default_qwerty_controller(struct xrt_device **xdevs,
-                          size_t num_xdevs,
-                          struct xrt_device *xd_hmd,
-                          struct xrt_device *xd_left,
-                          struct xrt_device *xd_right)
+static struct qwerty_controller *
+default_qwerty_controller(struct xrt_device **xdevs, size_t num_xdevs, struct qwerty_system *qsys)
 {
 	int head, left, right;
 	head = left = right = XRT_DEVICE_ROLE_UNASSIGNED;
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
+
+	struct xrt_device *xd_hmd = qsys->hmd ? &qsys->hmd->base.base : NULL;
+	struct xrt_device *xd_left = &qsys->lctrl->base.base;
+	struct xrt_device *xd_right = &qsys->rctrl->base.base;
 
 	struct qwerty_controller *default_qctrl = NULL;
 	if (xdevs[right] == xd_right) {
@@ -90,9 +91,7 @@ default_qwerty_controller(struct xrt_device **xdevs,
 void
 qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event event)
 {
-	static struct xrt_device *xd_hmd = NULL;
-	static struct xrt_device *xd_left = NULL;
-	static struct xrt_device *xd_right = NULL;
+	static struct qwerty_system *qsys = NULL;
 
 	static bool alt_pressed = false;
 	static bool ctrl_pressed = false;
@@ -105,28 +104,27 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 	// We can cache the devices as they don't get destroyed during runtime
 	static bool cached = false;
 	if (!cached) {
-		find_qwerty_devices(xdevs, num_xdevs, &xd_hmd, &xd_left, &xd_right);
-		default_qdev = default_qwerty_device(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
-		default_qctrl = default_qwerty_controller(xdevs, num_xdevs, xd_hmd, xd_left, xd_right);
+		qsys = find_qwerty_system(xdevs, num_xdevs);
+		default_qdev = default_qwerty_device(xdevs, num_xdevs, qsys);
+		default_qctrl = default_qwerty_controller(xdevs, num_xdevs, qsys);
 		cached = true;
+	}
+
+	if (!qsys->process_keys) {
+		return;
 	}
 
 	// Initialize different views of the same pointers.
 
-	struct qwerty_controller *qleft = qwerty_controller(xd_left);
+	struct qwerty_controller *qleft = qsys->lctrl;
 	struct qwerty_device *qd_left = &qleft->base;
 
-	struct qwerty_controller *qright = qwerty_controller(xd_right);
+	struct qwerty_controller *qright = qsys->rctrl;
 	struct qwerty_device *qd_right = &qright->base;
 
-	bool using_qhmd = xd_hmd != NULL;
-	struct qwerty_hmd *qhmd = using_qhmd ? qwerty_hmd(xd_hmd) : NULL;
+	bool using_qhmd = qsys->hmd != NULL;
+	struct qwerty_hmd *qhmd = using_qhmd ? qsys->hmd : NULL;
 	struct qwerty_device *qd_hmd = using_qhmd ? &qhmd->base : NULL;
-
-	struct qwerty_system *qsys = qd_left->sys;
-	if (!qsys->process_keys) {
-		return;
-	}
 
 	// clang-format off
 	// CTRL/ALT keys logic
@@ -230,5 +228,4 @@ qwerty_process_event(struct xrt_device **xdevs, size_t num_xdevs, SDL_Event even
 			qwerty_reset_controller_pose(qright);
 		}
 	}
-
 }
