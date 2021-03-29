@@ -72,7 +72,6 @@ default_qwerty_controller(struct xrt_device **xdevs, size_t num_xdevs, struct qw
 	head = left = right = XRT_DEVICE_ROLE_UNASSIGNED;
 	u_device_assign_xdev_roles(xdevs, num_xdevs, &head, &left, &right);
 
-	struct xrt_device *xd_hmd = qsys->hmd ? &qsys->hmd->base.base : NULL;
 	struct xrt_device *xd_left = &qsys->lctrl->base.base;
 	struct xrt_device *xd_right = &qsys->rctrl->base.base;
 
