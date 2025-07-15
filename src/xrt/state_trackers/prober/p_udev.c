@@ -437,15 +437,14 @@ p_udev_enumerate_hidraw(struct prober *p, struct udev *udev)
 		}
 
 		// Get USB interface number for non-virtual devices.
-		if (!device_is_virtual(raw_dev)) {
-			ret = p_udev_get_interface_number(raw_dev, &interface);
-			if (ret != 0) {
-				P_ERROR(p,
-				        "In enumerating hidraw devices: "
-				        "Failed to get interface number for '%s'",
-				        sysfs_path);
-				goto next;
-			}
+		ret = p_udev_get_interface_number(raw_dev, &interface);
+		// -1 is returned if it is not a USB device
+		if (ret < -1) {
+			P_ERROR(p,
+			        "In enumerating hidraw devices: "
+			        "Failed to get interface number for '%s'",
+			        sysfs_path);
+			goto next;
 		}
 
 		if (bus_type == HIDRAW_BUS_BLUETOOTH) {
@@ -545,7 +544,7 @@ p_udev_get_interface_number(struct udev_device *raw_dev, uint16_t *interface)
 
 	str = udev_device_get_sysattr_value(intf_dev, "bInterfaceNumber");
 	if (str == NULL) {
-		return -1;
+		return -2;
 	}
 
 	*interface = (uint16_t)strtol(str, NULL, 16);
