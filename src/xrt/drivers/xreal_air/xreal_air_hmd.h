@@ -160,6 +160,10 @@ xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
                             enum u_logging_level log_level,
                             uint16_t max_sensor_buffer_size);
 
+struct xreal_air_hmd;
+struct xreal_air_parsed_calibration *
+xreal_air_hmd_get_callibration(struct xreal_air_hmd *hmd);
+
 bool
 xreal_air_parse_calibration_buffer(struct xreal_air_parsed_calibration *calibration, const char *buffer, size_t size);
 

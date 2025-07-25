@@ -26,6 +26,7 @@
 #include "util/u_trace_marker.h"
 
 #include "xreal_air/xreal_air_hmd.h"
+#include "xreal_air/xreal_air_camera.h"
 #include "xreal_air/xreal_air_interface.h"
 
 enum u_logging_level xreal_air_log_level;
@@ -204,6 +205,17 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 
 	// Add to device list.
 	xsysd->xdevs[xsysd->xdev_count++] = xreal_air_device;
+
+	/*
+	 * Open camera
+	 */
+	struct xreal_air_camera *camera;
+	camera = xreal_air_camera_create(xp, xfctx, (char *)hmd_serial_no, NULL,
+	                                 xreal_air_hmd_get_callibration((struct xreal_air_hmd *)xreal_air_device));
+
+
+
+
 
 	// Assign to role(s).
 	ubrh->head = xreal_air_device;

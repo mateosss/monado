@@ -22,6 +22,7 @@
 #include "util/u_var.h"
 
 #include "xreal_air_hmd.h"
+#include "xreal_air_camera.h"
 
 #include "math/m_mathinclude.h"
 #include "math/m_relation_history.h"
@@ -1178,6 +1179,13 @@ xreal_air_hmd_compute_distortion(
  * Exported functions.
  *
  */
+
+struct xreal_air_parsed_calibration *
+xreal_air_hmd_get_callibration(struct xreal_air_hmd *hmd)
+{
+	return &hmd->calibration;
+}
+
 
 struct xrt_device *
 xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
