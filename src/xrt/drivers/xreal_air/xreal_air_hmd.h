@@ -14,6 +14,8 @@
 
 #include "os/os_hid.h"
 
+#include "xreal_air_camera.h"
+
 #include "util/u_logging.h"
 
 #ifdef __cplusplus
@@ -85,6 +87,16 @@ struct xreal_air_parsed_calibration
 	struct xrt_vec3 scale_mag;
 
 	float imu_noises[4];
+
+	/* Camera */
+	struct {
+		struct xrt_size resolution;
+		struct xrt_vec2 camera_center; /* cc */
+		struct xrt_vec2 focal_length; /* fc */
+		struct xrt_vec3 imu_p_cam;
+		struct xrt_quat imu_q_cam; /* direction in which the camera looks? */
+		float kc[12];
+	} slam_camera[2];
 };
 
 /*!
@@ -157,6 +169,7 @@ struct xreal_air_parsed_control
 struct xrt_device *
 xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
                             struct os_hid_device *control_device,
+                            struct xreal_air_camera *camera,
                             enum u_logging_level log_level,
                             uint16_t max_sensor_buffer_size);
 

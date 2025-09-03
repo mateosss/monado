@@ -23,6 +23,7 @@
 
 #include "xreal_air_hmd.h"
 #include "xreal_air_camera.h"
+#include "xreal_air_tracker.h"
 
 #include "math/m_mathinclude.h"
 #include "math/m_relation_history.h"
@@ -63,6 +64,9 @@ struct xreal_air_hmd
 
 	//! Only touched from the sensor thread.
 	timepoint_ns last_sensor_time;
+
+	struct xreal_air_camera *camera;
+	struct xreal_air_tracker *tracker;
 
 	struct xreal_air_parsed_sensor last;
 
@@ -329,20 +333,6 @@ update_fusion(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *sample,
 	m_relation_history_push(hmd->relation_hist, &rel, timestamp_ns);
 }
 
-static uint32_t
-calc_delta_and_handle_rollover(uint32_t next, uint32_t last)
-{
-	uint32_t tick_delta = next - last;
-
-	// The 24-bit tick counter has rolled over,
-	// adjust the "negative" value to be positive.
-	if (tick_delta > 0xffffff) {
-		tick_delta += 0x1000000;
-	}
-
-	return tick_delta;
-}
-
 static timepoint_ns
 ensure_forward_progress_timestamps(struct xreal_air_hmd *hmd, timepoint_ns timestamp_ns)
 {
@@ -573,9 +563,10 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 	// According to the ICM-42688-P datasheet: (offset: 25 °C, sensitivity: 132.48 LSB/°C)
 	hmd->read.temperature = ((float)s->temperature) / 132.48f + 25.0f;
 
-	uint32_t delta = calc_delta_and_handle_rollover(s->timestamp, last_timestamp);
+	time_duration_ns inter_sample_duration_ns = s->timestamp - last_timestamp;
 
-	time_duration_ns inter_sample_duration_ns = delta;
+	/* FIXME: Should we really *always* call this? That seems insane. */
+	xreal_air_tracker_clock_update(hmd->tracker, last_timestamp, now_ns);
 
 	// If this is larger then one second something bad is going on.
 	if (hmd->fusion.state != M_IMU_3DOF_STATE_START &&
@@ -1190,6 +1181,7 @@ xreal_air_hmd_get_callibration(struct xreal_air_hmd *hmd)
 struct xrt_device *
 xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
                             struct os_hid_device *control_device,
+                            struct xreal_air_camera *camera,
                             enum u_logging_level log_level,
                             uint16_t max_sensor_buffer_size)
 {
@@ -1312,6 +1304,8 @@ xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
 	}
 
 	XREAL_AIR_DEBUG(hmd, "YES!");
+
+	hmd->camera = camera;
 
 	return &hmd->base;
 

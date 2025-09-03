@@ -190,13 +190,16 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 		snprintf((char *)hmd_serial_no, XRT_DEVICE_NAME_LEN, "Unknown");
 	}
 
+	struct xreal_air_camera *camera;
+	camera = xreal_air_camera_create(xp, xfctx);
+
 	xret = xrt_prober_unlock_list(xp, &xpdevs);
 	if (xret != XRT_SUCCESS) {
 		goto fail;
 	}
 
 	struct xrt_device *xreal_air_device = xreal_air_hmd_create_device(
-	    hid_handle, hid_control, xreal_air_log_level, driver_max_sensor_buffer_sizes[product_index]);
+	    hid_handle, hid_control, camera, xreal_air_log_level, driver_max_sensor_buffer_sizes[product_index]);
 
 	if (xreal_air_device == NULL) {
 		XREAL_AIR_ERROR("Failed to initialise Xreal Air driver");
@@ -205,15 +208,6 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 
 	// Add to device list.
 	xsysd->xdevs[xsysd->xdev_count++] = xreal_air_device;
-
-	/*
-	 * Open camera
-	 */
-	struct xreal_air_camera *camera;
-	camera = xreal_air_camera_create(xp, xfctx, (char *)hmd_serial_no, NULL,
-	                                 xreal_air_hmd_get_callibration((struct xreal_air_hmd *)xreal_air_device));
-
-
 
 
 

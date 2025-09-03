@@ -62,8 +62,6 @@ struct xreal_air_camera
 
        struct xreal_air_tracker *tracker;
 
-       struct xreal_air_parsed_calibration *calibration;
-
        struct xrt_frame_sink in_sink; // Receive raw frames and split them
 
        struct u_sink_debug debug_sinks[2];
@@ -82,8 +80,6 @@ struct xreal_air_camera
 
 struct xreal_air_camera_finder
 {
-       const char *hmd_serial_no;
-
        struct xrt_fs *xfs;
        struct xrt_frame_context *xfctx;
 };
@@ -120,11 +116,7 @@ on_video_device(struct xrt_prober *xp,
 
 struct xreal_air_camera *
 xreal_air_camera_create(struct xrt_prober *xp,
-                        struct xrt_frame_context *xfctx,
-                        const char *hmd_serial_no,
-   //                   struct os_hid_device *hid,
-                        struct xreal_air_tracker *tracker,
-                        struct xreal_air_parsed_calibration *calibration)
+                        struct xrt_frame_context *xfctx)
 {
        struct xreal_air_camera_finder finder = {
            0,
@@ -134,7 +126,6 @@ xreal_air_camera_create(struct xrt_prober *xp,
 
        /* Set up the finder with the HMD serial number and frame server context we want */
        finder.xfctx = xfctx;
-       finder.hmd_serial_no = hmd_serial_no;
 
        /* Re-probe devices. The v4l2 camera device should have appeared by now */
        int retry_count = 5;
@@ -165,10 +156,6 @@ xreal_air_camera_create(struct xrt_prober *xp,
                XREAL_AIR_CAMERA_TRACE("Failed to init camera configuration mutex");
                goto cleanup;
        }
-
-       // Store the tracker
-       cam->tracker = tracker;
-       cam->calibration = calibration;
 
        /* Configure default camera settings */
        //rift_s_protocol_camera_report_init(&cam->camera_report);

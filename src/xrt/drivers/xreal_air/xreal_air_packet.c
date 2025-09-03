@@ -12,6 +12,7 @@
 #include "xreal_air_hmd.h"
 
 #include <cjson/cJSON.h>
+#include <math.h>
 #include <string.h>
 
 
@@ -138,6 +139,38 @@ read_u8_array(const uint8_t **buffer, uint8_t *out_value, size_t num)
  */
 
 static void
+read_json_size(cJSON *object, const char *const string, struct xrt_size *out_size)
+{
+	cJSON *obj_size = cJSON_GetObjectItem(object, string);
+
+	if ((!obj_size) || (!cJSON_IsArray(obj_size)) || (cJSON_GetArraySize(obj_size) != 2)) {
+		return;
+	}
+
+	cJSON *obj_w = cJSON_GetArrayItem(obj_size, 0);
+	cJSON *obj_h = cJSON_GetArrayItem(obj_size, 1);
+
+	out_size->w = lrint(cJSON_GetNumberValue(obj_w));
+	out_size->h = lrint(cJSON_GetNumberValue(obj_h));
+}
+
+static void
+read_json_vec2(cJSON *object, const char *const string, struct xrt_vec2 *out_vec2)
+{
+	cJSON *obj_vec2 = cJSON_GetObjectItem(object, string);
+
+	if ((!obj_vec2) || (!cJSON_IsArray(obj_vec2)) || (cJSON_GetArraySize(obj_vec2) != 2)) {
+		return;
+	}
+
+	cJSON *obj_x = cJSON_GetArrayItem(obj_vec2, 0);
+	cJSON *obj_y = cJSON_GetArrayItem(obj_vec2, 1);
+
+	out_vec2->x = (float)cJSON_GetNumberValue(obj_x);
+	out_vec2->y = (float)cJSON_GetNumberValue(obj_y);
+}
+
+static void
 read_json_vec3(cJSON *object, const char *const string, struct xrt_vec3 *out_vec3)
 {
 	cJSON *obj_vec3 = cJSON_GetObjectItem(object, string);
@@ -243,6 +276,28 @@ parse_calibration_json(struct xreal_air_parsed_calibration *calibration, cJSON *
 	read_json_array(dev1, "imu_noises", 4, calibration->imu_noises);
 }
 
+static void
+parse_camera_calibration_json(struct xreal_air_parsed_calibration *calibration, cJSON *dev, int camera)
+{
+	read_json_size(dev, "resolution", &calibration->slam_camera[camera].resolution);
+
+	read_json_vec2(dev, "cc", &calibration->slam_camera[camera].camera_center);
+	read_json_vec2(dev, "fc", &calibration->slam_camera[camera].focal_length);
+	read_json_vec3(dev, "imu_p_cam", &calibration->slam_camera[camera].imu_p_cam);
+	read_json_quat(dev, "imu_q_cam", &calibration->slam_camera[camera].imu_q_cam);
+
+	cJSON *obj_kc = cJSON_GetObjectItem(dev, "kc");
+
+	if ((!obj_kc) || (!cJSON_IsArray(obj_kc)) ||
+	    (cJSON_GetArraySize(obj_kc) != ARRAY_SIZE(calibration->slam_camera[camera].kc))) {
+		return;
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(calibration->slam_camera[camera].kc); i++) {
+		cJSON *kc_val = cJSON_GetArrayItem(obj_kc, i);
+		calibration->slam_camera[camera].kc[i] = cJSON_GetNumberValue(kc_val);
+	}
+}
 
 /*
  *
@@ -266,6 +321,16 @@ xreal_air_parse_calibration_buffer(struct xreal_air_parsed_calibration *calibrat
 			parse_calibration_json(calibration, dev1);
 			result = true;
 		}
+	}
+
+	cJSON *slam_camera = cJSON_GetObjectItem(root, "SLAM_camera");
+
+	if (slam_camera) {
+		cJSON *dev1 = cJSON_GetObjectItem(imu, "device_1");
+		cJSON *dev2 = cJSON_GetObjectItem(imu, "device_2");
+
+		parse_camera_calibration_json(calibration, dev1, 0);
+		parse_camera_calibration_json(calibration, dev2, 1);
 	}
 
 	cJSON_Delete(root);
