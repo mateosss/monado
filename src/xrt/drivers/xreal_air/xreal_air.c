@@ -30,6 +30,7 @@ xreal_air_system_create(struct xrt_prober *xp,
 	sys->base.type = XRT_TRACKING_TYPE_NONE;
 	sys->base.initial_offset.orientation.w = 1.0f;
 	sys->log_level = log_level;
+	sys->xfctx = xfctx;
 
 	/* Init refcount */
 	sys->ref.count = 1;
@@ -47,7 +48,7 @@ xreal_air_system_create(struct xrt_prober *xp,
 	}
 
 	/* At this point the callibration data is filled in */
-	sys->camera = xreal_air_camera_create(xp, xfctx);
+	sys->camera = xreal_air_camera_create(xp, sys);
 
 	XREAL_AIR_DEBUG("Oculus Rift S driver ready");
 

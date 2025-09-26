@@ -283,8 +283,8 @@ parse_camera_calibration_json(struct xreal_air_parsed_calibration *calibration, 
 
 	read_json_vec2(dev, "cc", &calibration->slam_camera[camera].camera_center);
 	read_json_vec2(dev, "fc", &calibration->slam_camera[camera].focal_length);
-	read_json_vec3(dev, "imu_p_cam", &calibration->slam_camera[camera].imu_p_cam);
-	read_json_quat(dev, "imu_q_cam", &calibration->slam_camera[camera].imu_q_cam);
+	read_json_vec3(dev, "imu_p_cam", &calibration->slam_camera[camera].imu_pose.position);
+	read_json_quat(dev, "imu_q_cam", &calibration->slam_camera[camera].imu_pose.orientation);
 
 	cJSON *obj_kc = cJSON_GetObjectItem(dev, "kc");
 

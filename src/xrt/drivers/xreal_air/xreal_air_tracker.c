@@ -166,16 +166,8 @@ xreal_air_create_hand_tracker(struct xreal_air_tracker *t,
 	}
 
 	if (device != NULL) {
-		// Attach tracking override that links hand pose to the SLAM tracked position
-		// The hand poses need to be rotated 90° because of the way we passed
-		// the stereo camera configuration to the hand tracker.
-		struct xrt_pose left_cam_rotated_from_imu;
-		struct xrt_pose cam_rotate = {.orientation = {.x = 1.0, .y = 0.0, .z = 0.0, .w = 0.0},
-		                              .position = {0, 0, 0}};
-		math_pose_transform(&cam_rotate, &t->left_cam_from_imu, &left_cam_rotated_from_imu);
-
 		device = multi_create_tracking_override(XRT_TRACKING_OVERRIDE_ATTACHED, device, &t->base,
-		                                        XRT_INPUT_GENERIC_TRACKER_POSE, &left_cam_rotated_from_imu);
+		                                        XRT_INPUT_GENERIC_TRACKER_POSE, &t->left_cam_from_imu);
 	}
 
 	XREAL_AIR_DEBUG("Rift S HMD hand tracker successfully created");
@@ -232,19 +224,19 @@ xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
 #endif
 
 	t->stereo_calib->camera_translation[0] =
-		t->hmd_calib->slam_camera[1].imu_p_cam.x - t->hmd_calib->slam_camera[0].imu_p_cam.x;
+		t->hmd_calib->slam_camera[1].imu_pose.position.x - t->hmd_calib->slam_camera[0].imu_pose.position.x;
 	t->stereo_calib->camera_translation[1] =
-		t->hmd_calib->slam_camera[1].imu_p_cam.y - t->hmd_calib->slam_camera[0].imu_p_cam.y;
+		t->hmd_calib->slam_camera[1].imu_pose.position.y - t->hmd_calib->slam_camera[0].imu_pose.position.y;
 	t->stereo_calib->camera_translation[2] =
-		t->hmd_calib->slam_camera[1].imu_p_cam.z - t->hmd_calib->slam_camera[0].imu_p_cam.z;
+		t->hmd_calib->slam_camera[1].imu_pose.position.z - t->hmd_calib->slam_camera[0].imu_pose.position.z;
 
 	/* XXX: Is this actually correct? */
 	struct xrt_quat left_cam_q_imu;
 	struct xrt_quat left_q_right;
 	struct xrt_matrix_3x3 left_rot_right;
 
-	math_quat_invert(&t->hmd_calib->slam_camera[0].imu_q_cam, &left_cam_q_imu);
-	math_quat_rotate(&left_cam_q_imu, &t->hmd_calib->slam_camera[1].imu_q_cam, &left_q_right);
+	math_quat_invert(&t->hmd_calib->slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
+	math_quat_rotate(&left_cam_q_imu, &t->hmd_calib->slam_camera[1].imu_pose.orientation, &left_q_right);
 	math_matrix_3x3_from_quat(&left_cam_q_imu, &left_rot_right);
 
 	t->stereo_calib->camera_rotation[0][0] = left_rot_right.v[0];
@@ -263,8 +255,7 @@ xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
  *
  * Determines which trackers to initialize
  *
- * @param xfctx the frame server that will own processing nodes
- * @param hmd_config HMD configuration and firmware info
+ * @param sys struct xreal_air_system
  *
  * @return initialised tracker on success, NULL if creation fails
  */
@@ -288,17 +279,12 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 		return NULL;
 	}
 
-#if 0
-	// Compute IMU and camera device poses for get_tracked_pose relations
-	math_pose_from_isometry(sys->calibration.device_from_imu, &t->device_from_imu);
+	// XXX: Set the IMU to be our device pose. It is pretty much centered, but that is
+	// probably still not actually what we want to do.
+	math_pose_identity(&t->device_from_imu);
 
-	struct xrt_pose device_from_left_cam;
-	struct xreal_air_camera_calibration *left_cam = &sys->calibration.slam_camera[0];
-	math_pose_from_isometry(&left_cam->device_from_camera, &device_from_left_cam);
-
-	struct xrt_pose left_cam_from_device;
-	math_pose_invert(&device_from_left_cam, &left_cam_from_device);
-	math_pose_transform(&left_cam_from_device, &t->device_from_imu, &t->left_cam_from_imu);
+	// Copy the value for convenience
+	t->left_cam_from_imu = t->sys->calibration.slam_camera[0].imu_pose;
 
 	// Decide whether to initialize the SLAM tracker
 	bool slam_wanted = debug_get_bool_option_xreal_air_slam();
@@ -335,14 +321,13 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 
 	// Construct the stereo camera calibration for the front cameras
 	xreal_air_create_stereo_camera_calib_rotated(t);
-	xreal_air_fill_slam_calibration(t, hmd_config);
 
 	// Initialize the input sinks for the camera to send to
 
 	// Initialize SLAM tracker
 	struct xrt_slam_sinks *slam_sinks = NULL;
 	if (t->tracking.slam_enabled) {
-		slam_sinks = xreal_air_create_slam_tracker(t, xfctx);
+		slam_sinks = xreal_air_create_slam_tracker(t, sys->xfctx);
 		if (slam_sinks == NULL) {
 			XREAL_AIR_WARN("Unable to setup the SLAM tracker");
 			xreal_air_tracker_destroy(t);
@@ -355,7 +340,7 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 	struct xrt_device *hand_device = NULL;
 	struct xrt_hand_masks_sink *masks_sink = slam_sinks ? slam_sinks->hand_masks : NULL;
 	if (t->tracking.hand_enabled) {
-		int hand_status = xreal_air_create_hand_tracker(t, xfctx, masks_sink, &hand_sinks, &hand_device);
+		int hand_status = xreal_air_create_hand_tracker(t, sys->xfctx, masks_sink, &hand_sinks, &hand_device);
 		if (hand_status != 0 || hand_sinks == NULL || hand_device == NULL) {
 			XREAL_AIR_WARN("Unable to setup the hand tracker");
 			xreal_air_tracker_destroy(t);
@@ -369,8 +354,8 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 		struct xrt_frame_sink *entry_cam0_sink = NULL;
 		struct xrt_frame_sink *entry_cam1_sink = NULL;
 
-		u_sink_split_create(xfctx, slam_sinks->cams[0], hand_sinks->cams[0], &entry_cam0_sink);
-		u_sink_split_create(xfctx, slam_sinks->cams[1], hand_sinks->cams[1], &entry_cam1_sink);
+		u_sink_split_create(sys->xfctx, slam_sinks->cams[0], hand_sinks->cams[0], &entry_cam0_sink);
+		u_sink_split_create(sys->xfctx, slam_sinks->cams[1], hand_sinks->cams[1], &entry_cam1_sink);
 
 		entry_sinks = *slam_sinks;
 		entry_sinks.cams[0] = entry_cam0_sink;
@@ -386,7 +371,6 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 	t->slam_sinks = entry_sinks;
 	t->handtracker = hand_device;
 
-#endif
 	return t;
 }
 
@@ -397,12 +381,6 @@ xreal_air_tracker_destroy(struct xreal_air_tracker *t)
 
 	m_imu_3dof_close(&t->fusion.i3dof);
 	os_mutex_destroy(&t->mutex);
-}
-
-struct xrt_slam_sinks *
-xreal_air_tracker_get_slam_sinks(struct xreal_air_tracker *t)
-{
-	return &t->in_slam_sinks;
 }
 
 struct xrt_device *
@@ -448,9 +426,9 @@ clock_hw2mono_get(struct xreal_air_tracker *t, uint64_t device_ts, timepoint_ns 
 
 void
 xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
-                          uint64_t device_timestamp_ns,
-                          const struct xrt_vec3 *accel,
-                          const struct xrt_vec3 *gyro)
+                             uint64_t device_timestamp_ns,
+                             const struct xrt_vec3 *accel,
+                             const struct xrt_vec3 *gyro)
 {
 	os_mutex_lock(&t->mutex);
 
@@ -500,9 +478,8 @@ xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
 
 void
 xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
-                                uint64_t frame_ts_ns,
-                                struct xrt_frame *left,
-				struct xrt_frame *right)
+                                   struct xrt_frame *left,
+                                   struct xrt_frame *right)
 {
 	timepoint_ns frame_time;
 
@@ -520,21 +497,8 @@ xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
 		return;
 	}
 
-	/* Ensure the input timestamp is within 32-bits of the IMU
-	 * time, because the timestamps are reported and extended to 64-bits
-	 * separately and can end up in different epochs */
-	uint64_t adj_frame_ts_ns = frame_ts_ns + t->camera_ts_offset;
-	int64_t frame_to_imu_uS = (adj_frame_ts_ns / 1000 - t->fusion.last_imu_timestamp_ns / 1000);
-
-	if (frame_to_imu_uS < -(int64_t)(1ULL << 31) || frame_to_imu_uS > (int64_t)(1ULL << 31)) {
-		t->camera_ts_offset =
-		    (UPPER_32BITS(t->fusion.last_imu_timestamp_ns / 1000) - UPPER_32BITS(frame_ts_ns / 1000)) * 1000;
-		XREAL_AIR_DEBUG("Applying epoch offset to frame times of %" PRId64 " (frame->imu was %" PRId64 " µS)",
-		             t->camera_ts_offset, frame_to_imu_uS);
-	}
-	frame_ts_ns += t->camera_ts_offset;
-
-	clock_hw2mono_get(t, frame_ts_ns, &frame_time);
+	/* Generate a capture timestamp using the system monotonic clock */
+	clock_hw2mono_get(t, left->source_timestamp, &frame_time);
 
 	if (frame_time < t->last_frame_time) {
 		XREAL_AIR_WARN("Camera frame time went backward by %" PRId64 " ns", frame_time - t->last_frame_time);
@@ -542,19 +506,18 @@ xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
 		return;
 	}
 
-	XREAL_AIR_TRACE("SLAM frame timestamp %" PRIu64 " local %" PRIu64, frame_ts_ns, frame_time);
+	XREAL_AIR_TRACE("SLAM frame timestamp %" PRIu64 " local %" PRIu64, left->source_timestamp, frame_time);
 
 	t->last_frame_time = frame_time;
 	os_mutex_unlock(&t->mutex);
 
-#if 0
-	for (int i = 0; i < XREAL_AIR_CAMERA_COUNT; i++) {
-		if (t->slam_sinks.cams[i]) {
-			frames[i]->timestamp = frame_time;
-			xrt_sink_push_frame(t->slam_sinks.cams[i], frames[i]);
-		}
-	}
-#endif
+	left->timestamp = frame_time;
+	right->timestamp = frame_time;
+
+	if (t->slam_sinks.cams[0])
+		xrt_sink_push_frame(t->slam_sinks.cams[0], left);
+	if (t->slam_sinks.cams[1])
+		xrt_sink_push_frame(t->slam_sinks.cams[1], right);
 }
 
 //! Specific pose correction for Basalt to OpenXR coordinates
@@ -568,9 +531,9 @@ xreal_air_tracker_correct_pose_from_basalt(struct xrt_pose *pose)
 
 static xrt_result_t
 xreal_air_tracker_get_tracked_pose_imu(struct xrt_device *xdev,
-                                    enum xrt_input_name name,
-                                    int64_t at_timestamp_ns,
-                                    struct xrt_space_relation *out_relation)
+                                       enum xrt_input_name name,
+                                       int64_t at_timestamp_ns,
+                                       struct xrt_space_relation *out_relation)
 {
 	struct xreal_air_tracker *tracker = (struct xreal_air_tracker *)(xdev);
 	if (name != XRT_INPUT_GENERIC_TRACKER_POSE) {

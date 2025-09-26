@@ -21,8 +21,7 @@ struct xreal_air_camera_calibration {
 	struct xrt_size resolution;
 	struct xrt_vec2 camera_center; /* cc */
 	struct xrt_vec2 focal_length; /* fc */
-	struct xrt_vec3 imu_p_cam;
-	struct xrt_quat imu_q_cam; /* direction in which the camera looks? */
+	struct xrt_pose imu_pose;
 	float kc[12];
 };
 
@@ -52,7 +51,8 @@ struct xreal_air_system
 	enum u_logging_level log_level;
 
 	struct xreal_air_parsed_calibration calibration;
-	struct xrt_frame_context xfctx;
+
+	struct xrt_frame_context *xfctx;
 
 	struct xreal_air_hmd *hmd;
 	struct xreal_air_tracker *tracker;

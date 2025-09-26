@@ -82,7 +82,7 @@ struct xreal_air_tracker
 		bool hand_enabled;
 	} tracking;
 
-	// Correction offset poses from firmware
+	// Correction offset poses
 	struct xrt_pose device_from_imu;
 	struct xrt_pose left_cam_from_imu;
 
@@ -105,9 +105,6 @@ struct xreal_air_tracker
 	/* Stereo calibration for the front 2 cameras */
 	struct t_stereo_camera_calibration *stereo_calib;
 	struct t_slam_calibration slam_calib;
-
-	/* Input sinks that the camera delivers SLAM frames to */
-	struct xrt_slam_sinks in_slam_sinks;
 
 	/* SLAM/HT sinks we deliver imu and frame data to */
 	struct xrt_slam_sinks slam_sinks;
@@ -132,8 +129,6 @@ xreal_air_tracker_destroy(struct xreal_air_tracker *t);
 void
 xreal_air_tracker_add_debug_ui(struct xreal_air_tracker *t, void *root);
 
-struct xrt_slam_sinks *
-xreal_air_tracker_get_slam_sinks(struct xreal_air_tracker *t);
 struct xrt_device *
 xreal_air_tracker_get_hand_tracking_device(struct xreal_air_tracker *t);
 
@@ -148,8 +143,7 @@ xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
 
 void
 xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
-                                uint64_t frame_ts_ns,
-                                struct xrt_frame *left, struct xrt_frame *right);
+                                   struct xrt_frame *left, struct xrt_frame *right);
 void
 xreal_air_tracker_get_tracked_pose(struct xreal_air_tracker *t,
                                 enum xreal_air_tracker_pose pose,
