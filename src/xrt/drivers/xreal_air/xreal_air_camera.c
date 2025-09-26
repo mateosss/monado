@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <unistd.h>  // For access()
 
-#define XREAL_AIR_CAMERA_TRACE(...) U_LOG_IFL_T(U_LOGGING_WARN, __VA_ARGS__)
+#define XREAL_AIR_CAMERA_TRACE(...) U_LOG_IFL_T(cam->sys->log_level, __VA_ARGS__)
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -135,7 +135,7 @@ xreal_air_camera_create(struct xrt_prober *xp, struct xreal_air_system *sys)
 	} while (retry_count-- > 0);
 
 	if (finder.xfs == NULL) {
-		XREAL_AIR_CAMERA_TRACE("Didn't find Xreal Air camera device");
+		U_LOG_IFL_T(sys->log_level, "Didn't find Xreal Air camera device");
 		return NULL;
 	}
 

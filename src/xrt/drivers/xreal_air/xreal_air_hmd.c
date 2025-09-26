@@ -314,6 +314,9 @@ update_fusion_locked(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *
 {
 	read_sample_and_apply_calibration(hmd, sample, &hmd->read.accel, &hmd->read.gyro, &hmd->read.mag);
 	m_imu_3dof_update(&hmd->fusion, timestamp_ns, &hmd->read.accel, &hmd->read.gyro);
+
+	/* XXX: With this, do we still need the fusion and relation_hist here? */
+	xreal_air_tracker_imu_update(hmd->sys->tracker, hmd->last.timestamp, &hmd->read.accel, &hmd->read.gyro);
 }
 
 static void
@@ -557,6 +560,7 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 
 	if (!hmd->calibration_valid) {
 		request_sensor_control_start_imu_data(hmd, 0xAA);
+		return;
 	}
 
 	struct xreal_air_parsed_sensor *s = &hmd->last;
@@ -1122,6 +1126,8 @@ xreal_air_hmd_get_tracked_pose(struct xrt_device *xdev,
                                struct xrt_space_relation *out_relation)
 {
 	struct xreal_air_hmd *hmd = xreal_air_hmd(xdev);
+
+	/* FIXME: Query the tracker now that we have it? */
 
 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
 		U_LOG_XDEV_UNSUPPORTED_INPUT(&hmd->base, hmd->log_level, name);

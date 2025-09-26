@@ -137,17 +137,17 @@ xreal_air_tracker_clock_update(struct xreal_air_tracker *t, uint64_t device_time
 
 void
 xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
-                          uint64_t device_timestamp_ns,
-                          const struct xrt_vec3 *accel,
-                          const struct xrt_vec3 *gyro);
+                             uint64_t device_timestamp_ns,
+                             const struct xrt_vec3 *accel,
+                             const struct xrt_vec3 *gyro);
 
 void
 xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
                                    struct xrt_frame *left, struct xrt_frame *right);
 void
 xreal_air_tracker_get_tracked_pose(struct xreal_air_tracker *t,
-                                enum xreal_air_tracker_pose pose,
-                                uint64_t at_timestamp_ns,
-                                struct xrt_space_relation *out_relation);
+                                   enum xreal_air_tracker_pose pose,
+                                   uint64_t at_timestamp_ns,
+                                   struct xrt_space_relation *out_relation);
 
 #endif
