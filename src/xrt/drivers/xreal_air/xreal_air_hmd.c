@@ -64,9 +64,6 @@ struct xreal_air_hmd
 	//! Used to read sensor packets.
 	struct os_thread_helper oth;
 
-	//! Only touched from the sensor thread.
-	timepoint_ns last_sensor_time;
-
 	struct xreal_air_camera *camera;
 
 	struct xreal_air_parsed_sensor last;
@@ -307,28 +304,11 @@ read_sample_and_apply_calibration(struct xreal_air_hmd *hmd,
 }
 
 static void
-update_fusion(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *sample, uint64_t timestamp_ns)
+update_fusion(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *sample)
 {
 	read_sample_and_apply_calibration(hmd, sample, &hmd->read.accel, &hmd->read.gyro, &hmd->read.mag);
 
 	xreal_air_tracker_imu_update(hmd->sys->tracker, hmd->last.timestamp, &hmd->read.accel, &hmd->read.gyro);
-}
-
-static timepoint_ns
-ensure_forward_progress_timestamps(struct xreal_air_hmd *hmd, timepoint_ns timestamp_ns)
-{
-	timepoint_ns t = timestamp_ns;
-
-	/*
-	 * This make sure the timestamp is after the last we sent to the fusion,
-	 * but it effectively drops the sample.
-	 */
-	if (hmd->last_sensor_time > t) {
-		t = hmd->last_sensor_time + 1;
-	}
-
-	hmd->last_sensor_time = t;
-	return t;
 }
 
 static void
@@ -547,19 +527,11 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 	// According to the ICM-42688-P datasheet: (offset: 25 °C, sensitivity: 132.48 LSB/°C)
 	hmd->read.temperature = ((float)s->temperature) / 132.48f + 25.0f;
 
-	time_duration_ns inter_sample_duration_ns = s->timestamp - last_timestamp;
-
 	/* FIXME: Should we really *always* call this? That seems insane. */
 	xreal_air_tracker_clock_update(hmd->sys->tracker, last_timestamp, now_ns);
 
-	// Move it back in time.
-	timepoint_ns timestamp_ns = now_ns - inter_sample_duration_ns;
-
-	// Make sure timestamps are always after a previous timestamp.
-	timestamp_ns = ensure_forward_progress_timestamps(hmd, timestamp_ns);
-
 	// Update the fusion with the sample.
-	update_fusion(hmd, &s->sample, timestamp_ns);
+	update_fusion(hmd, &s->sample);
 }
 
 static void
