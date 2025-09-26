@@ -111,9 +111,6 @@ struct xreal_air_hmd
 		bool last_frame;
 		bool calibration;
 	} gui;
-
-	struct m_imu_3dof fusion;
-	struct m_relation_history *relation_hist;
 };
 
 /*
@@ -310,29 +307,11 @@ read_sample_and_apply_calibration(struct xreal_air_hmd *hmd,
 }
 
 static void
-update_fusion_locked(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *sample, uint64_t timestamp_ns)
-{
-	read_sample_and_apply_calibration(hmd, sample, &hmd->read.accel, &hmd->read.gyro, &hmd->read.mag);
-	m_imu_3dof_update(&hmd->fusion, timestamp_ns, &hmd->read.accel, &hmd->read.gyro);
-
-	/* XXX: With this, do we still need the fusion and relation_hist here? */
-	xreal_air_tracker_imu_update(hmd->sys->tracker, hmd->last.timestamp, &hmd->read.accel, &hmd->read.gyro);
-}
-
-static void
 update_fusion(struct xreal_air_hmd *hmd, struct xreal_air_parsed_sample *sample, uint64_t timestamp_ns)
 {
-	struct xrt_space_relation rel;
-	U_ZERO(&rel); // Clear out the relation.
-	rel.relation_flags = (enum xrt_space_relation_flags)(XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
-	                                                     XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT);
+	read_sample_and_apply_calibration(hmd, sample, &hmd->read.accel, &hmd->read.gyro, &hmd->read.mag);
 
-	os_mutex_lock(&hmd->device_mutex);
-	update_fusion_locked(hmd, sample, timestamp_ns);
-	rel.pose.orientation = hmd->fusion.rot; // We have no tracking, don't return a position.
-	os_mutex_unlock(&hmd->device_mutex);
-
-	m_relation_history_push(hmd->relation_hist, &rel, timestamp_ns);
+	xreal_air_tracker_imu_update(hmd->sys->tracker, hmd->last.timestamp, &hmd->read.accel, &hmd->read.gyro);
 }
 
 static timepoint_ns
@@ -572,13 +551,6 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 
 	/* FIXME: Should we really *always* call this? That seems insane. */
 	xreal_air_tracker_clock_update(hmd->sys->tracker, last_timestamp, now_ns);
-
-	// If this is larger then one second something bad is going on.
-	if (hmd->fusion.state != M_IMU_3DOF_STATE_START &&
-	    inter_sample_duration_ns >= (time_duration_ns)U_TIME_1S_IN_NS) {
-		XREAL_AIR_ERROR(hmd, "Drop packet (sensor too slow): %" PRId64, inter_sample_duration_ns);
-		return;
-	}
 
 	// Move it back in time.
 	timepoint_ns timestamp_ns = now_ns - inter_sample_duration_ns;
@@ -1038,11 +1010,6 @@ teardown(struct xreal_air_hmd *hmd)
 		hmd->hid_sensor = NULL;
 	}
 
-	m_relation_history_destroy(&hmd->relation_hist);
-
-	// Destroy the fusion.
-	m_imu_3dof_close(&hmd->fusion);
-
 	os_thread_helper_destroy(&hmd->oth);
 	os_mutex_destroy(&hmd->device_mutex);
 }
@@ -1125,34 +1092,16 @@ xreal_air_hmd_get_tracked_pose(struct xrt_device *xdev,
                                int64_t at_timestamp_ns,
                                struct xrt_space_relation *out_relation)
 {
-	struct xreal_air_hmd *hmd = xreal_air_hmd(xdev);
-
-	/* FIXME: Query the tracker now that we have it? */
+	struct xreal_air_hmd *hmd = (struct xreal_air_hmd *)(xdev);
 
 	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
-		U_LOG_XDEV_UNSUPPORTED_INPUT(&hmd->base, hmd->log_level, name);
+		U_LOG_XDEV_UNSUPPORTED_INPUT(&hmd->base, hmd->sys->log_level, name);
 		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
 
-	const enum xrt_space_relation_flags flags = (enum xrt_space_relation_flags)(
-	    XRT_SPACE_RELATION_ORIENTATION_VALID_BIT | XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT);
+	U_ZERO(out_relation);
 
-	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
-	relation.relation_flags = flags;
-
-	m_relation_history_get(hmd->relation_hist, at_timestamp_ns, &relation);
-	relation.relation_flags = flags; // Needed after history_get
-
-	*out_relation = relation;
-	struct xrt_quat *orientation = &out_relation->pose.orientation;
-
-	// Make sure that the orientation is valid.
-	if (math_quat_dot(orientation, orientation) > 0.0f) {
-		math_quat_normalize(orientation);
-	} else {
-		orientation->w = 1.0f;
-	}
-
+	xreal_air_tracker_get_tracked_pose(hmd->sys->tracker, XREAL_AIR_TRACKER_POSE_DEVICE, at_timestamp_ns, out_relation);
 	return XRT_SUCCESS;
 }
 
@@ -1208,9 +1157,6 @@ xreal_air_hmd_create_device(struct xreal_air_system *sys,
 
 	// Distortion information, fills in xdev->compute_distortion().
 	u_distortion_mesh_set_none(&hmd->base);
-
-	m_imu_3dof_init(&hmd->fusion, M_IMU_3DOF_USE_GRAVITY_DUR_20MS);
-	m_relation_history_create(&hmd->relation_hist);
 
 	hmd->static_id = 0;
 	hmd->display_on = false;
@@ -1298,7 +1244,6 @@ xreal_air_hmd_create_device(struct xreal_air_system *sys,
 	u_var_add_ro_vec3_f32(hmd, &hmd->read.gyro, "read.gyro");
 	u_var_add_ro_vec3_f32(hmd, &hmd->read.mag, "read.mag");
 	u_var_add_log_level(hmd, &hmd->log_level, "Log level");
-	m_imu_3dof_add_vars(&hmd->fusion, hmd, "Fusion");
 	u_var_add_gui_header(hmd, &hmd->gui.calibration, "Calibration");
 	u_var_add_ro_u32(hmd, &hmd->calibration_buffer_len, "calibration_buffer_len");
 	u_var_add_ro_u32(hmd, &hmd->calibration_buffer_pos, "calibration_buffer_pos");
