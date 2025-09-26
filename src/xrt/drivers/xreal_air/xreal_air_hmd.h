@@ -9,11 +9,9 @@
 
 #pragma once
 
-#include "xrt/xrt_device.h"
-#include "xrt/xrt_prober.h"
-
 #include "os/os_hid.h"
 
+#include "xreal_air.h"
 #include "xreal_air_camera.h"
 
 #include "util/u_logging.h"
@@ -73,31 +71,6 @@ extern "C" {
 #define XREAL_AIR_MSG_START_IMU_DATA 0x19
 #define XREAL_AIR_MSG_GET_STATIC_ID 0x1A
 #define XREAL_AIR_MSG_UNKNOWN 0x1D
-
-struct xreal_air_parsed_calibration
-{
-	struct xrt_vec3 accel_bias;
-	struct xrt_quat accel_q_gyro;
-	struct xrt_vec3 gyro_bias;
-	struct xrt_quat gyro_q_mag;
-	struct xrt_vec3 mag_bias;
-
-	struct xrt_vec3 scale_accel;
-	struct xrt_vec3 scale_gyro;
-	struct xrt_vec3 scale_mag;
-
-	float imu_noises[4];
-
-	/* Camera */
-	struct {
-		struct xrt_size resolution;
-		struct xrt_vec2 camera_center; /* cc */
-		struct xrt_vec2 focal_length; /* fc */
-		struct xrt_vec3 imu_p_cam;
-		struct xrt_quat imu_q_cam; /* direction in which the camera looks? */
-		float kc[12];
-	} slam_camera[2];
-};
 
 /*!
  * A parsed single gyroscope, accelerometer and
@@ -166,16 +139,11 @@ struct xreal_air_parsed_control
  *
  * @ingroup drv_xreal_air
  */
-struct xrt_device *
-xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
+struct xreal_air_hmd *
+xreal_air_hmd_create_device(struct xreal_air_system *sys,
+                            struct os_hid_device *sensor_device,
                             struct os_hid_device *control_device,
-                            struct xreal_air_camera *camera,
-                            enum u_logging_level log_level,
                             uint16_t max_sensor_buffer_size);
-
-struct xreal_air_hmd;
-struct xreal_air_parsed_calibration *
-xreal_air_hmd_get_callibration(struct xreal_air_hmd *hmd);
 
 bool
 xreal_air_parse_calibration_buffer(struct xreal_air_parsed_calibration *calibration, const char *buffer, size_t size);

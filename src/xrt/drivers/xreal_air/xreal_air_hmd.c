@@ -52,6 +52,8 @@ struct xreal_air_hmd
 {
 	struct xrt_device base;
 
+	struct xreal_air_system *sys;
+
 	//! Owned by the @ref oth thread.
 	struct os_hid_device *hid_sensor;
 
@@ -66,7 +68,6 @@ struct xreal_air_hmd
 	timepoint_ns last_sensor_time;
 
 	struct xreal_air_camera *camera;
-	struct xreal_air_tracker *tracker;
 
 	struct xreal_air_parsed_sensor last;
 
@@ -104,8 +105,6 @@ struct xreal_air_hmd
 	uint32_t calibration_buffer_pos;
 	char *calibration_buffer;
 	bool calibration_valid;
-
-	struct xreal_air_parsed_calibration calibration;
 
 	struct
 	{
@@ -272,9 +271,9 @@ read_sample_and_apply_calibration(struct xreal_air_hmd *hmd,
 	// Apply misalignment via quaternions.
 
 	struct xrt_quat accel_q_mag;
-	math_quat_rotate(&hmd->calibration.accel_q_gyro, &hmd->calibration.gyro_q_mag, &accel_q_mag);
+	math_quat_rotate(&hmd->sys->calibration.accel_q_gyro, &hmd->sys->calibration.gyro_q_mag, &accel_q_mag);
 
-	math_quat_rotate_vec3(&hmd->calibration.accel_q_gyro, &gyro, &gyro);
+	math_quat_rotate_vec3(&hmd->sys->calibration.accel_q_gyro, &gyro, &gyro);
 	math_quat_rotate_vec3(&accel_q_mag, &mag, &mag);
 
 	// Go from Gs to m/s2.
@@ -289,21 +288,21 @@ read_sample_and_apply_calibration(struct xreal_air_hmd *hmd,
 	pre_biased_coordinate_system(&gyro);
 	pre_biased_coordinate_system(&mag);
 
-	math_vec3_subtract(&hmd->calibration.accel_bias, &accel);
-	math_vec3_subtract(&hmd->calibration.gyro_bias, &gyro);
-	math_vec3_subtract(&hmd->calibration.mag_bias, &mag);
+	math_vec3_subtract(&hmd->sys->calibration.accel_bias, &accel);
+	math_vec3_subtract(&hmd->sys->calibration.gyro_bias, &gyro);
+	math_vec3_subtract(&hmd->sys->calibration.mag_bias, &mag);
 
-	accel.x *= hmd->calibration.scale_accel.x;
-	accel.y *= hmd->calibration.scale_accel.y;
-	accel.z *= hmd->calibration.scale_accel.z;
+	accel.x *= hmd->sys->calibration.scale_accel.x;
+	accel.y *= hmd->sys->calibration.scale_accel.y;
+	accel.z *= hmd->sys->calibration.scale_accel.z;
 
-	gyro.x *= hmd->calibration.scale_gyro.x;
-	gyro.y *= hmd->calibration.scale_gyro.y;
-	gyro.z *= hmd->calibration.scale_gyro.z;
+	gyro.x *= hmd->sys->calibration.scale_gyro.x;
+	gyro.y *= hmd->sys->calibration.scale_gyro.y;
+	gyro.z *= hmd->sys->calibration.scale_gyro.z;
 
-	mag.x *= hmd->calibration.scale_mag.x;
-	mag.y *= hmd->calibration.scale_mag.y;
-	mag.z *= hmd->calibration.scale_mag.z;
+	mag.x *= hmd->sys->calibration.scale_mag.x;
+	mag.y *= hmd->sys->calibration.scale_mag.y;
+	mag.z *= hmd->sys->calibration.scale_mag.z;
 
 	post_biased_coordinate_system(&accel, out_accel);
 	post_biased_coordinate_system(&gyro, out_gyro);
@@ -461,7 +460,7 @@ handle_sensor_control_cal_data_get_next_segment(struct xreal_air_hmd *hmd,
 
 	if (hmd->calibration_buffer_pos == hmd->calibration_buffer_len) {
 		// Parse calibration data from raw json.
-		if (!xreal_air_parse_calibration_buffer(&hmd->calibration, hmd->calibration_buffer,
+		if (!xreal_air_parse_calibration_buffer(&hmd->sys->calibration, hmd->calibration_buffer,
 		                                        hmd->calibration_buffer_len)) {
 			hmd->calibration_valid = false;
 
@@ -517,8 +516,10 @@ handle_sensor_control_data_msg(struct xreal_air_hmd *hmd, unsigned char *buffer,
 {
 	struct xreal_air_parsed_sensor_control_data data;
 
-	if (!xreal_air_parse_sensor_control_data_packet(&data, buffer, size, hmd->max_sensor_buffer_size)) {
+	if (hmd->calibration_valid &&
+	    !xreal_air_parse_sensor_control_data_packet(&data, buffer, size, hmd->max_sensor_buffer_size)) {
 		XREAL_AIR_ERROR(hmd, "Could not decode sensor control data packet");
+		return;
 	}
 
 	hmd->imu_stream_state = 0xAA;
@@ -566,7 +567,7 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 	time_duration_ns inter_sample_duration_ns = s->timestamp - last_timestamp;
 
 	/* FIXME: Should we really *always* call this? That seems insane. */
-	xreal_air_tracker_clock_update(hmd->tracker, last_timestamp, now_ns);
+	xreal_air_tracker_clock_update(hmd->sys->tracker, last_timestamp, now_ns);
 
 	// If this is larger then one second something bad is going on.
 	if (hmd->fusion.state != M_IMU_3DOF_STATE_START &&
@@ -1171,26 +1172,19 @@ xreal_air_hmd_compute_distortion(
  *
  */
 
-struct xreal_air_parsed_calibration *
-xreal_air_hmd_get_callibration(struct xreal_air_hmd *hmd)
-{
-	return &hmd->calibration;
-}
-
-
-struct xrt_device *
-xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
+struct xreal_air_hmd *
+xreal_air_hmd_create_device(struct xreal_air_system *sys,
+                            struct os_hid_device *sensor_device,
                             struct os_hid_device *control_device,
-                            struct xreal_air_camera *camera,
-                            enum u_logging_level log_level,
                             uint16_t max_sensor_buffer_size)
 {
 	enum u_device_alloc_flags flags =
 	    (enum u_device_alloc_flags)(U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE);
 	struct xreal_air_hmd *hmd = U_DEVICE_ALLOCATE(struct xreal_air_hmd, flags, 1, 0);
+	int count;
 	int ret;
 
-	hmd->log_level = log_level;
+	hmd->sys = sys;
 	hmd->max_sensor_buffer_size = max_sensor_buffer_size;
 	hmd->base.update_inputs = xreal_air_hmd_update_inputs;
 	hmd->base.get_tracked_pose = xreal_air_hmd_get_tracked_pose;
@@ -1266,6 +1260,14 @@ xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
 		goto cleanup;
 	}
 
+	/* Wait for callibration data to be read */
+	count = 0;
+	while (!hmd->calibration_valid) {
+		if (count++ > 1000000)
+			goto cleanup;
+		os_nanosleep(1000);
+	}
+
 	/*
 	 * Device setup.
 	 */
@@ -1305,9 +1307,7 @@ xreal_air_hmd_create_device(struct os_hid_device *sensor_device,
 
 	XREAL_AIR_DEBUG(hmd, "YES!");
 
-	hmd->camera = camera;
-
-	return &hmd->base;
+	return hmd;
 
 cleanup:
 	XREAL_AIR_DEBUG(hmd, "NO! :(");

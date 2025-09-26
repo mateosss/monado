@@ -41,6 +41,8 @@ struct xreal_air_tracker
 {
 	struct xrt_device base;
 
+	struct xreal_air_system *sys;
+
 	struct xreal_air_parsed_calibration *hmd_calib;
 
 	//! Protects shared access to 3dof and pose storage
@@ -122,9 +124,7 @@ struct xreal_air_tracker
 };
 
 struct xreal_air_tracker *
-xreal_air_tracker_create(struct xrt_tracking_origin *origin,
-                         struct xrt_frame_context *xfctx,
-                         struct xreal_air_parsed_calibration *calib_data);
+xreal_air_tracker_create(struct xreal_air_system *sys);
 void
 xreal_air_tracker_start(struct xreal_air_tracker *t);
 void

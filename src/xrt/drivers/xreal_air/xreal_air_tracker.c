@@ -45,9 +45,14 @@
 #endif
 
 #include "xreal_air.h"
-#include "xreal_air_interface.h"
-#include "xreal_air_util.h"
 #include "xreal_air_tracker.h"
+
+#define XREAL_AIR_TRACE(...)	U_LOG_IFL_T(t->sys->log_level, __VA_ARGS__)
+#define XREAL_AIR_INFO(...)	U_LOG_IFL_I(t->sys->log_level, __VA_ARGS__)
+#define XREAL_AIR_DEBUG(...)	U_LOG_IFL_D(t->sys->log_level, __VA_ARGS__)
+#define XREAL_AIR_WARN(...)	U_LOG_IFL_W(t->sys->log_level, __VA_ARGS__)
+#define XREAL_AIR_ERROR(...)	U_LOG_IFL_E(t->sys->log_level, __VA_ARGS__)
+
 
 #ifdef XRT_FEATURE_SLAM
 static const bool slam_supported = true;
@@ -264,16 +269,15 @@ xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
  * @return initialised tracker on success, NULL if creation fails
  */
 struct xreal_air_tracker *
-xreal_air_tracker_create(struct xrt_tracking_origin *origin,
-                         struct xrt_frame_context *xfctx,
-                         struct xreal_air_parsed_calibration *calib_data)
+xreal_air_tracker_create(struct xreal_air_system *sys)
 {
 	struct xreal_air_tracker *t = U_DEVICE_ALLOCATE(struct xreal_air_tracker, U_DEVICE_ALLOC_TRACKING_NONE, 1, 0);
 	if (t == NULL) {
 		return NULL;
 	}
 
-	t->base.tracking_origin = origin;
+	t->sys = sys;
+	t->base.tracking_origin = &sys->base;
 	t->base.get_tracked_pose = xreal_air_tracker_get_tracked_pose_imu;
 
 	// Pose / state lock
@@ -284,11 +288,12 @@ xreal_air_tracker_create(struct xrt_tracking_origin *origin,
 		return NULL;
 	}
 
+#if 0
 	// Compute IMU and camera device poses for get_tracked_pose relations
-	math_pose_from_isometry(&hmd_config->imu_calibration.device_from_imu, &t->device_from_imu);
+	math_pose_from_isometry(sys->calibration.device_from_imu, &t->device_from_imu);
 
 	struct xrt_pose device_from_left_cam;
-	struct xreal_air_camera_calibration *left_cam = &hmd_config->camera_calibration.cameras[XREAL_AIR_CAMERA_FRONT_LEFT];
+	struct xreal_air_camera_calibration *left_cam = &sys->calibration.slam_camera[0];
 	math_pose_from_isometry(&left_cam->device_from_camera, &device_from_left_cam);
 
 	struct xrt_pose left_cam_from_device;
@@ -381,6 +386,7 @@ xreal_air_tracker_create(struct xrt_tracking_origin *origin,
 	t->slam_sinks = entry_sinks;
 	t->handtracker = hand_device;
 
+#endif
 	return t;
 }
 
@@ -541,12 +547,14 @@ xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
 	t->last_frame_time = frame_time;
 	os_mutex_unlock(&t->mutex);
 
+#if 0
 	for (int i = 0; i < XREAL_AIR_CAMERA_COUNT; i++) {
 		if (t->slam_sinks.cams[i]) {
 			frames[i]->timestamp = frame_time;
 			xrt_sink_push_frame(t->slam_sinks.cams[i], frames[i]);
 		}
 	}
+#endif
 }
 
 //! Specific pose correction for Basalt to OpenXR coordinates
@@ -566,7 +574,8 @@ xreal_air_tracker_get_tracked_pose_imu(struct xrt_device *xdev,
 {
 	struct xreal_air_tracker *tracker = (struct xreal_air_tracker *)(xdev);
 	if (name != XRT_INPUT_GENERIC_TRACKER_POSE) {
-		U_LOG_XDEV_UNSUPPORTED_INPUT(&tracker->base, xreal_air_log_level, name);
+		/* FIXME: logging */
+		U_LOG_XDEV_UNSUPPORTED_INPUT(&tracker->base, U_LOGGING_ERROR, name);
 		return XRT_ERROR_INPUT_UNSUPPORTED;
 	}
 

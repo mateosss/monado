@@ -25,8 +25,7 @@
 #include "util/u_system_helpers.h"
 #include "util/u_trace_marker.h"
 
-#include "xreal_air/xreal_air_hmd.h"
-#include "xreal_air/xreal_air_camera.h"
+#include "xreal_air/xreal_air.h"
 #include "xreal_air/xreal_air_interface.h"
 
 enum u_logging_level xreal_air_log_level;
@@ -134,9 +133,11 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
                            struct xrt_frame_context *xfctx,
                            struct u_builder_roles_helper *ubrh)
 {
+	struct os_hid_device *hid_imu = NULL;
+	struct os_hid_device *hid_control = NULL;
 	struct xrt_prober_device **xpdevs = NULL;
-	size_t xpdev_count = 0;
 	xrt_result_t xret = XRT_SUCCESS;
+	size_t xpdev_count = 0;
 
 	DRV_TRACE_MARKER();
 
@@ -164,19 +165,16 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 		goto unlock_and_fail;
 	}
 
-	struct os_hid_device *hid_handle = NULL;
-	int result = xrt_prober_open_hid_interface(xp, dev_hmd, driver_handle_ifaces[product_index], &hid_handle);
+	int result = xrt_prober_open_hid_interface(xp, dev_hmd, driver_handle_ifaces[product_index], &hid_imu);
 
 	if (result != 0) {
-		XREAL_AIR_ERROR("Failed to open Xreal Air handle interface");
+		XREAL_AIR_ERROR("Failed to open Xreal Air imu interface");
 		goto unlock_and_fail;
 	}
 
-	struct os_hid_device *hid_control = NULL;
 	result = xrt_prober_open_hid_interface(xp, dev_hmd, driver_control_ifaces[product_index], &hid_control);
 
 	if (result != 0) {
-		os_hid_destroy(hid_handle);
 		XREAL_AIR_ERROR("Failed to open Xreal Air control interface");
 		goto unlock_and_fail;
 	}
@@ -184,35 +182,29 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 	unsigned char hmd_serial_no[XRT_DEVICE_NAME_LEN];
 	result = xrt_prober_get_string_descriptor(xp, dev_hmd, XRT_PROBER_STRING_SERIAL_NUMBER, hmd_serial_no,
 	                                          XRT_DEVICE_NAME_LEN);
-
 	if (result < 0) {
 		XREAL_AIR_WARN("Could not read Xreal Air serial number from USB");
 		snprintf((char *)hmd_serial_no, XRT_DEVICE_NAME_LEN, "Unknown");
 	}
-
-	struct xreal_air_camera *camera;
-	camera = xreal_air_camera_create(xp, xfctx);
 
 	xret = xrt_prober_unlock_list(xp, &xpdevs);
 	if (xret != XRT_SUCCESS) {
 		goto fail;
 	}
 
-	struct xrt_device *xreal_air_device = xreal_air_hmd_create_device(
-	    hid_handle, hid_control, camera, xreal_air_log_level, driver_max_sensor_buffer_sizes[product_index]);
-
-	if (xreal_air_device == NULL) {
-		XREAL_AIR_ERROR("Failed to initialise Xreal Air driver");
+	struct xreal_air_system *system =
+		xreal_air_system_create(xp, xfctx, hmd_serial_no, hid_imu, hid_control,
+					driver_max_sensor_buffer_sizes[product_index], xreal_air_log_level);
+	if (system == NULL) {
+		XREAL_AIR_ERROR("Failed to create Xreal Air system");
 		goto fail;
 	}
 
-	// Add to device list.
-	xsysd->xdevs[xsysd->xdev_count++] = xreal_air_device;
-
-
+	// Add HMD to device list.
+	xsysd->xdevs[xsysd->xdev_count++] = (struct xrt_device*)system->hmd;
 
 	// Assign to role(s).
-	ubrh->head = xreal_air_device;
+	ubrh->head = (struct xrt_device*)system->hmd;
 
 	return XRT_SUCCESS;
 
@@ -229,6 +221,11 @@ unlock_and_fail:
 
 	/* Fallthrough */
 fail:
+	if (hid_imu)
+		os_hid_destroy(hid_imu);
+	if (hid_control)
+		os_hid_destroy(hid_control);
+
 	return XRT_ERROR_DEVICE_CREATION_FAILED;
 }
 

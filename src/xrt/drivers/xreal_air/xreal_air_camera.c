@@ -8,7 +8,7 @@
  */
 #include <string.h>
 
-#include "xreal_air_hmd.h"
+#include "xreal_air.h"
 #include "xreal_air_camera.h"
 
 #include "os/os_threading.h"
@@ -233,8 +233,8 @@ xreal_air_camera_create(struct xrt_prober *xp,
        return cam;
 
 cleanup:
-//     rift_s_camera_destroy(cam);
-       return NULL;
+	xreal_air_camera_destroy(cam);
+	return NULL;
 }
 
 static struct xrt_frame *
@@ -388,4 +388,15 @@ receive_cam_frame(struct xrt_frame_sink *sink, struct xrt_frame *xf)
        // rift_s_tracker_push_slam_frames(cam->tracker, descrambled->timestamp, &descrambled);
 
        xrt_frame_reference(&descrambled, NULL);
+}
+
+void xreal_air_camera_destroy(struct xreal_air_camera *camera)
+{
+	os_mutex_destroy(&camera->lock);
+
+	u_sink_debug_destroy(&camera->debug_sinks[0]);
+	u_sink_debug_destroy(&camera->debug_sinks[1]);
+
+	xrt_frame_reference(&camera->last_left, NULL);
+	xrt_frame_reference(&camera->last_right, NULL);
 }
