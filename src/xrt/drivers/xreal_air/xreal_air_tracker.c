@@ -224,19 +224,19 @@ xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
 #endif
 
 	t->stereo_calib->camera_translation[0] =
-		t->hmd_calib->slam_camera[1].imu_pose.position.x - t->hmd_calib->slam_camera[0].imu_pose.position.x;
+		t->hmd_calib.slam_camera[1].imu_pose.position.x - t->hmd_calib.slam_camera[0].imu_pose.position.x;
 	t->stereo_calib->camera_translation[1] =
-		t->hmd_calib->slam_camera[1].imu_pose.position.y - t->hmd_calib->slam_camera[0].imu_pose.position.y;
+		t->hmd_calib.slam_camera[1].imu_pose.position.y - t->hmd_calib.slam_camera[0].imu_pose.position.y;
 	t->stereo_calib->camera_translation[2] =
-		t->hmd_calib->slam_camera[1].imu_pose.position.z - t->hmd_calib->slam_camera[0].imu_pose.position.z;
+		t->hmd_calib.slam_camera[1].imu_pose.position.z - t->hmd_calib.slam_camera[0].imu_pose.position.z;
 
 	/* XXX: Is this actually correct? */
 	struct xrt_quat left_cam_q_imu;
 	struct xrt_quat left_q_right;
 	struct xrt_matrix_3x3 left_rot_right;
 
-	math_quat_invert(&t->hmd_calib->slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
-	math_quat_rotate(&left_cam_q_imu, &t->hmd_calib->slam_camera[1].imu_pose.orientation, &left_q_right);
+	math_quat_invert(&t->hmd_calib.slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
+	math_quat_rotate(&left_cam_q_imu, &t->hmd_calib.slam_camera[1].imu_pose.orientation, &left_q_right);
 	math_matrix_3x3_from_quat(&left_cam_q_imu, &left_rot_right);
 
 	t->stereo_calib->camera_rotation[0][0] = left_rot_right.v[0];

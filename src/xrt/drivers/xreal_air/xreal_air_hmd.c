@@ -478,10 +478,9 @@ handle_sensor_control_data_msg(struct xreal_air_hmd *hmd, unsigned char *buffer,
 {
 	struct xreal_air_parsed_sensor_control_data data;
 
-	if (hmd->calibration_valid &&
-	    !xreal_air_parse_sensor_control_data_packet(&data, buffer, size, hmd->max_sensor_buffer_size)) {
+	if (!xreal_air_parse_sensor_control_data_packet(&data, buffer, size, hmd->max_sensor_buffer_size)) {
 		XREAL_AIR_ERROR(hmd, "Could not decode sensor control data packet");
-		return;
+		//return;
 	}
 
 	hmd->imu_stream_state = 0xAA;
@@ -519,8 +518,10 @@ handle_sensor_msg(struct xreal_air_hmd *hmd, unsigned char *buffer, size_t size)
 
 	if (!hmd->calibration_valid) {
 		request_sensor_control_start_imu_data(hmd, 0xAA);
-		return;
 	}
+
+	if (!hmd->sys->tracker)
+		return;
 
 	struct xreal_air_parsed_sensor *s = &hmd->last;
 

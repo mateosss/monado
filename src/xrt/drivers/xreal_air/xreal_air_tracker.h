@@ -43,7 +43,7 @@ struct xreal_air_tracker
 
 	struct xreal_air_system *sys;
 
-	struct xreal_air_parsed_calibration *hmd_calib;
+	struct xreal_air_parsed_calibration hmd_calib;
 
 	//! Protects shared access to 3dof and pose storage
 	struct os_mutex mutex;
