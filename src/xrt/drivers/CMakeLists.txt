@@ -117,11 +117,13 @@ if(XRT_BUILD_DRIVER_XREAL_AIR)
 				     xreal_air/xreal_air_interface.h xreal_air/xreal_air_packet.c
 				     xreal_air/xreal_air_camera.h xreal_air/xreal_air_camera.c
 				     xreal_air/xreal_air_tracker.h xreal_air/xreal_air_tracker.c
+				     xreal_air/xreal_air_util.h xreal_air/xreal_air_util.cpp
 		)
 	target_link_libraries(
-		drv_xreal_air PRIVATE xrt-interfaces HIDAPI::hidapi aux_util xrt-external-cjson
+		drv_xreal_air PRIVATE xrt-interfaces HIDAPI::hidapi aux_util
+		xrt-external-cjson xrt-external-tinyceres
 		)
-	target_include_directories(drv_xreal_air PRIVATE ${HIDAPI_INCLUDE_DIRS})
+	target_include_directories(drv_xreal_air SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR} ${HIDAPI_INCLUDE_DIRS})
 	list(APPEND ENABLED_HEADSET_DRIVERS xreal_air)
 endif()
 

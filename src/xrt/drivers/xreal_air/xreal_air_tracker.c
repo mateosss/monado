@@ -46,6 +46,7 @@
 
 #include "xreal_air.h"
 #include "xreal_air_tracker.h"
+#include "xreal_air_util.h"
 
 #define XREAL_AIR_TRACE(...)	U_LOG_IFL_T(t->sys->log_level, __VA_ARGS__)
 #define XREAL_AIR_INFO(...)	U_LOG_IFL_I(t->sys->log_level, __VA_ARGS__)
@@ -287,19 +288,13 @@ xreal_air_tracker_add_debug_ui(struct xreal_air_tracker *t, void *root)
  *
  */
 static void
-xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
+xreal_air_create_stereo_camera_calib(struct xreal_air_tracker *t)
 {
 	t_stereo_camera_calibration_alloc(&t->stereo_calib, T_DISTORTION_FISHEYE_KB4);
 
-	t->stereo_calib->view[0].image_size_pixels = t->sys->calibration.slam_camera[0].resolution;
-	t->stereo_calib->view[1].image_size_pixels = t->sys->calibration.slam_camera[1].resolution;
-
 	/* FIXME: This is just wrong */
-	t->stereo_calib->view[0].distortion_model = T_DISTORTION_FISHEYE_KB4;
-	t->stereo_calib->view[0].kb4.k1 = t->sys->calibration.slam_camera[0].kc[0];
-	t->stereo_calib->view[0].kb4.k2 = t->sys->calibration.slam_camera[0].kc[1];
-	t->stereo_calib->view[0].kb4.k3 = t->sys->calibration.slam_camera[0].kc[2];
-	t->stereo_calib->view[0].kb4.k4 = t->sys->calibration.slam_camera[0].kc[3];
+	t->stereo_calib->view[0] = xreal_air_get_cam_calib(&t->sys->calibration.slam_camera[0]);
+	t->stereo_calib->view[1] = xreal_air_get_cam_calib(&t->sys->calibration.slam_camera[1]);
 
 	t->stereo_calib->camera_translation[0] =
 		t->sys->calibration.slam_camera[1].imu_pose.position.x - t->sys->calibration.slam_camera[0].imu_pose.position.x;
@@ -398,7 +393,7 @@ xreal_air_tracker_create(struct xreal_air_system *sys)
 	t->pose.orientation.w = 1.0f; // All other values set to zero by U_DEVICE_ALLOCATE (which calls U_CALLOC)
 
 	// Construct the stereo camera calibration for the front cameras
-	xreal_air_create_stereo_camera_calib_rotated(t);
+	xreal_air_create_stereo_camera_calib(t);
 
 	// Initialize the input sinks for the camera to send to
 
