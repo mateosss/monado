@@ -99,6 +99,80 @@ xreal_air_tracker_switch_method_cb(void *t_ptr)
 	}
 }
 
+XRT_MAYBE_UNUSED void
+xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
+{
+	/* FIXME: Made up values, fetch from t->sys->calibration.imu_noises */
+	const double a_noise_std = 0.01;
+	const double g_noise_std = 0.001;
+
+	/* we pass already corrected accel and gyro
+	 * readings to Basalt, so the transforms and
+	 * offsets are just identity / zero matrices */
+	struct t_imu_calibration imu_calib = {
+		.accel = {
+			.transform = {
+				{1.0, 0.0, 0.0},
+				{0.0, 1.0, 0.0},
+				{0.0, 0.0, 1.0},
+			},
+			.offset = { 0, },
+			.bias_std = {
+				t->sys->calibration.accel_bias.x,
+				t->sys->calibration.accel_bias.y,
+				t->sys->calibration.accel_bias.z,
+			},
+			.noise_std = {
+				a_noise_std, a_noise_std, a_noise_std
+			},
+		},
+		.gyro = {
+			.transform = {
+				{1.0, 0.0, 0.0},
+				{0.0, 1.0, 0.0},
+				{0.0, 0.0, 1.0},
+			},
+			.offset = {
+				0,
+			},
+			.bias_std = {
+				t->sys->calibration.gyro_bias.x,
+				t->sys->calibration.gyro_bias.y,
+				t->sys->calibration.gyro_bias.z,
+			},
+			.noise_std = {
+				g_noise_std, g_noise_std, g_noise_std
+			},
+		},
+	};
+
+	struct t_slam_imu_calibration calib = {
+		.base = imu_calib,
+		.frequency = 1000, /* a sample every 1 milliseconds */
+	};
+
+	t->slam_calib.imu = calib;
+}
+
+XRT_MAYBE_UNUSED static void
+xreal_air_fill_slam_calibration(struct xreal_air_tracker *t)
+{
+	xreal_air_fill_slam_imu_calibration(t);
+
+	/* Camera callibration data */
+	t->slam_calib.cam_count = 2;
+	for (int i = 0; i < t->slam_calib.cam_count; i++) {
+		math_matrix_4x4_isometry_from_pose(
+			&t->sys->calibration.slam_camera[i].imu_pose,
+			&t->slam_calib.cams[i].T_imu_cam);
+
+		t->slam_calib.cams[i].base = t->stereo_calib->view[i];
+
+		/* SLAM frames are every 2nd frame of 60Hz camera feed */
+		t->slam_calib.cams[i].frequency = 30;
+	}
+}
+
 static struct xrt_slam_sinks *
 xreal_air_create_slam_tracker(struct xreal_air_tracker *t, struct xrt_frame_context *xfctx)
 {
@@ -109,6 +183,8 @@ xreal_air_create_slam_tracker(struct xreal_air_tracker *t, struct xrt_frame_cont
 #ifdef XRT_FEATURE_SLAM
 	struct t_slam_tracker_config config = {0};
 	t_slam_fill_default_config(&config);
+
+	xreal_air_fill_slam_calibration(t);
 
 	/* No need to refcount these parameters */
 	config.cam_count = 2;
@@ -151,8 +227,8 @@ xreal_air_create_hand_tracker(struct xreal_air_tracker *t,
 	extra_camera_info.views[0].boundary_type = HT_IMAGE_BOUNDARY_NONE;
 	extra_camera_info.views[1].boundary_type = HT_IMAGE_BOUNDARY_NONE;
 
-	extra_camera_info.views[0].camera_orientation = CAMERA_ORIENTATION_90;
-	extra_camera_info.views[1].camera_orientation = CAMERA_ORIENTATION_90;
+	extra_camera_info.views[0].camera_orientation = CAMERA_ORIENTATION_0;
+	extra_camera_info.views[1].camera_orientation = CAMERA_ORIENTATION_0;
 
 	struct t_hand_tracking_create_info create_info = {.cams_info = extra_camera_info, .masks_sink = masks_sink};
 
@@ -215,28 +291,30 @@ xreal_air_create_stereo_camera_calib_rotated(struct xreal_air_tracker *t)
 {
 	t_stereo_camera_calibration_alloc(&t->stereo_calib, T_DISTORTION_FISHEYE_KB4);
 
-#if 0
-	calib->view[0].intrinsics[3][3];
-	calib->view[0].kb4.k1 = 0;
-	calib->view[0].kb4.k2 = 0;
-	calib->view[0].kb4.k3 = 0;
-	calib->view[0].kb4.k4 = 0;
-#endif
+	t->stereo_calib->view[0].image_size_pixels = t->sys->calibration.slam_camera[0].resolution;
+	t->stereo_calib->view[1].image_size_pixels = t->sys->calibration.slam_camera[1].resolution;
+
+	/* FIXME: This is just wrong */
+	t->stereo_calib->view[0].distortion_model = T_DISTORTION_FISHEYE_KB4;
+	t->stereo_calib->view[0].kb4.k1 = t->sys->calibration.slam_camera[0].kc[0];
+	t->stereo_calib->view[0].kb4.k2 = t->sys->calibration.slam_camera[0].kc[1];
+	t->stereo_calib->view[0].kb4.k3 = t->sys->calibration.slam_camera[0].kc[2];
+	t->stereo_calib->view[0].kb4.k4 = t->sys->calibration.slam_camera[0].kc[3];
 
 	t->stereo_calib->camera_translation[0] =
-		t->hmd_calib.slam_camera[1].imu_pose.position.x - t->hmd_calib.slam_camera[0].imu_pose.position.x;
+		t->sys->calibration.slam_camera[1].imu_pose.position.x - t->sys->calibration.slam_camera[0].imu_pose.position.x;
 	t->stereo_calib->camera_translation[1] =
-		t->hmd_calib.slam_camera[1].imu_pose.position.y - t->hmd_calib.slam_camera[0].imu_pose.position.y;
+		t->sys->calibration.slam_camera[1].imu_pose.position.y - t->sys->calibration.slam_camera[0].imu_pose.position.y;
 	t->stereo_calib->camera_translation[2] =
-		t->hmd_calib.slam_camera[1].imu_pose.position.z - t->hmd_calib.slam_camera[0].imu_pose.position.z;
+		t->sys->calibration.slam_camera[1].imu_pose.position.z - t->sys->calibration.slam_camera[0].imu_pose.position.z;
 
 	/* XXX: Is this actually correct? */
 	struct xrt_quat left_cam_q_imu;
 	struct xrt_quat left_q_right;
 	struct xrt_matrix_3x3 left_rot_right;
 
-	math_quat_invert(&t->hmd_calib.slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
-	math_quat_rotate(&left_cam_q_imu, &t->hmd_calib.slam_camera[1].imu_pose.orientation, &left_q_right);
+	math_quat_invert(&t->sys->calibration.slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
+	math_quat_rotate(&left_cam_q_imu, &t->sys->calibration.slam_camera[1].imu_pose.orientation, &left_q_right);
 	math_matrix_3x3_from_quat(&left_cam_q_imu, &left_rot_right);
 
 	t->stereo_calib->camera_rotation[0][0] = left_rot_right.v[0];
@@ -506,7 +584,8 @@ xreal_air_tracker_push_slam_frames(struct xreal_air_tracker *t,
 		return;
 	}
 
-	XREAL_AIR_TRACE("SLAM frame timestamp %" PRIu64 " local %" PRIu64, left->source_timestamp, frame_time);
+	XREAL_AIR_TRACE("SLAM frame timestamp %" PRIu64 " local %" PRIu64,
+			left->source_timestamp, frame_time);
 
 	t->last_frame_time = frame_time;
 	os_mutex_unlock(&t->mutex);

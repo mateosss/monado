@@ -326,8 +326,8 @@ xreal_air_parse_calibration_buffer(struct xreal_air_parsed_calibration *calibrat
 	cJSON *slam_camera = cJSON_GetObjectItem(root, "SLAM_camera");
 
 	if (slam_camera) {
-		cJSON *dev1 = cJSON_GetObjectItem(imu, "device_1");
-		cJSON *dev2 = cJSON_GetObjectItem(imu, "device_2");
+		cJSON *dev1 = cJSON_GetObjectItem(slam_camera, "device_1");
+		cJSON *dev2 = cJSON_GetObjectItem(slam_camera, "device_2");
 
 		parse_camera_calibration_json(calibration, dev1, 0);
 		parse_camera_calibration_json(calibration, dev2, 1);

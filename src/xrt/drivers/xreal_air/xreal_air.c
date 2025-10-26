@@ -50,7 +50,10 @@ xreal_air_system_create(struct xrt_prober *xp,
 	/* At this point the callibration data is filled in */
 	sys->camera = xreal_air_camera_create(xp, sys);
 
-	XREAL_AIR_DEBUG("Oculus Rift S driver ready");
+	XREAL_AIR_DEBUG("XReal Air driver ready");
+
+	/* Finally, start tracking*/
+	xreal_air_tracker_start(sys->tracker);
 
 	return sys;
 

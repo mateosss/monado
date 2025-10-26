@@ -282,15 +282,15 @@ receive_cam_frame(struct xrt_frame_sink *sink, struct xrt_frame *xf)
 	assert(descrambled->format == XRT_FORMAT_L8);
 
 	XREAL_AIR_CAMERA_TRACE("cam img t=%" PRIu64 " source_t=%" PRIu64 " seq=%" PRIu64 " right=%d",
-			       xf->timestamp, xf->source_timestamp, xf->source_sequence, is_right);
+			       descrambled->timestamp, descrambled->source_timestamp, xf->source_sequence, is_right);
 
 	if (!is_right) {
 		struct xrt_frame *rotated = NULL;
 		u_frame_create_one_off(XRT_FORMAT_L8, descrambled->height, descrambled->width, &rotated);
 		rotate_l8_90_ccw(rotated->data, descrambled->data, descrambled->width, descrambled->height);
 		rotated->timestamp = descrambled->timestamp;
-		rotated->source_sequence = rotated->source_sequence;
-		rotated->source_timestamp = rotated->source_timestamp;
+		rotated->source_sequence = descrambled->source_sequence;
+		rotated->source_timestamp = descrambled->source_timestamp;
 
 		u_sink_debug_push_frame(&cam->debug_sinks[0], rotated);
 		xrt_frame_reference(&cam->last_left, rotated);
@@ -300,8 +300,8 @@ receive_cam_frame(struct xrt_frame_sink *sink, struct xrt_frame *xf)
 		u_frame_create_one_off(XRT_FORMAT_L8, descrambled->height, descrambled->width, &rotated);
 		rotate_l8_90_cw(rotated->data, descrambled->data, descrambled->width, descrambled->height);
 		rotated->timestamp = descrambled->timestamp;
-		rotated->source_sequence = rotated->source_sequence;
-		rotated->source_timestamp = rotated->source_timestamp;
+		rotated->source_sequence = descrambled->source_sequence;
+		rotated->source_timestamp = descrambled->source_timestamp;
 
 		u_sink_debug_push_frame(&cam->debug_sinks[1], rotated);
 		xrt_frame_reference(&cam->last_right, rotated);

@@ -427,6 +427,8 @@ handle_sensor_control_cal_data_get_next_segment(struct xreal_air_hmd *hmd,
 			hmd->calibration_valid = false;
 
 			XREAL_AIR_ERROR(hmd, "Failed parse calibration data!");
+			/* XXX: This doesn't work, figure out a way to try again */
+			request_sensor_control_start_imu_data(hmd, 0x00);
 		} else {
 			hmd->calibration_valid = true;
 
@@ -1206,6 +1208,7 @@ xreal_air_hmd_create_device(struct xreal_air_system *sys,
 	 */
 
 	u_var_add_root(hmd, "Xreal Air Glasses", true);
+	u_var_add_log_level(hmd, &hmd->sys->log_level, "Log level");
 	u_var_add_u8(hmd, &hmd->wants.brightness, "Brightness");
 	u_var_add_u8(hmd, &hmd->wants.display_mode, "Display mode");
 	u_var_add_gui_header(hmd, &hmd->gui.last_frame, "Last data");
