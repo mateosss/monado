@@ -1183,7 +1183,7 @@ xreal_air_hmd_create_device(struct xreal_air_system *sys,
 		goto cleanup;
 	}
 
-	if (!control_brightness(hmd) || !control_display_mode(hmd)) {
+	if (!control_brightness(hmd)) { // || !control_display_mode(hmd)) {
 		goto cleanup;
 	}
 

@@ -29,8 +29,10 @@ struct xreal_air_parsed_calibration
 {
 	struct xrt_vec3 accel_bias;
 	struct xrt_quat accel_q_gyro;
+	float accel_calib_mat[9];
 	struct xrt_vec3 gyro_bias;
 	struct xrt_quat gyro_q_mag;
+	float gyro_calib_mat[9];
 	struct xrt_vec3 mag_bias;
 
 	struct xrt_vec3 scale_accel;

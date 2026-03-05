@@ -263,6 +263,8 @@ read_sample(const uint8_t **buffer, struct xreal_air_parsed_sample *sample)
 static void
 parse_calibration_json(struct xreal_air_parsed_calibration *calibration, cJSON *dev1)
 {
+	cJSON *intrinsics = cJSON_GetObjectItem(dev1, "imu_intrinsics");
+
 	read_json_vec3(dev1, "accel_bias", &calibration->accel_bias);
 	read_json_quat(dev1, "accel_q_gyro", &calibration->accel_q_gyro);
 	read_json_vec3(dev1, "gyro_bias", &calibration->gyro_bias);
@@ -274,6 +276,9 @@ parse_calibration_json(struct xreal_air_parsed_calibration *calibration, cJSON *
 	read_json_vec3(dev1, "scale_mag", &calibration->scale_mag);
 
 	read_json_array(dev1, "imu_noises", 4, calibration->imu_noises);
+
+	read_json_array(intrinsics, "accl_calib_mat", 9, calibration->accel_calib_mat);
+	read_json_array(intrinsics, "gyro_calib_mat", 9, calibration->gyro_calib_mat);
 }
 
 static void

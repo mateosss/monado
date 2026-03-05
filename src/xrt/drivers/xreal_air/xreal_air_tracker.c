@@ -103,25 +103,33 @@ xreal_air_tracker_switch_method_cb(void *t_ptr)
 XRT_MAYBE_UNUSED void
 xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
 {
+	struct xreal_air_parsed_calibration *cal = &t->sys->calibration;
 	/* FIXME: Made up values, fetch from t->sys->calibration.imu_noises */
-	const double a_noise_std = 0.01;
-	const double g_noise_std = 0.001;
+	const double a_noise_std = cal->imu_noises[2];
+	const double g_noise_std = cal->imu_noises[0];
 
-	/* we pass already corrected accel and gyro
-	 * readings to Basalt, so the transforms and
-	 * offsets are just identity / zero matrices */
 	struct t_imu_calibration imu_calib = {
 		.accel = {
 			.transform = {
-				{1.0, 0.0, 0.0},
-				{0.0, 1.0, 0.0},
-				{0.0, 0.0, 1.0},
+//				{ cal->accel_calib_mat[0], cal->accel_calib_mat[3], cal->accel_calib_mat[6] },
+//				{ -cal->accel_calib_mat[1], -cal->accel_calib_mat[4], -cal->accel_calib_mat[7] },
+//				{ -cal->accel_calib_mat[2], -cal->accel_calib_mat[5], -cal->accel_calib_mat[8] },
+//				{ cal->accel_calib_mat[0], cal->accel_calib_mat[1], cal->accel_calib_mat[2] },
+//				{ cal->accel_calib_mat[3], cal->accel_calib_mat[4], cal->accel_calib_mat[5] },
+//				{ cal->accel_calib_mat[6], cal->accel_calib_mat[7], cal->accel_calib_mat[8] },
+				{ 1, 0, 0 },
+				{ 0, 1, 0 },
+				{ 0, 0, 1 },
 			},
-			.offset = { 0, },
+			.offset = {
+				-t->sys->calibration.accel_bias.x,
+				-t->sys->calibration.accel_bias.y,
+				-t->sys->calibration.accel_bias.z,
+			},
 			.bias_std = {
-				t->sys->calibration.accel_bias.x,
-				t->sys->calibration.accel_bias.y,
-				t->sys->calibration.accel_bias.z,
+				cal->imu_noises[3],
+				cal->imu_noises[3],
+				cal->imu_noises[3],
 			},
 			.noise_std = {
 				a_noise_std, a_noise_std, a_noise_std
@@ -129,17 +137,25 @@ xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
 		},
 		.gyro = {
 			.transform = {
-				{1.0, 0.0, 0.0},
-				{0.0, 1.0, 0.0},
-				{0.0, 0.0, 1.0},
+				{ 0, 0, 0 },
+				{ 0, 0, 0 },
+				{ 0, 0, 0 },
+//				{ cal->gyro_calib_mat[0], cal->gyro_calib_mat[3], cal->gyro_calib_mat[6] },
+//				{ -cal->gyro_calib_mat[1], -cal->gyro_calib_mat[4], -cal->gyro_calib_mat[7] },
+//				{ -cal->gyro_calib_mat[2], -cal->gyro_calib_mat[5], -cal->gyro_calib_mat[8] },
+//				{ cal->gyro_calib_mat[0], cal->gyro_calib_mat[1], cal->gyro_calib_mat[2] },
+//				{ cal->gyro_calib_mat[3], cal->gyro_calib_mat[4], cal->gyro_calib_mat[5] },
+//				{ cal->gyro_calib_mat[6], cal->gyro_calib_mat[7], cal->gyro_calib_mat[8] },
 			},
 			.offset = {
-				0,
+				-t->sys->calibration.gyro_bias.x,
+				-t->sys->calibration.gyro_bias.y,
+				-t->sys->calibration.gyro_bias.z,
 			},
 			.bias_std = {
-				t->sys->calibration.gyro_bias.x,
-				t->sys->calibration.gyro_bias.y,
-				t->sys->calibration.gyro_bias.z,
+				cal->imu_noises[1],
+				cal->imu_noises[1],
+				cal->imu_noises[1],
 			},
 			.noise_std = {
 				g_noise_std, g_noise_std, g_noise_std
@@ -163,13 +179,11 @@ xreal_air_fill_slam_calibration(struct xreal_air_tracker *t)
 	/* Camera callibration data */
 	t->slam_calib.cam_count = 2;
 	for (int i = 0; i < t->slam_calib.cam_count; i++) {
-		math_matrix_4x4_isometry_from_pose(
-			&t->sys->calibration.slam_camera[i].imu_pose,
-			&t->slam_calib.cams[i].T_imu_cam);
+		// T_imu_cam is already filled in
 
 		t->slam_calib.cams[i].base = t->stereo_calib->view[i];
-
-		/* SLAM frames are every 2nd frame of 60Hz camera feed */
+		
+		/* SLAM frames are every 2nd frame of 60Hz camera feed; XXX: is this correct? */
 		t->slam_calib.cams[i].frequency = 30;
 	}
 }
@@ -188,6 +202,7 @@ xreal_air_create_slam_tracker(struct xreal_air_tracker *t, struct xrt_frame_cont
 	xreal_air_fill_slam_calibration(t);
 
 	/* No need to refcount these parameters */
+	config.slam_ui = true;
 	config.cam_count = 2;
 	config.slam_calib = &t->slam_calib;
 
@@ -290,7 +305,43 @@ xreal_air_tracker_add_debug_ui(struct xreal_air_tracker *t, void *root)
 static void
 xreal_air_create_stereo_camera_calib(struct xreal_air_tracker *t)
 {
+	/* Camera positions for Basalt (this is hopefully correct) */
+	for (int i = 0; i < 2; i++) {
+		struct xrt_quat *q_imu_cam = &t->sys->calibration.slam_camera[i].imu_pose.orientation;
+		struct xrt_vec3 *p_imu_cam = &t->sys->calibration.slam_camera[i].imu_pose.position;
+
+		struct xrt_matrix_3x3 R_imu_cam;
+		struct xrt_matrix_4x4 T_imu_cam;
+
+		math_matrix_3x3_from_quat(q_imu_cam, &R_imu_cam);
+
+		math_matrix_4x4_isometry_from_rt(&R_imu_cam, p_imu_cam, &T_imu_cam);
+
+		/* IMU samples in XREAL frame give +x right, +y up, +z forward */
+		struct xrt_matrix_4x4 T_A_B;
+		math_matrix_4x4_identity(&T_A_B);
+
+		// Is there some nicer way of accessing the row/column?
+		T_A_B.v[1 + 1*4] = -1;
+		T_A_B.v[2 + 2*4] = -1;
+
+		math_matrix_4x4_multiply(&T_imu_cam, &T_A_B, &t->slam_calib.cams[i].T_imu_cam);
+	}
+
+	/*
+	 * stero_calib->view is used in general, the rest in there is for hand tracking!
+	 * FIXME: this is completely wrong
+	 */
 	t_stereo_camera_calibration_alloc(&t->stereo_calib, T_DISTORTION_FISHEYE_KB4);
+
+	/* XXX: Is this actually correct? */
+	struct xrt_quat left_cam_q_imu;
+	struct xrt_quat left_q_right;
+	struct xrt_matrix_3x3 left_rot_right;
+
+	math_quat_invert(&t->sys->calibration.slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
+	math_quat_rotate(&left_cam_q_imu, &t->sys->calibration.slam_camera[1].imu_pose.orientation, &left_q_right);
+	math_matrix_3x3_from_quat(&left_cam_q_imu, &left_rot_right);
 
 	/* FIXME: This is just wrong */
 	t->stereo_calib->view[0] = xreal_air_get_cam_calib(&t->sys->calibration.slam_camera[0]);
@@ -302,15 +353,6 @@ xreal_air_create_stereo_camera_calib(struct xreal_air_tracker *t)
 		t->sys->calibration.slam_camera[1].imu_pose.position.y - t->sys->calibration.slam_camera[0].imu_pose.position.y;
 	t->stereo_calib->camera_translation[2] =
 		t->sys->calibration.slam_camera[1].imu_pose.position.z - t->sys->calibration.slam_camera[0].imu_pose.position.z;
-
-	/* XXX: Is this actually correct? */
-	struct xrt_quat left_cam_q_imu;
-	struct xrt_quat left_q_right;
-	struct xrt_matrix_3x3 left_rot_right;
-
-	math_quat_invert(&t->sys->calibration.slam_camera[0].imu_pose.orientation, &left_cam_q_imu);
-	math_quat_rotate(&left_cam_q_imu, &t->sys->calibration.slam_camera[1].imu_pose.orientation, &left_q_right);
-	math_matrix_3x3_from_quat(&left_cam_q_imu, &left_rot_right);
 
 	t->stereo_calib->camera_rotation[0][0] = left_rot_right.v[0];
 	t->stereo_calib->camera_rotation[0][1] = left_rot_right.v[1];
@@ -537,11 +579,23 @@ xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
 	os_mutex_unlock(&t->mutex);
 
 	if (t->slam_sinks.imu) {
+		static timepoint_ns last_ns;
 		/* Push IMU sample to the SLAM tracker */
-		struct xrt_vec3_f64 accel64 = {accel->x, accel->y, accel->z};
-		struct xrt_vec3_f64 gyro64 = {gyro->x, gyro->y, gyro->z};
+		//struct xrt_vec3_f64 accel64 = {accel->x, accel->y, accel->z};
+		//struct xrt_vec3_f64 gyro64 = {gyro->x, gyro->y, gyro->z};
+		struct xrt_vec3_f64 accel64 = {
+			//accel->x, accel->y, accel->z
+			0, 9.806, 0
+		};
+		struct xrt_vec3_f64 gyro64 = {
+			//gyro->x, gyro->y, gyro->z
+			0, 0, 0
+		};
 		struct xrt_imu_sample sample = {
 		    .timestamp_ns = local_timestamp_ns, .accel_m_s2 = accel64, .gyro_rad_secs = gyro64};
+
+printf("%ld, %ld, diff = %ld\n", last_ns, local_timestamp_ns, local_timestamp_ns - last_ns);
+last_ns = local_timestamp_ns;
 
 		xrt_sink_push_imu(t->slam_sinks.imu, &sample);
 	}

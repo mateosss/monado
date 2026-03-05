@@ -197,7 +197,8 @@ xreal_air_open_system_impl(struct xrt_builder *xb,
 					driver_max_sensor_buffer_sizes[product_index], xreal_air_log_level);
 	if (system == NULL) {
 		XREAL_AIR_ERROR("Failed to create Xreal Air system");
-		goto fail;
+		// Do *not* free hid_imu and hid_control.
+		return XRT_ERROR_DEVICE_CREATION_FAILED;
 	}
 
 	// Add HMD to device list.

@@ -47,6 +47,8 @@ xreal_air_system_create(struct xrt_prober *xp,
 		goto cleanup;
 	}
 
+	xreal_air_tracker_add_debug_ui(sys->tracker, sys->hmd);
+
 	/* At this point the callibration data is filled in */
 	sys->camera = xreal_air_camera_create(xp, sys);
 
@@ -67,7 +69,8 @@ xreal_air_system_free(struct xreal_air_system *sys)
 {
 	xrt_device_destroy((struct xrt_device**)&sys->hmd);
 	xrt_device_destroy((struct xrt_device**)&sys->tracker);
-	xreal_air_camera_destroy(sys->camera);
+	if (sys->camera)
+		xreal_air_camera_destroy(sys->camera);
 	free(sys);
 }
 
