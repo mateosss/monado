@@ -198,8 +198,8 @@ xreal_air_get_cam_calib(struct xreal_air_camera_calibration *callib)
 	struct t_camera_calibration tcc;
 
 	tcc.image_size_pixels = callib->resolution;
-	tcc.intrinsics[0][0] = 10 * callib->focal_length.x;
-	tcc.intrinsics[1][1] = 10 * callib->focal_length.y;
+	tcc.intrinsics[0][0] = callib->focal_length.x;
+	tcc.intrinsics[1][1] = callib->focal_length.y;
 	tcc.intrinsics[0][2] = callib->camera_center.x;
 	tcc.intrinsics[1][2] = callib->camera_center.y;
 	tcc.intrinsics[2][2] = 1.0;
