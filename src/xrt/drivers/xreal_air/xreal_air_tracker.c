@@ -121,10 +121,9 @@ xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
 				{ 0, 1, 0 },
 				{ 0, 0, 1 },
 			},
+			// Already applied by the callibration code
 			.offset = {
-				-t->sys->calibration.accel_bias.x,
-				-t->sys->calibration.accel_bias.y,
-				-t->sys->calibration.accel_bias.z,
+				0, 0, 0
 			},
 			.bias_std = {
 				cal->imu_noises[3],
@@ -137,9 +136,9 @@ xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
 		},
 		.gyro = {
 			.transform = {
-				{ 0, 0, 0 },
-				{ 0, 0, 0 },
-				{ 0, 0, 0 },
+				{ 1, 0, 0 },
+				{ 0, 1, 0 },
+				{ 0, 0, 1 },
 //				{ cal->gyro_calib_mat[0], cal->gyro_calib_mat[3], cal->gyro_calib_mat[6] },
 //				{ -cal->gyro_calib_mat[1], -cal->gyro_calib_mat[4], -cal->gyro_calib_mat[7] },
 //				{ -cal->gyro_calib_mat[2], -cal->gyro_calib_mat[5], -cal->gyro_calib_mat[8] },
@@ -148,9 +147,7 @@ xreal_air_fill_slam_imu_calibration(struct xreal_air_tracker *t)
 //				{ cal->gyro_calib_mat[6], cal->gyro_calib_mat[7], cal->gyro_calib_mat[8] },
 			},
 			.offset = {
-				-t->sys->calibration.gyro_bias.x,
-				-t->sys->calibration.gyro_bias.y,
-				-t->sys->calibration.gyro_bias.z,
+				0, 0, 0
 			},
 			.bias_std = {
 				cal->imu_noises[1],
