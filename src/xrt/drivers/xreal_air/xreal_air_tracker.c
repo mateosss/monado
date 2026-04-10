@@ -179,7 +179,7 @@ xreal_air_fill_slam_calibration(struct xreal_air_tracker *t)
 		// T_imu_cam is already filled in
 
 		t->slam_calib.cams[i].base = t->stereo_calib->view[i];
-		
+
 		/* SLAM frames are every 2nd frame of 60Hz camera feed; XXX: is this correct? */
 		t->slam_calib.cams[i].frequency = 30;
 	}
@@ -578,20 +578,20 @@ xreal_air_tracker_imu_update(struct xreal_air_tracker *t,
 	if (t->slam_sinks.imu) {
 		static timepoint_ns last_ns;
 		/* Push IMU sample to the SLAM tracker */
-		//struct xrt_vec3_f64 accel64 = {accel->x, accel->y, accel->z};
-		//struct xrt_vec3_f64 gyro64 = {gyro->x, gyro->y, gyro->z};
-		struct xrt_vec3_f64 accel64 = {
-			//accel->x, accel->y, accel->z
-			0, 9.806, 0
-		};
-		struct xrt_vec3_f64 gyro64 = {
-			//gyro->x, gyro->y, gyro->z
-			0, 0, 0
-		};
+		struct xrt_vec3_f64 accel64 = {accel->x, accel->y, accel->z};
+		struct xrt_vec3_f64 gyro64 = {gyro->x, gyro->y, gyro->z};
+		// struct xrt_vec3_f64 accel64 = {
+		// 	//accel->x, accel->y, accel->z
+		// 	0, 9.806, 0
+		// };
+		// struct xrt_vec3_f64 gyro64 = {
+		// 	//gyro->x, gyro->y, gyro->z
+		// 	0, 0, 0
+		// };
 		struct xrt_imu_sample sample = {
 		    .timestamp_ns = local_timestamp_ns, .accel_m_s2 = accel64, .gyro_rad_secs = gyro64};
 
-printf("%ld, %ld, diff = %ld\n", last_ns, local_timestamp_ns, local_timestamp_ns - last_ns);
+// printf("%ld, %ld, diff = %ld\n", last_ns, local_timestamp_ns, local_timestamp_ns - last_ns);
 last_ns = local_timestamp_ns;
 
 		xrt_sink_push_imu(t->slam_sinks.imu, &sample);

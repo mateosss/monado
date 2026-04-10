@@ -317,6 +317,14 @@ xreal_air_parse_calibration_buffer(struct xreal_air_parsed_calibration *calibrat
 	bool result = false;
 
 	cJSON *root = cJSON_ParseWithLength(buffer, size);
+
+	//  print root as string for debugging
+	char *root_string = cJSON_Print(root);
+	if (root_string) {
+		printf("Calibration JSON:\n%s\n", root_string);
+		cJSON_free(root_string);
+	}
+
 	cJSON *imu = cJSON_GetObjectItem(root, "IMU");
 
 	if (imu) {
