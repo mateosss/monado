@@ -36,8 +36,12 @@ set(CJSON_ROOT_DIR
 
 include(FindPackageHandleStandardArgs)
 
-# Check for CMake config first.
-find_package(cJSON QUIET CONFIG)
+# Many distro-provided cJSON config files embed absolute /usr paths, which are
+# incorrect for cross builds with a sysroot. Prefer manual discovery there.
+if(NOT CMAKE_CROSSCOMPILING)
+    # Check for CMake config first on native builds.
+    find_package(cJSON QUIET CONFIG)
+endif()
 if(cJSON_FOUND AND TARGET cjson)
     set_target_properties(cjson PROPERTIES IMPORTED_GLOBAL TRUE)
     # Found config, let's prefer it.
@@ -55,7 +59,7 @@ else()
         CJSON_LIBRARY
         NAMES cjson
         PATHS ${CJSON_ROOT_DIR}
-        PATH_SUFFIXES lib)
+        PATH_SUFFIXES lib lib/aarch64-linux-gnu lib64)
 
     find_package_handle_standard_args(cJSON REQUIRED_VARS CJSON_INCLUDE_DIR
                                                           CJSON_LIBRARY)

@@ -111,3 +111,6 @@ vk_layer_settings.txt
 
 # Kotlin
 .kotlin
+
+cmake_modules/mona7z-arm64-sysroot
+x-tools/

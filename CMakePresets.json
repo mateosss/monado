@@ -55,6 +55,23 @@
             }
         },
         {
+            "name": "radxa-a7z",
+            "displayName": "Release service for Radxa Cubie A7Z",
+            "inherits": "service-release",
+            "environment": {
+                "PATH": "${sourceDir}/x-tools/aarch64-rpi3-linux-gnu/bin:$penv{PATH}"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_DOC": "OFF",
+                "BUILD_DOC_EXTRACT_ALL": "OFF",
+                "CMAKE_SYSROOT": "${sourceDir}/cmake_modules/mona7z-arm64-sysroot",
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake_modules/RadxaToolchain.cmake",
+                "CXX_MARCH": "armv8.2-a+dotprod+fp16",
+                "CXX_MCPU": "cortex-a76.cortex-a55"
+            }
+        },
+        {
             "name": "inproc-release",
             "displayName": "Release in-process",
             "inherits": "inproc-debug",
