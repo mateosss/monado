@@ -1227,7 +1227,6 @@ p_open_hid_interface(struct xrt_prober *xp,
 #endif
 
 #elif defined(XRT_OS_WINDOWS)
-	(void)ret;
 #ifdef XRT_HAVE_LIBUSB
 	ret = p_libusb_open_hid_interface(pdev, hid_iface, out_hid_dev);
 	if (ret != 0) {
@@ -1238,6 +1237,7 @@ p_open_hid_interface(struct xrt_prober *xp,
 	return 0;
 #else
 	(void)pdev;
+	(void)ret;
 	U_LOG_E("HID devices not yet supported on Windows, cannot open interface (%i)", hid_iface);
 	return -1;
 #endif

@@ -3,7 +3,6 @@
 /*!
  * @file
  * @brief  HID implementation based on libusb.
- * @author
  * @ingroup st_prober
  */
 
@@ -15,6 +14,7 @@
 #include "util/u_misc.h"
 
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 
 /*!
@@ -165,12 +165,16 @@ find_hid_endpoints(libusb_device *dev, int hid_iface, int *out_interface_number,
 	int interface_number = -1;
 	uint8_t ep_in = 0;
 	uint8_t ep_out = 0;
+	bool found = false;
 
 	for (uint8_t i = 0; i < cfg->bNumInterfaces; i++) {
 		const struct libusb_interface *iface = &cfg->interface[i];
 		for (int j = 0; j < iface->num_altsetting; j++) {
 			const struct libusb_interface_descriptor *alt = &iface->altsetting[j];
 			if (alt->bInterfaceNumber != hid_iface) {
+				continue;
+			}
+			if (alt->bInterfaceClass != LIBUSB_CLASS_HID) {
 				continue;
 			}
 
@@ -188,6 +192,15 @@ find_hid_endpoints(libusb_device *dev, int hid_iface, int *out_interface_number,
 					ep_out = ep->bEndpointAddress;
 				}
 			}
+
+			if (ep_in != 0) {
+				found = true;
+				break;
+			}
+		}
+
+		if (found) {
+			break;
 		}
 	}
 
