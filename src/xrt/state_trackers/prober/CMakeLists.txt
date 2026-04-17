@@ -31,7 +31,7 @@ endif()
 
 # Add libusb
 if(XRT_HAVE_LIBUSB)
-	target_sources(st_prober PRIVATE p_libusb.c)
+	target_sources(st_prober PRIVATE p_libusb.c p_hid_libusb.c)
 	target_include_directories(st_prober PUBLIC ${LIBUSB1_INCLUDE_DIRS})
 	target_link_libraries(st_prober PRIVATE ${LIBUSB1_LIBRARIES})
 endif()

@@ -1212,14 +1212,48 @@ p_open_hid_interface(struct xrt_prober *xp,
 		return 0;
 	}
 
+	// Fall back to libusb when there is no hidraw node for this interface.
+#ifdef XRT_HAVE_LIBUSB
+	ret = p_libusb_open_hid_interface(pdev, hid_iface, out_hid_dev);
+	if (ret != 0) {
+		U_LOG_E("Could not open the requested hid interface (%i) via hidraw or libusb (%i)!", hid_iface, ret);
+		return ret;
+	}
+
+	return 0;
+#else
 	U_LOG_E("Could not find the requested hid interface (%i) on the device!", hid_iface);
 	return -1;
+#endif
 
 #elif defined(XRT_OS_WINDOWS)
-	(void)pdev;
 	(void)ret;
+#ifdef XRT_HAVE_LIBUSB
+	ret = p_libusb_open_hid_interface(pdev, hid_iface, out_hid_dev);
+	if (ret != 0) {
+		U_LOG_E("Could not open requested hid interface (%i) via libusb (%i)!", hid_iface, ret);
+		return ret;
+	}
+
+	return 0;
+#else
+	(void)pdev;
 	U_LOG_E("HID devices not yet supported on Windows, cannot open interface (%i)", hid_iface);
 	return -1;
+#endif
+#elif defined(XRT_OS_ANDROID)
+#ifdef XRT_HAVE_LIBUSB
+	ret = p_libusb_open_hid_interface(pdev, hid_iface, out_hid_dev);
+	if (ret != 0) {
+		U_LOG_E("Could not open requested hid interface (%i) via libusb (%i)!", hid_iface, ret);
+		return ret;
+	}
+
+	return 0;
+#else
+	U_LOG_E("No HID backend available on Android for interface (%i)", hid_iface);
+	return -1;
+#endif
 #else
 #error "no port of hid code"
 #endif

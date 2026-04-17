@@ -30,6 +30,8 @@
 #include <sys/types.h>
 #endif
 
+struct os_hid_device;
+
 /*
  *
  * Struct and defines
@@ -282,6 +284,12 @@ p_libusb_get_string_descriptor(struct prober *p,
  */
 bool
 p_libusb_can_open(struct prober *p, struct prober_device *pdev);
+
+/*!
+ * @private @memberof prober
+ */
+int
+p_libusb_open_hid_interface(struct prober_device *pdev, int hid_iface, struct os_hid_device **out_hid_dev);
 
 /*!
  * @}
