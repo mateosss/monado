@@ -22,8 +22,8 @@ We need to replicate the Radxa's sysroot on our Ubuntu host.
 You can download a pre-built sysroot and extract it:
 
 ```bash
-wget https://gitlab.freedesktop.org/mateosss/basalt-lfs/-/raw/main/bullseye-arm64-sysroot.tar.xz
-tar -xvf bullseye-arm64-sysroot.tar.xz # Extracts to: cmake_modules/bullseye-arm64-sysroot
+wget https://gitlab.freedesktop.org/mateosss/basalt-lfs/-/raw/main/mona7z-arm64-sysroot.tar.xz
+tar -xvf mona7z-arm64-sysroot.tar.xz # Extracts to: cmake_modules/mona7z-arm64-sysroot
 ```
 
 <details>
@@ -70,7 +70,7 @@ rm -rf usr/lib/aarch64-linux-gnu/libopencv_cvv.a
 
 # Compress for distribution
 cd -
-tar -cJvf bullseye-arm64-sysroot.tar.xz "$SYSROOT"
+tar -cJvf mona7z-arm64-sysroot.tar.xz "$SYSROOT"
 ```
 
 </details>
