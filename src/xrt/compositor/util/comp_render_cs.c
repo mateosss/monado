@@ -890,4 +890,107 @@ comp_render_cs_dispatch(struct render_compute *render,
 		    render,       //
 		    d);           //
 	}
+
+	// struct vk_bundle* vk = render->r->vk;
+	// struct render_resources* rr = render->r;
+
+	// VkImageLayout target_final_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	// VkImageSubresourceRange range = {
+	//     .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+	//     .baseMipLevel = 0,
+	//     .levelCount = 1,
+	//     .baseArrayLayer = 0,
+	//     .layerCount = 1,
+	// };
+
+	// // Barrier to make source a source
+	// vk_cmd_image_barrier_locked(                       //
+	//     vk,                                            // vk_bundle
+	//     rr->cmd,                                        // cmdbuffer
+	//     rr->mock.color.image,                                           // image
+	//     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,          // srcAccessMask
+	//     VK_ACCESS_TRANSFER_READ_BIT,                   // dstAccessMask
+	//     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,      // oldImageLayout
+	//     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,          // newImageLayout
+	//     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
+	//     VK_PIPELINE_STAGE_TRANSFER_BIT,                // dstStageMask
+	//     range);                                        // subresourceRange
+
+	// for (uint32_t view_index = 0; view_index < d->squash_view_count; view_index++) {
+	// 	VkImage target_image = d->views[view_index].squash.image;
+
+
+	// 	// Barrier to make destination a destination
+	// 	vk_cmd_image_barrier_locked(              //
+	// 		vk,                                   // vk_bundle
+	// 		rr->cmd,                               // cmdbuffer
+	// 		target_image,                                  // image
+	// 		0,                                    // srcAccessMask
+	// 		VK_ACCESS_TRANSFER_WRITE_BIT,         // dstAccessMask
+	// 		VK_IMAGE_LAYOUT_UNDEFINED,            // oldImageLayout
+	// 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // newImageLayout
+	// 		VK_PIPELINE_STAGE_TRANSFER_BIT,       // srcStageMask
+	// 		VK_PIPELINE_STAGE_TRANSFER_BIT,       // dstStageMask
+	// 		range);                               // subresourceRange
+
+	// 	VkImageBlit blit = {
+	// 		.srcSubresource =
+	// 			{
+	// 				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+	// 				.layerCount = 1,
+	// 			},
+	// 		.dstSubresource =
+	// 			{
+	// 				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+	// 				.layerCount = 1,
+	// 			},
+	// 	};
+
+	// 	blit.srcOffsets[1].x = 200;
+	// 	blit.srcOffsets[1].y = 200;
+	// 	blit.srcOffsets[1].z = 1;
+
+	// 	blit.dstOffsets[1].x = 500;
+	// 	blit.dstOffsets[1].y = 500;
+	// 	blit.dstOffsets[1].z = 1;
+
+	// 	vk->vkCmdBlitImage(                       //
+	// 		rr->cmd,                              // commandBuffer
+	// 		rr->mock.color.image,                 // srcImage
+	// 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // srcImageLayout
+	// 		target_image,                                  // dstImage
+	// 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // dstImageLayout
+	// 		1,                                    // regionCount
+	// 		&blit,                                // pRegions
+	// 		VK_FILTER_LINEAR                      // filter
+	// 	);
+
+	// 	// Reset destination
+	// 	vk_cmd_image_barrier_locked(              //
+	// 		vk,                                   // vk_bundle
+	// 		rr->cmd,                               // cmdbuffer
+	// 		target_image,                                  // image
+	// 		VK_ACCESS_TRANSFER_WRITE_BIT,         // srcAccessMask
+	// 		0,                                    // dstAccessMask
+	// 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // oldImageLayout
+	// 		target_final_layout,            // newImageLayout
+	// 		VK_PIPELINE_STAGE_TRANSFER_BIT,       // srcStageMask
+	// 		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, // dstStageMask
+	// 		range);                               // subresourceRange
+	// }
+
+	// // Reset src
+	// vk_cmd_image_barrier_locked(                  //
+	//     vk,                                       // vk_bundle
+	//     rr->cmd,                                  // cmdbuffer
+	//     rr->mock.color.image,                     // image
+	//     VK_ACCESS_TRANSFER_READ_BIT,              // srcAccessMask
+	//     0,                                        // dstAccessMask
+	//     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,     // oldImageLayout
+	//     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // newImageLayout
+	//     VK_PIPELINE_STAGE_TRANSFER_BIT,           // srcStageMask
+	//     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,        // dstStageMask
+	//     range);                                   // subresourceRange
+
 }

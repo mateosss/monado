@@ -19,6 +19,7 @@ add_library(
 	comp_render.h
 	comp_render_cs.c
 	comp_render_gfx.c
+	comp_render_png.c
 	comp_render_helpers.h
 	comp_scratch.c
 	comp_scratch.h

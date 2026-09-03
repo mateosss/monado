@@ -162,6 +162,21 @@ chl_frame_state_gfx_default_pipeline(struct chl_frame_state *frame_state,
 	render_gfx_end(render);
 }
 
+static inline void
+chl_frame_state_png_default_pipeline(struct render_png_render_pass *render_pass,
+                                     struct render_gfx *render,
+                                     const struct comp_layer *layers,
+                                     uint32_t layer_count)
+{
+	// Start the compute pipeline.
+	render_png_begin(render);
+
+	comp_render_png_dispatch(render, layers, layer_count, render_pass);
+
+	// Make the command buffer submittable.
+	render_png_end(render);
+}
+
 
 /*
  *

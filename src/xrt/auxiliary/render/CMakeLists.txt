@@ -16,11 +16,12 @@ add_library(
 	render_resources.c
 	render_sub_alloc.c
 	render_util.c
+	render_png.c
 	)
 # The aux_vk library needs to be public to include Vulkan.
 target_link_libraries(
 	aux_render
-	PUBLIC xrt-interfaces aux_vk comp_includes aux_shaders
+	PUBLIC xrt-interfaces aux_vk comp_includes aux_shaders xrt-external-stb
 	PRIVATE aux_util aux_os
 	)
 

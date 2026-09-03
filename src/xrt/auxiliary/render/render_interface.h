@@ -539,6 +539,48 @@ struct render_resources
 		//! Whether distortion images have been pre-rotated 90 degrees.
 		bool pre_rotated;
 	} distortion;
+
+		struct
+	{
+		struct
+		{
+			VkImage image;
+			VkImageView image_view;
+			VkDeviceMemory memory;
+		} color;
+
+		VkCommandPool cmd_pool;
+
+		VkCommandBuffer cmd;
+
+		//! The binding index for the source texture.
+		uint32_t src_binding;
+
+		//! The binding index for the UBO.
+		uint32_t ubo_binding;
+
+		VkDescriptorPool ubo_and_src_descriptor_pool;
+
+		VkDescriptorSetLayout descriptor_set_layout;
+
+		VkPipelineLayout pipeline_layout;
+
+		VkPipeline pipeline;
+
+		struct render_buffer vbo;
+		struct render_buffer ibo;
+		
+		float* vertices;
+		uint32_t vertex_count;
+		uint32_t stride;
+
+		uint16_t *indices;
+		//! Number of indices for the triangle strips (one per view).
+		uint32_t index_count;
+
+		//! Info UBOs.
+		struct render_buffer ubos[XRT_MAX_VIEWS];
+	} png;
 };
 
 /*!
@@ -753,6 +795,39 @@ void
 render_gfx_render_pass_fini(struct render_gfx_render_pass *rgrp);
 
 
+struct render_png_render_pass
+{
+	struct render_resources *r;
+
+	//! The format of the image(s) we are rendering to.
+	VkFormat format;
+
+	//! Sample count for this render pass.
+	VkSampleCountFlagBits sample_count;
+
+	//! Load op used on the attachment(s).
+	VkAttachmentLoadOp load_op;
+
+	//! Final layout of the target image(s).
+	VkImageLayout final_layout;
+
+	//! Render pass used for rendering.
+	VkRenderPass render_pass;
+
+	VkPipeline pipeline;
+
+};
+
+bool
+render_png_render_pass_init(struct render_png_render_pass *rprp,
+                            struct render_resources *r,
+                            VkFormat format,
+                            VkAttachmentLoadOp load_op,
+                            VkImageLayout final_layout);
+
+void
+render_png_render_pass_fini(struct render_png_render_pass *rprp);
+
 /*
  *
  * Rendering target
@@ -774,6 +849,7 @@ struct render_gfx_target_resources
 
 	//! Render pass.
 	struct render_gfx_render_pass *rgrp;
+	struct render_png_render_pass *rprp;
 
 	//! The offset & extents of the framebuffer.
 	VkRect2D render_area;
@@ -793,6 +869,13 @@ render_gfx_target_resources_init(struct render_gfx_target_resources *rtr,
                                  struct render_gfx_render_pass *rgrp,
                                  VkImageView target,
                                  VkExtent2D extent);
+
+bool
+render_png_target_resources_init(struct render_gfx_target_resources *rtr,
+                                 struct render_resources *r,
+                                 struct render_png_render_pass *rgrp,
+                                 VkImageView target,
+                                 struct render_viewport_data viewport_data);
 
 /*!
  * Frees all resources held by the target, does not free the struct itself.
@@ -866,6 +949,17 @@ render_gfx_begin(struct render_gfx *render);
  */
 bool
 render_gfx_end(struct render_gfx *render);
+
+struct render_png_ubo_data
+{
+	struct xrt_matrix_4x4 mvp;
+};
+
+bool
+render_png_begin(struct render_gfx *render);
+
+bool
+render_png_end(struct render_gfx *render);
 
 /*!
  * Frees all resources held by the rendering, does not free the struct itself.
@@ -1103,6 +1197,33 @@ render_gfx_end_view(struct render_gfx *render);
  */
 void
 render_gfx_mesh_draw(struct render_gfx *render, uint32_t mesh_index, VkDescriptorSet descriptor_set, bool do_timewarp);
+
+bool
+render_png_begin_target(struct render_gfx *render,
+                        struct render_gfx_target_resources *rtr,
+                        const VkClearColorValue *color);
+
+void
+render_png_end_target(struct render_gfx *render);
+
+void
+render_png_begin_view(struct render_gfx *render,
+                      uint32_t view,
+                      const struct render_viewport_data *viewport_data,
+                      const render_scissor_data_t *scissor_data);
+
+void
+render_png_end_view(struct render_gfx *render);
+
+void
+render_png_draw(struct render_gfx *render, VkDescriptorSet descriptor_set);
+
+XRT_CHECK_RESULT VkResult
+render_png_alloc_and_write(struct render_gfx *render,
+                                const struct render_png_ubo_data *data,
+                                VkSampler src_sampler,
+                                VkImageView src_image_view,
+                                VkDescriptorSet *out_descriptor_set);
 
 /*!
  * Dispatch a cylinder layer shader into the current target and view.

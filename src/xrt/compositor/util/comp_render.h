@@ -497,6 +497,12 @@ comp_render_gfx_dispatch(struct render_gfx *render,
 
 /*! @} */
 
+void
+comp_render_png_dispatch(struct render_gfx *render,
+			const struct comp_layer *layers,
+			const uint32_t layer_count,
+			struct render_png_render_pass *render_pass);
+
 
 /*
  *

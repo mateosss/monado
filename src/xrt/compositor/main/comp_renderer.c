@@ -152,6 +152,8 @@ struct comp_renderer
 	 */
 	struct render_gfx_target_resources *rtr_array;
 
+	struct render_png_render_pass png_render_pass;
+
 	/*!
 	 * Array of fences equal in size to the number of comp_target images.
 	 */
@@ -436,6 +438,13 @@ renderer_create_renderings_and_fences(struct comp_renderer *r)
 
 	struct vk_bundle *vk = &r->c->base.vk;
 
+	render_png_render_pass_init(       //
+		&r->png_render_pass,        // rgrp
+		&r->c->nr,                     // struct render_resources
+		r->c->target->format,          //
+		VK_ATTACHMENT_LOAD_OP_LOAD, // load_op
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);   // final_layout
+
 	bool use_compute = r->settings->use_compute;
 	if (!use_compute) {
 		r->rtr_array = U_TYPED_ARRAY_CALLOC(struct render_gfx_target_resources, r->buffer_count);
@@ -487,6 +496,7 @@ renderer_close_renderings_and_fences(struct comp_renderer *r)
 
 		// Close the render pass used for rendering to the target.
 		render_gfx_render_pass_fini(&r->target_render_pass);
+		render_png_render_pass_fini(&r->png_render_pass);
 
 		free(r->rtr_array);
 		r->rtr_array = NULL;
@@ -972,6 +982,42 @@ dispatch_graphics(struct comp_renderer *r,
 }
 
 
+static XRT_CHECK_RESULT VkResult
+dispatch_png(struct comp_renderer *r,
+                  struct render_gfx *render,
+                  struct chl_frame_state *frame_state,
+                  enum comp_target_fov_source fov_source)
+{
+	struct comp_compositor *c = r->c;
+	struct vk_bundle *vk = &c->base.vk;
+	VkResult ret;
+
+	// Basics
+	const struct comp_layer *layers = c->base.layer_accum.layers;
+	uint32_t layer_count = c->base.layer_accum.layer_count;
+
+	chl_frame_state_png_default_pipeline(&r->png_render_pass,
+                                     render,
+                                     layers,
+                                     layer_count);
+
+	struct vk_submit_info_builder builder = XRT_STRUCT_INIT;
+
+	vk_submit_info_builder_prepare( //
+	    &builder,                   //
+	    NULL,                 //
+	    &render->r->png.cmd,                       //
+	    1,                          //
+	    NULL,               //
+	    NULL);                      //
+
+	ret = vk_cmd_submit_locked(vk, vk->main_queue, 1, &builder.submit_info, VK_NULL_HANDLE);
+	VK_CHK_AND_RET(ret, "renderer_submit_queue");
+
+	return ret;
+}
+
+
 /*
  *
  * Compute
@@ -1112,9 +1158,12 @@ comp_renderer_draw(struct comp_renderer *r)
 
 	bool use_compute = r->settings->use_compute;
 	struct render_gfx render_g = {0};
+	struct render_gfx render_png = {0};
 	struct render_compute render_c = {0};
 
 	VkResult res = VK_SUCCESS;
+	render_gfx_init(&render_png, &c->nr);
+	res = dispatch_png(r, &render_png, &frame_state, fov_source);
 	if (use_compute) {
 		render_compute_init(&render_c, &c->nr);
 		res = dispatch_compute(r, &render_c, &frame_state, fov_source);
@@ -1229,6 +1278,7 @@ comp_renderer_draw(struct comp_renderer *r)
 	 * Free resources.
 	 */
 
+	render_gfx_fini(&render_png);
 	if (use_compute) {
 		render_compute_fini(&render_c);
 	} else {

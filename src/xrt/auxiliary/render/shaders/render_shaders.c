@@ -41,6 +41,8 @@
 #include "layer_quad.frag.h"
 #include "mesh.frag.h"
 #include "mesh.vert.h"
+#include "png.vert.h"
+#include "png.frag.h"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -115,6 +117,9 @@ render_shaders_load(struct render_shaders *s, struct vk_bundle *vk)
 	LOAD(mesh_vert);
 	LOAD(mesh_frag);
 
+	LOAD(png_vert);
+	LOAD(png_frag);
+
 	LOAD(layer_cylinder_frag);
 	LOAD(layer_cylinder_vert);
 	LOAD(layer_equirect2_frag);
@@ -139,6 +144,9 @@ render_shaders_fini(struct render_shaders *s, struct vk_bundle *vk)
 	D(ShaderModule, s->layer_comp);
 	D(ShaderModule, s->mesh_vert);
 	D(ShaderModule, s->mesh_frag);
+
+	D(ShaderModule, s->png_vert);
+	D(ShaderModule, s->png_frag);
 
 	D(ShaderModule, s->layer_cylinder_frag);
 	D(ShaderModule, s->layer_cylinder_vert);

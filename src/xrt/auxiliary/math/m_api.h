@@ -750,6 +750,12 @@ math_matrix_4x4_projection_vulkan_infinite_reverse(const struct xrt_fov *fov,
                                                    struct xrt_matrix_4x4 *result);
 
 
+void
+math_matrix_4x4_projection(const struct xrt_fov fov,
+						   float near_plane,
+					 	   float far_plane,
+						   struct xrt_matrix_4x4 *result);
+
 /*
  *
  * Pose functions.

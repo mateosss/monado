@@ -16,6 +16,8 @@ set(SHADERS
     layer.comp
     mesh.frag
     mesh.vert
+    png.frag
+    png.vert
     layer_cylinder.frag
     layer_cylinder.vert
     layer_equirect2.frag

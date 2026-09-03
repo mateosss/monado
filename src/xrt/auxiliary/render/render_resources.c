@@ -21,6 +21,9 @@
 
 #include <stdio.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 /*
  *
@@ -527,10 +530,42 @@ render_resources_init(struct render_resources *r,
 	 * Constants
 	 */
 
+	float verts[16] = {
+		-0.5, -0.5, 1.0, 1.0,
+		0.5, -0.5, 0.0, 1.0,
+		0.5, 0.5, 0.0, 0.0,
+		-0.5, 0.5, 1.0, 0.0
+	};
+
+	uint16_t indxs[6] = {
+		0, 1, 2, 2, 3, 0
+	};
+
 	r->view_count = xdev->hmd->view_count;
+	r->png.src_binding = 0;
+	r->png.ubo_binding = 1;
 	r->mesh.src_binding = 0;
 	r->mesh.ubo_binding = 1;
 	struct xrt_hmd_parts *parts = xdev->hmd;
+	r->png.vertex_count = 6;
+	r->png.index_count = 6;
+	uint32_t stride_in_floats = 4;
+	r->png.stride = sizeof(float) * stride_in_floats;
+	uint32_t float_count = r->png.vertex_count * stride_in_floats;
+
+	r->png.vertices = U_TYPED_ARRAY_CALLOC(float, float_count);
+	for (uint32_t i = 0; i < r->png.vertex_count; ++i) {
+		uint32_t offset = i*stride_in_floats;
+		r->png.vertices[offset] = verts[offset];			// x
+		r->png.vertices[offset + 1] = verts[offset + 1];	// y
+		r->png.vertices[offset + 2] = verts[offset + 2];	// u
+		r->png.vertices[offset + 3] = verts[offset + 3];	// v
+	}
+	r->png.indices = U_TYPED_ARRAY_CALLOC(uint16_t, r->png.index_count);
+	for (uint32_t i = 0; i < r->png.index_count; i++) {
+		r->png.indices[i] = indxs[i];
+	}
+
 	r->mesh.vertex_count = parts->distortion.mesh.vertex_count;
 	r->mesh.stride = parts->distortion.mesh.stride;
 	r->mesh.index_count_total = parts->distortion.mesh.index_count_total;
@@ -603,6 +638,128 @@ render_resources_init(struct render_resources *r,
 	VK_CHK_WITH_RET(ret, "vkCreateCommandPool", false);
 
 	VK_NAME_COMMAND_POOL(vk, r->cmd_pool, "render_resources command pool");
+
+	ret = vk->vkCreateCommandPool(vk->device, &command_pool_info, NULL, &r->png.cmd_pool);
+	VK_CHK_WITH_RET(ret, "vkCreateCommandPool", false);
+
+	VK_NAME_COMMAND_POOL(vk, r->png.cmd_pool, "render_resources png command pool");
+
+	/*
+	 * PNG
+	 */
+
+	{
+		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+		VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		
+		int texWidth = 1;
+		int texHeight = 1;
+		int texChannels = 0;
+		stbi_uc* pixels = stbi_load("../Buh.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		U_LOG_W("texWidth: %d, texHeight: %d", texWidth, texHeight);
+		VkExtent2D extent = {texWidth, texHeight};
+
+		VkImageSubresourceRange subresource_range = {
+		    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+		    .baseMipLevel = 0,
+		    .levelCount = 1,
+		    .baseArrayLayer = 0,
+		    .layerCount = 1,
+		};
+
+		ret = vk_create_image_simple( //
+		    vk,                       // vk_bundle
+		    extent,                   // extent
+		    format,                   // format
+		    usage,                    // usage
+		    &r->png.color.memory,    // out_mem
+		    &r->png.color.image);    // out_image
+		VK_CHK_WITH_RET(ret, "vk_create_image_simple", false);
+
+		VK_NAME_DEVICE_MEMORY(vk, r->png.color.memory, "render_resources png color device memory");
+		VK_NAME_IMAGE(vk, r->png.color.image, "render_resources png color image");
+
+		ret = vk_create_view(           //
+		    vk,                         // vk_bundle
+		    r->png.color.image,        // image
+		    VK_IMAGE_VIEW_TYPE_2D,      // type
+		    format,                     // format
+		    subresource_range,          // subresource_range
+		    &r->png.color.image_view); // out_view
+		VK_CHK_WITH_RET(ret, "vk_create_view", false);
+
+		VK_NAME_IMAGE_VIEW(vk, r->png.color.image_view, "render_resources png color image view");
+
+		VkDeviceSize image_size = texWidth * texHeight * 4;
+		struct render_buffer *staging_buffer = U_TYPED_CALLOC(struct render_buffer);
+		ret = render_buffer_init(vk, staging_buffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+							VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+							image_size);
+		VK_CHK_WITH_RET(ret, "render buffer init", false);
+		
+		ret = render_buffer_map_and_write(vk, staging_buffer, pixels, image_size);
+		VK_CHK_WITH_RET(ret, "render buffer map and write", false);
+
+		VkCommandBuffer cmd = VK_NULL_HANDLE;
+		ret = vk_cmd_create_and_begin_cmd_buffer_locked(vk, r->png.cmd_pool, 0, &cmd);
+		VK_CHK_WITH_RET(ret, "vk_cmd_create_and_begin_cmd_buffer_locked", false);
+
+		VK_NAME_COMMAND_BUFFER(vk, cmd, "render_resources png command buffer");
+
+		vk_cmd_image_barrier_locked(              //
+			vk,                                       //
+			cmd,                                      //
+			r->png.color.image,                      //
+			0,                                        //
+			VK_ACCESS_TRANSFER_WRITE_BIT,             //
+			VK_IMAGE_LAYOUT_UNDEFINED,                //
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			subresource_range);                       //
+
+		VkBufferImageCopy region = {
+			.bufferOffset = 0,
+			.bufferRowLength = 0,
+			.bufferImageHeight = 0,
+			.imageSubresource = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .baseArrayLayer = 0, .layerCount = 1},
+			.imageOffset = {0, 0, 0},
+			.imageExtent = {extent.width, extent.height, 1}
+		};
+
+		vk->vkCmdCopyBufferToImage(cmd, staging_buffer->buffer, r->png.color.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		ret = prepare_mock_image_locked( //
+		    vk,                          // vk_bundle
+		    cmd,                         // cmd
+		    r->png.color.image);        // dst
+		VK_CHK_WITH_RET(ret, "prepare_mock_image_locked", false);
+
+		ret = vk_cmd_end_submit_wait_and_free_cmd_buffer_locked(vk, vk->main_queue, r->png.cmd_pool, cmd);
+		VK_CHK_WITH_RET(ret, "vk_cmd_end_submit_wait_and_free_cmd_buffer_locked", false);
+
+		render_buffer_unmap(vk, staging_buffer);
+		render_buffer_fini(vk, staging_buffer);
+		free(staging_buffer);
+		// No need to wait, submit waits on the fence.
+
+		const uint32_t png_shader_count = RENDER_MAX_LAYER_RUNS_COUNT(r);
+
+		struct vk_descriptor_pool_info png_pool_info = {
+		    .uniform_per_descriptor_count = 1,
+		    .sampler_per_descriptor_count = 1,
+		    .storage_image_per_descriptor_count = 0,
+		    .storage_buffer_per_descriptor_count = 0,
+		    .descriptor_count = png_shader_count,
+		    .freeable = false,
+		};
+
+		ret = vk_create_descriptor_pool(          //
+		    vk,                                   // vk_bundle
+		    &png_pool_info,                      // info
+		    &r->png.ubo_and_src_descriptor_pool); // out_descriptor_pool
+		VK_CHK_WITH_RET(ret, "vk_create_descriptor_pool", false);
+	}
 
 
 	/*
@@ -688,6 +845,16 @@ render_resources_init(struct render_resources *r,
 	VK_CHK_WITH_RET(ret, "vkAllocateCommandBuffers", false);
 
 	VK_NAME_COMMAND_BUFFER(vk, r->cmd, "render_resources command buffer");
+
+	cmd_buffer_info.commandPool = r->png.cmd_pool;
+
+	ret = vk->vkAllocateCommandBuffers( //
+	    vk->device,                     // device
+	    &cmd_buffer_info,               // pAllocateInfo
+	    &r->png.cmd);                       // pCommandBuffers
+	VK_CHK_WITH_RET(ret, "vkAllocateCommandBuffers", false);
+
+	VK_NAME_COMMAND_BUFFER(vk, r->png.cmd, "render_resources png command buffer");
 
 
 	/*
@@ -815,6 +982,46 @@ render_resources_init(struct render_resources *r,
 	bret = init_mesh_ubo_buffers(     //
 	    vk,                           //
 	    r->mesh.ubos, r->view_count); //
+	if (!bret) {
+		return false;
+	}
+
+	/*
+	 * PNG static.
+	 */
+	ret = create_gfx_ubo_and_src_descriptor_set_layout( //
+	    vk,                                             // vk_bundle
+	    r->png.ubo_binding,                            // ubo_binding
+	    r->png.src_binding,                            // src_binding
+	    &r->png.descriptor_set_layout);                // out_mesh_descriptor_set_layout
+	VK_CHK_WITH_RET(ret, "create_gfx_ubo_and_src_descriptor_set_layout", false);
+
+	VK_NAME_DESCRIPTOR_SET_LAYOUT(vk, r->png.descriptor_set_layout, "render_resources png descriptor set layout");
+
+	ret = vk_create_pipeline_layout(   //
+	    vk,                            // vk_bundle
+	    r->png.descriptor_set_layout, // descriptor_set_layout
+	    &r->png.pipeline_layout);     // out_pipeline_layout
+	VK_CHK_WITH_RET(ret, "vk_create_pipeline_layout", false);
+
+	VK_NAME_PIPELINE_LAYOUT(vk, r->png.pipeline_layout, "render_resources png pipeline layout");
+
+	bret = init_mesh_vertex_buffers(     //
+	    vk,                              //
+	    &r->png.vbo,                    //
+	    &r->png.ibo,                    //
+	    r->png.vertex_count,            //
+	    r->png.stride,                  //
+	    r->png.vertices, //
+	    r->png.index_count,       //
+	    r->png.indices); //
+	if (!bret) {
+		return false;
+	}
+
+	bret = init_mesh_ubo_buffers(     //
+	    vk,                           //
+	    r->png.ubos, r->view_count); //
 	if (!bret) {
 		return false;
 	}
@@ -1140,6 +1347,8 @@ render_resources_fini(struct render_resources *r)
 
 	vk_cmd_pool_destroy(vk, &r->distortion_pool);
 	D(CommandPool, r->cmd_pool);
+
+	D(CommandPool, r->png.cmd_pool);
 
 	// Finally forget about the vk bundle. We do not own it!
 	r->vk = NULL;
